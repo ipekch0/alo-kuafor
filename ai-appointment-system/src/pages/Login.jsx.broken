@@ -1,0 +1,215 @@
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff, Calendar } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import logoImage from '../assets/experceplogolu.png';
+
+const Login = () => {
+    const navigate = useNavigate();
+    const { login, register } = useAuth();
+    const [isLogin, setIsLogin] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+    });
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            if (isLogin) {
+                // Login
+                const result = await login(formData.email, formData.password);
+                if (result.success) {
+                    navigate('/');
+                } else {
+                    setError(result.error || 'Giriş başarısız');
+                }
+            } else {
+                // Register
+                if (formData.password !== formData.confirmPassword) {
+                    setError('Şifreler eşleşmiyor');
+                    setLoading(false);
+                    return;
+                }
+
+                const result = await register(formData.name, formData.email, formData.password);
+                if (result.success) {
+                    navigate('/');
+                } else {
+                    setError(result.error || 'Kayıt başarısız');
+                }
+            }
+        } catch (err) {
+            setError(err.message || 'Bir hata ol uştu');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+            {/* Background Effects */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl"></div>
+            </div>
+
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-md relative z-10"
+            >
+                {/* Logo/Title */}
+                <div className="text-center mb-8">
+                    {isLogin ? 'Hesabınıza giriş yapın' : 'Yeni hesap oluşturun'}
+                </p>
+        </div>
+
+                {/* Login/Register Form */ }
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8"
+                >
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {!isLogin && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Ad Soyad
+                                </label>
+                                <div className="relative">
+                                    <UserPlus className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                                        placeholder="Ahmet Yılmaz"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                E-posta
+                            </label>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                                    placeholder="ornek@email.com"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Şifre
+                            </label>
+                            <div className="relative">
+                                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    required
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    className="w-full pl-12 pr-12 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                                    placeholder="••••••••"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300"
+                                >
+                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {!isLogin && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Şifre Tekrar
+                                </label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        className="w-full pl-12 pr-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20"
+                                        placeholder="••••••••"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {loading ? (
+                                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <>
+                                    {isLogin ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                                    {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
+                                </>
+                            )}
+                        </button>
+                    </form>
+
+                    <div className="mt-6 text-center">
+                        <button
+                            onClick={() => {
+                                setIsLogin(!isLogin);
+                                setError('');
+                                setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+                            }}
+                            className="text-gray-400 hover:text-purple-400 transition-colors"
+                        >
+                            {isLogin ? (
+                                <>Hesabınız yok mu? <span className="text-purple-400 font-semibold">Kayıt Ol</span></>
+                            ) : (
+                                <>Zaten hesabınız var mı? <span className="text-purple-400 font-semibold">Giriş Yap</span></>
+                            )}
+                        </button>
+                    </div>
+                </motion.div>
+
+                <p className="text-center text-gray-500 text-sm mt-8">
+                    © 2025 EksperCep. Tüm hakları saklıdır.
+                </p>
+            </motion.div >
+        </div >
+    );
+};
+
+export default Login;
