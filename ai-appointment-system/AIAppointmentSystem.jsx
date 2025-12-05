@@ -96,6 +96,13 @@ const AIAppointmentSystem = () => {
 
   const currentTitle = menuItems.find(m => m.id === selectedView)?.label || (selectedView === 'user-profile' ? 'Profilim' : 'Panel');
 
+  // Set default view based on role
+  React.useEffect(() => {
+    if (user?.role === 'customer' && selectedView === 'dashboard') {
+      setSelectedView('customer-appointments');
+    }
+  }, [user, selectedView, setSelectedView]);
+
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
       <AppointmentCreateModal />
@@ -130,15 +137,17 @@ const AIAppointmentSystem = () => {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          <div className="mb-8">
-            <button
-              onClick={() => { setSelectedView('create-appointment'); setMobileMenuOpen(false); }}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/20"
-            >
-              <PlusCircle className="w-5 h-5" />
-              <span>Yeni Randevu</span>
-            </button>
-          </div>
+          {user?.role !== 'customer' && (
+            <div className="mb-8">
+              <button
+                onClick={() => { setSelectedView('create-appointment'); setMobileMenuOpen(false); }}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-900/20"
+              >
+                <PlusCircle className="w-5 h-5" />
+                <span>Yeni Randevu</span>
+              </button>
+            </div>
+          )}
 
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Menü</p>
           {filteredMenuItems.map((item) => {
