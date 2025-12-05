@@ -111,4 +111,46 @@ router.put('/:id/status', async (req, res) => {
     }
 });
 
+// GET customer's own appointments
+router.get('/my-appointments', async (req, res) => {
+    try {
+        // Find appointments where the user is linked
+        const appointments = await prisma.appointment.findMany({
+            where: { userId: req.user.id },
+            include: {
+                salon: true,
+                professional: true,
+                service: true
+            },
+            orderBy: { dateTime: 'desc' }
+        });
+        res.json(appointments);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST pay for appointment
+router.post('/:id/pay', async (req, res) => {
+    try {
+        const { paymentMethod, cardDetails } = req.body;
+
+        // In a real app, process payment with cardDetails here via Stripe/Iyzico
+        // For now, we simulate success
+
+        const appointment = await prisma.appointment.update({
+            where: { id: parseInt(req.params.id) },
+            data: {
+                isPaid: true,
+                paymentMethod: paymentMethod || 'credit_card',
+                status: 'confirmed' // Auto confirm if paid? Or keep as is. Let's confirm to make user happy.
+            }
+        });
+
+        res.json({ success: true, appointment });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
 module.exports = router;

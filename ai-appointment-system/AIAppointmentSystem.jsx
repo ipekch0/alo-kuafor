@@ -33,6 +33,7 @@ import CreateAppointment from './src/components/CreateAppointment';
 import AIChatAssistant from './src/components/AIChatAssistant';
 import BusinessProfile from './src/components/BusinessProfile';
 
+import CustomerAppointments from './src/components/CustomerAppointments';
 import UserProfile from './src/components/UserProfile';
 // import Settings from './src/pages/Settings';
 
@@ -43,19 +44,27 @@ const AIAppointmentSystem = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Panel' },
-    { id: 'business-profile', icon: Building2, label: 'İşletme Profili' },
-    { id: 'appointments', icon: CalendarIcon, label: 'Randevular' },
-    { id: 'professionals', icon: Users, label: 'Personel' },
-    { id: 'customers', icon: UserCircle, label: 'Müşteriler' },
-    { id: 'services', icon: Briefcase, label: 'Hizmetler' },
-    { id: 'reports', icon: Bot, label: 'AI Raporlar' },
-    // { id: 'settings', icon: Settings, label: 'Ayarlar' },
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Panel', roles: ['salon_owner', 'admin'] },
+    { id: 'customer-appointments', icon: CalendarIcon, label: 'Randevularım', roles: ['customer'] }, // New item
+    { id: 'business-profile', icon: Building2, label: 'İşletme Profili', roles: ['salon_owner'] },
+    { id: 'appointments', icon: CalendarIcon, label: 'Randevular', roles: ['salon_owner', 'admin', 'professional'] },
+    { id: 'professionals', icon: Users, label: 'Personel', roles: ['salon_owner', 'admin'] },
+    { id: 'customers', icon: UserCircle, label: 'Müşteriler', roles: ['salon_owner', 'admin'] },
+    { id: 'services', icon: Briefcase, label: 'Hizmetler', roles: ['salon_owner', 'admin'] },
+    { id: 'reports', icon: Bot, label: 'AI Raporlar', roles: ['salon_owner', 'admin'] },
   ];
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (item.roles && !item.roles.includes(user.role)) return false;
+    return true;
+  });
 
   const renderContent = () => {
     switch (selectedView) {
       case 'dashboard': return <Dashboard />;
+      case 'customer-appointments': return <CustomerAppointments />; // New case
       case 'business-profile': return <BusinessProfile />;
       case 'appointments': return <AppointmentList />;
       case 'create-appointment': return <CreateAppointment />;
@@ -132,7 +141,7 @@ const AIAppointmentSystem = () => {
           </div>
 
           <p className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Menü</p>
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = selectedView === item.id;
             const Icon = item.icon;
             return (

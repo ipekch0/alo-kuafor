@@ -61,6 +61,12 @@ model Salon {
   
   workingHours    String?          // JSON object: { "monday": { "start": "09:00", "end": "19:00" }, ... }
   
+  // Official Business Details
+  taxNumber       String?
+  taxOffice       String?
+  isVerified      Boolean          @default(false)
+  ownerName       String?          // Official business owner name
+
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -153,6 +159,10 @@ model Appointment {
   notes           String?
   totalPrice      Decimal
   
+  // Payment Info
+  isPaid          Boolean          @default(false)
+  paymentMethod   String?          // credit_card, cash, transfer
+
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }

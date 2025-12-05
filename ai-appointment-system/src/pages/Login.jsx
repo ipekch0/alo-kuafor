@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff, Scissors } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff, Scissors, Building2, MapPin, Phone, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -8,13 +8,23 @@ const Login = () => {
     const navigate = useNavigate();
     const { login, register } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
+    const [isSalonOwner, setIsSalonOwner] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        // Salon Owner Details
+        salonName: '',
+        taxNumber: '',
+        taxOffice: '',
+        address: '',
+        city: '',
+        phone: ''
     });
+
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -38,11 +48,31 @@ const Login = () => {
                     return;
                 }
 
-                const result = await register(formData.name, formData.email, formData.password);
-                if (result.success) {
-                    navigate('/panel');
+                if (isSalonOwner) {
+                    // Register as Salon Owner with details
+                    const salonDetails = {
+                        salonName: formData.salonName,
+                        taxNumber: formData.taxNumber,
+                        taxOffice: formData.taxOffice,
+                        address: formData.address,
+                        city: formData.city,
+                        phone: formData.phone
+                    };
+
+                    const result = await register(formData.name, formData.email, formData.password, 'salon_owner', salonDetails);
+                    if (result.success) {
+                        navigate('/panel');
+                    } else {
+                        setError(result.error || 'Kayıt başarısız');
+                    }
                 } else {
-                    setError(result.error || 'Kayıt başarısız');
+                    // Regular customer register
+                    const result = await register(formData.name, formData.email, formData.password, 'customer');
+                    if (result.success) {
+                        navigate('/panel');
+                    } else {
+                        setError(result.error || 'Kayıt başarısız');
+                    }
                 }
             }
         } catch (err) {
@@ -57,7 +87,7 @@ const Login = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-md"
+                className="w-full max-w-xl"
             >
                 {/* Logo Text */}
                 <div className="text-center mb-8">
@@ -85,28 +115,47 @@ const Login = () => {
                 >
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {!isLogin && (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Ad Soyad
-                                </label>
-                                <div className="relative">
-                                    <UserPlus className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="input-premium pl-12"
-                                        placeholder="Ad Soyad"
-                                    />
+                            <div className="flex justify-center mb-6">
+                                <div className="flex items-center bg-slate-100 rounded-full p-1 border border-slate-200">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSalonOwner(false)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${!isSalonOwner ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        Müşteri
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsSalonOwner(true)}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${isSalonOwner ? 'bg-white text-brand-accent-indigo shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                    >
+                                        İşletme Sahibi
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {!isLogin && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="col-span-1 md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Ad Soyad</label>
+                                    <div className="relative">
+                                        <UserPlus className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="input-premium pl-12"
+                                            placeholder="Ad Soyad"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                E-posta
-                            </label>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">E-posta</label>
                             <div className="relative">
                                 <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                                 <input
@@ -120,48 +169,149 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Şifre
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    required
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="input-premium pl-12 pr-12"
-                                    placeholder="••••••••"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                                >
-                                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {!isLogin && (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
-                                    Şifre Tekrar
-                                </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className={`${isLogin ? 'md:col-span-2' : ''}`}>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Şifre</label>
                                 <div className="relative">
                                     <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                                     <input
                                         type={showPassword ? 'text' : 'password'}
                                         required
-                                        value={formData.confirmPassword}
-                                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                                        className="input-premium pl-12"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="input-premium pl-12 pr-12"
                                         placeholder="••••••••"
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
                                 </div>
                             </div>
-                        )}
+
+                            {!isLogin && (
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Şifre Tekrar</label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            required
+                                            value={formData.confirmPassword}
+                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                            className="input-premium pl-12"
+                                            placeholder="••••••••"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Salon Owner Specific Fields */}
+                        <AnimatePresence>
+                            {!isLogin && isSalonOwner && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    className="space-y-4 pt-4 border-t border-slate-100"
+                                >
+                                    <h3 className="text-sm font-semibold text-brand-accent-indigo uppercase tracking-wider">İşletme Bilgileri</h3>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">İşletme Adı</label>
+                                        <div className="relative">
+                                            <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                required={isSalonOwner}
+                                                value={formData.salonName}
+                                                onChange={(e) => setFormData({ ...formData, salonName: e.target.value })}
+                                                className="input-premium pl-12"
+                                                placeholder="Örn: Stil Kuaför"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Vergi No</label>
+                                            <div className="relative">
+                                                <FileText className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                                <input
+                                                    type="text"
+                                                    required={isSalonOwner}
+                                                    value={formData.taxNumber}
+                                                    onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })}
+                                                    className="input-premium pl-12"
+                                                    placeholder="Vergi No"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Vergi Dairesi</label>
+                                            <div className="relative">
+                                                <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                                <input
+                                                    type="text"
+                                                    required={isSalonOwner}
+                                                    value={formData.taxOffice}
+                                                    onChange={(e) => setFormData({ ...formData, taxOffice: e.target.value })}
+                                                    className="input-premium pl-12"
+                                                    placeholder="Vergi Dairesi"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Şehir</label>
+                                            <input
+                                                type="text"
+                                                required={isSalonOwner}
+                                                value={formData.city}
+                                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                                className="input-premium px-4"
+                                                placeholder="İstanbul"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
+                                            <div className="relative">
+                                                <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                                <input
+                                                    type="tel"
+                                                    required={isSalonOwner}
+                                                    value={formData.phone}
+                                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                    className="input-premium pl-12"
+                                                    placeholder="0555 555 55 55"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Açık Adres</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-4 top-3 w-5 h-5 text-slate-400" />
+                                            <textarea
+                                                required={isSalonOwner}
+                                                value={formData.address}
+                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                                className="input-premium pl-12 pt-2"
+                                                placeholder="Adres detayları..."
+                                                rows="2"
+                                            ></textarea>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         {error && (
                             <motion.div
@@ -194,7 +344,12 @@ const Login = () => {
                             onClick={() => {
                                 setIsLogin(!isLogin);
                                 setError('');
-                                setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+                                // Reset basics but keep mode toggle state for UX maybe? Or reset all. Let's reset all.
+                                // Actually better to keep form state clean
+                                setFormData({
+                                    name: '', email: '', password: '', confirmPassword: '',
+                                    salonName: '', taxNumber: '', taxOffice: '', address: '', city: '', phone: ''
+                                });
                             }}
                             className="text-slate-500 hover:text-brand-accent-indigo transition-colors"
                         >

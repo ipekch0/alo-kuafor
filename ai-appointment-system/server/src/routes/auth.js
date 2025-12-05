@@ -11,7 +11,7 @@ const JWT_EXPIRES_IN = '7d';
 // Register new user
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, role, salonDetails } = req.body;
 
         // Validate input
         if (!name || !email || !password) {
@@ -20,6 +20,13 @@ router.post('/register', async (req, res) => {
 
         if (password.length < 6) {
             return res.status(400).json({ error: 'Password must be at least 6 characters' });
+        }
+
+        // Additional validation for salon owners
+        if (role === 'salon_owner') {
+            if (!salonDetails || !salonDetails.salonName || !salonDetails.taxNumber || !salonDetails.taxOffice) {
+                return res.status(400).json({ error: 'İşletme adı, vergi numarası ve vergi dairesi zorunludur.' });
+            }
         }
 
         // Check if user already exists
@@ -34,26 +41,49 @@ router.post('/register', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create user
-        const user = await prisma.user.create({
-            data: {
-                name,
-                email,
-                password: hashedPassword,
-                role: 'user'
-            },
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-                createdAt: true
+        // Use transaction to ensure both User and Salon (if applicable) are created
+        const result = await prisma.$transaction(async (prisma) => {
+            // Create user
+            const user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    password: hashedPassword,
+                    role: role || 'customer' // Default to customer
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                    createdAt: true
+                }
+            });
+
+            // If salon owner, create salon
+            if (role === 'salon_owner' && salonDetails) {
+                await prisma.salon.create({
+                    data: {
+                        name: salonDetails.salonName,
+                        slug: salonDetails.salonName.toLowerCase().replace(/ /g, '-') + '-' + Math.floor(Math.random() * 1000), // Simple slug gen
+                        address: salonDetails.address || '',
+                        city: salonDetails.city || '',
+                        phone: salonDetails.phone || '',
+                        ownerId: user.id,
+                        taxNumber: salonDetails.taxNumber,
+                        taxOffice: salonDetails.taxOffice,
+                        ownerName: name,
+                        isVerified: false // Default to false until admin approval or auto-check
+                    }
+                });
             }
+
+            return user;
         });
 
         // Generate JWT token
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: result.id, email: result.email },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
@@ -61,7 +91,7 @@ router.post('/register', async (req, res) => {
         res.status(201).json({
             message: 'User registered successfully',
             token,
-            user
+            user: result
         });
     } catch (error) {
         console.error('Register error:', error);
