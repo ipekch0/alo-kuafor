@@ -18,6 +18,7 @@ import VerifyEmail from './pages/VerifyEmail';
 import Legal from './pages/Legal';
 import UserProfile from './pages/UserProfile';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import MainLayout from './layouts/MainLayout';
 import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
@@ -63,7 +64,8 @@ function App() {
                     <Route path="/subscriptions" element={<SubscriptionPlans />} />
                     <Route path="/legal" element={<Legal />} />
                     <Route path="/profile" element={<UserProfile />} />
-                    <Route path="/avg" element={<ForgotPassword />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                 </Route>
 
                 <Route path="/login" element={<Login />} />

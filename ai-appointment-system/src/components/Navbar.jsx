@@ -45,7 +45,7 @@ const Navbar = () => {
                             <Scissors className="w-5 h-5" />
                         </div>
                         <span className="text-2xl font-bold tracking-tight font-serif text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            İpekManage
+                            OdakManage
                         </span>
                     </Link>
 

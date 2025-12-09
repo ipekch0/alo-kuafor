@@ -167,7 +167,7 @@ const Finance = () => {
 
                 {/* Print Header (Visible only in print) */}
                 <div className="print-header hidden pb-8 border-b border-gray-200">
-                    <h1 className="text-2xl font-bold text-slate-900">İpekManage - Finans Raporu</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">OdakManage - Finans Raporu</h1>
                     <p className="text-slate-500">{new Date().toLocaleDateString('tr-TR', { dateStyle: 'full' })}</p>
                 </div>
 

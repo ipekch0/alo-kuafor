@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const sendEmail = require('../utils/email');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -99,13 +100,13 @@ router.post('/register', async (req, res) => {
         // Send Verification Email
         try {
             await transporter.sendMail({
-                from: `"İpekManage Güvenlik" <${process.env.EMAIL_USER}>`,
+                from: `"OdakManage Güvenlik" <${process.env.EMAIL_USER}>`,
                 to: email,
-                subject: 'İpekManage Doğrulama Kodunuz',
-                text: `Merhaba ${name}, İpekManage'e hoşgeldiniz! Doğrulama kodunuz: ${verificationCode}`,
+                subject: 'OdakManage Doğrulama Kodunuz',
+                text: `Merhaba ${name}, OdakManage'e hoşgeldiniz! Doğrulama kodunuz: ${verificationCode}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                        <h2 style="color: #4F46E5;">İpekManage'e Hoşgeldiniz!</h2>
+                        <h2 style="color: #4F46E5;">OdakManage'e Hoşgeldiniz!</h2>
                         <p>Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
                         
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
@@ -227,13 +228,13 @@ router.post('/resend-verification', async (req, res) => {
         // Send Email
         try {
             await transporter.sendMail({
-                from: `"İpekManage Güvenlik" <${process.env.EMAIL_USER}>`,
+                from: `"OdakManage Güvenlik" <${process.env.EMAIL_USER}>`,
                 to: email,
                 subject: 'Yeni Doğrulama Kodunuz',
                 text: `Merhaba ${user.name}, yeni doğrulama kodunuz: ${verificationCode}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                        <h2 style="color: #4F46E5;">İpekManage Doğrulama Kodu</h2>
+                        <h2 style="color: #4F46E5;">OdakManage Doğrulama Kodu</h2>
                         <p>Yeni bir doğrulama kodu talep ettiniz. Lütfen aşağıdaki kodu giriniz:</p>
                         <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; display: inline-block; margin: 10px 0;">
                             ${verificationCode}
@@ -390,6 +391,84 @@ router.get('/me', async (req, res) => {
 // Logout
 router.post('/logout', (req, res) => {
     res.json({ message: 'Logout successful' });
+});
+
+// ... (existing imports)
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+        }
+
+        // Generate Token
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 3600000); // 1 hour
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                resetPasswordToken: token,
+                resetPasswordExpires: expires
+            }
+        });
+
+        // Send Email
+        const resetUrl = `${req.headers.origin}/reset-password?token=${token}`;
+        const html = `
+            <h3>Şifre Sıfırlama</h3>
+            <p>Şifrenizi sıfırlamak için aşağıdaki linke tıklayınız:</p>
+            <a href="${resetUrl}">Şifremi Sıfırla</a>
+            <p>Link 1 saat geçerlidir.</p>
+        `;
+
+        await sendEmail(user.email, 'Şifre Sıfırlama Talebi', html);
+
+        res.json({ success: true, message: 'Sıfırlama bağlantısı e-posta adresinize gönderildi.' });
+
+    } catch (error) {
+        console.error('Forgot Password Error:', error);
+        res.status(500).json({ error: 'İşlem başarısız.' });
+    }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const user = await prisma.user.findFirst({
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { gt: new Date() }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş token.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetPasswordToken: null,
+                resetPasswordExpires: null
+            }
+        });
+
+        res.json({ success: true, message: 'Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.' });
+
+    } catch (error) {
+        console.error('Reset Password Error:', error);
+        res.status(500).json({ error: 'Sıfırlama işlemi başarısız.' });
+    }
 });
 
 module.exports = router;

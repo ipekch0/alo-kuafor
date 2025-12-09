@@ -1,91 +1,158 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { generateAIResponse } = require('../services/aiService');
+
+// Helper for file logging
+const logToFile = (data) => {
+    try {
+        const logPath = path.join(__dirname, '../../debug_log.txt');
+        const timestamp = new Date().toISOString();
+        const message = `[${timestamp}] ${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}\n`;
+        fs.appendFileSync(logPath, message);
+    } catch (e) {
+        console.error('Logging failed:', e);
+    }
+};
+
+// Note: authenticateToken is applied in index.js for this router -> MOVED to specific routes
+const authenticateToken = require('../middleware/auth');
 
 // Exchange Code for Token (Official Meta Flow)
-router.post('/exchange-token', async (req, res) => {
+router.post('/exchange-token', authenticateToken, async (req, res) => {
     try {
         const { code } = req.body;
+        logToFile(`Received request with code/token: ${code.substring(0, 20)}...`);
 
-        // 1. Get User Access Token
+        const userId = req.user.id;
+
+        // 1. Exchange Short-Lived Token for Long-Lived Token
         const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` +
+            `grant_type=fb_exchange_token&` +
             `client_id=${process.env.FACEBOOK_APP_ID}&` +
             `client_secret=${process.env.FACEBOOK_APP_SECRET}&` +
-            `code=${code}`;
+            `fb_exchange_token=${code}`;
+
+        console.log('Exchanging access token for User ID:', userId);
 
         const tokenRes = await axios.get(tokenUrl);
         const accessToken = tokenRes.data.access_token;
 
         if (!accessToken) throw new Error('Failed to get access token');
+        console.log('Long-lived access token received.');
 
-        // 2. Get WABA ID (WhatsApp Business Account ID)
-        // We use the token to inspect what businesses are connected
-        // For simplicity in Embedded Signup, the user selects one WABA.
-        // We can fetch shared WABAs via debug_token or specific endpoints.
-        // A better approach for Embedded Signup is checking the 'granular_scopes' or fetching client_business_accounts.
+        // ... rest of the logic ...
 
-        // Let's fetch the debug token info to get the specific WABA ID granted
+        // 2. Identify the WABA (WhatsApp Business Account) ID
+        // Use App Access Token for debugging to ensure we can inspect any user token
+        const appAccessToken = `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`;
         const debugUrl = `https://graph.facebook.com/v18.0/debug_token?` +
             `input_token=${accessToken}&` +
-            `access_token=${accessToken}`; // or app access token
+            `access_token=${appAccessToken}`;
 
         const debugRes = await axios.get(debugUrl);
+        const granularScopes = debugRes.data.data.granular_scopes;
 
-        // Note: In a full production app, you iterate through the permission granular scopes
-        // to find the exact target_ids (WABA IDs).
-        // For this implementation, we will assume the first connected WABA is the target,
-        // or we use the 'accounts' endpoint to list them.
+        logToFile({ msg: 'Debug Token Response', data: debugRes.data });
 
-        // Fetch user's accounts to find the WABA
-        // This part can be tricky depending on exact permission setup.
-        // Often for Embedded Signup, the frontend receives the WABA ID in the response? 
-        // No, frontend gets 'code'.
+        let wabaId = null;
+        if (granularScopes) {
+            const whatsappScope = granularScopes.find(scope => scope.scope === 'whatsapp_business_management');
+            if (whatsappScope && whatsappScope.target_ids && whatsappScope.target_ids.length > 0) {
+                wabaId = whatsappScope.target_ids[0];
+            }
+        }
 
-        // Let's simplified assumption: We save the access token and use it for future API calls.
-        // But to look professional, we should identify the WABA and Phone ID now.
+        if (!wabaId) {
+            const warningMsg = 'WABA ID not found in granular scopes. Attempting fallback...';
+            logToFile({ msg: warningMsg, scopes: granularScopes });
 
-        // Step 2 (Better): Fetch WABA's Phone Numbers
-        // We need the WABA ID first.
-        // Let's try fetching /me/accounts logic equivalent for WhatsApp?
-        // Actually, shared WABA is usually accessible.
+            // Fallback: Fetch User's WABAs directly (Requires 'whatsapp_business_management' scope only)
+            try {
+                // OLD (Failed): me?fields=businesses... -> Requires 'business_management'
+                // NEW (Fix): me?fields=client_whatsapp_business_accounts... -> Requires 'whatsapp_business_management'
+                const meUrl = `https://graph.facebook.com/v18.0/me?fields=businesses{id,name,owned_whatsapp_business_accounts{id,name}}&access_token=${accessToken}`;
+                const meRes = await axios.get(meUrl);
 
-        // CRITICAL: For Embedded Signup, we swap the token, then we subscribe the WABA.
+                logToFile({ msg: 'Me/Businesses Response', data: meRes.data });
 
-        // Let's update the Salon with the Token first.
-        const userId = req.user?.id; // Assumes auth middleware used
-        // But wait, the route usage in index.js might not have auth middleware applied?
-        // Let's check index.js later. Assuming we have user info via JWT middleware manually or global.
+                const businesses = meRes.data.businesses?.data || [];
+                for (const business of businesses) {
+                    if (business.owned_whatsapp_business_accounts?.data?.length > 0) {
+                        wabaId = business.owned_whatsapp_business_accounts.data[0].id;
+                        logToFile({ msg: 'Found WABA ID via businesses > owned_wab', wabaId: wabaId });
+                        break;
+                    }
+                }
 
-        // If req.user is missing (custom auth flow), we fail.
-        // The calling code sent 'Authorization: Bearer undefined' in some cases? 
-        // No, AuthContext sends it.
+            } catch (fallbackError) {
+                logToFile({ msg: 'Fallback WABA fetch failed', error: fallbackError.message, response: fallbackError.response?.data });
+                console.error('Fallback WABA fetch failed:', fallbackError);
+            }
 
-        // We need to decode the token if middleware isn't here. 
-        // But index.js likely didn't apply auth middleware to this specific route.
-        // We should add it or decode manually.
+            if (!wabaId) {
+                throw new Error('WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager.');
+            }
+        }
 
-        // For now, let's assume we can update the salon based on the user ID decoded from the token header.
-        // We'll proceed with the token exchange logic.
+        // 3. Get Phone Number ID
+        const phoneUrl = `https://graph.facebook.com/v18.0/${wabaId}/phone_numbers?access_token=${accessToken}`;
+        const phoneRes = await axios.get(phoneUrl);
 
-        // TODO: Ideally fetch the Phone Number ID here.
-        // For now, save the token.
+        if (!phoneRes.data.data || phoneRes.data.data.length === 0) {
+            throw new Error('No WhatsApp phone number found for this business account.');
+        }
 
-        // Mocking the DB update for safety if middleware is missing, 
-        // but we'll try to find the salon effectively.
-        // In a real scenario we MUST know which salon to update.
+        const phoneNumberId = phoneRes.data.data[0].id;
+        const phoneNumber = phoneRes.data.data[0].display_phone_number;
 
-        // Let's return success with the token details for now so frontend can debug.
-        res.json({ success: true, accessToken, debug: debugRes.data });
+        // 4. Update Database
+        const salon = await prisma.salon.findFirst({
+            where: { ownerId: userId }
+        });
+
+        if (!salon) {
+            throw new Error('Salon not found for this user.');
+        }
+
+        const updatedSalon = await prisma.salon.update({
+            where: { id: salon.id },
+            data: {
+                whatsappAPIToken: accessToken,
+                whatsappBusinessId: wabaId,
+                whatsappPhoneId: phoneNumberId,
+            }
+        });
+
+        // 5. Subscribe WABA to Webhooks
+        try {
+            await axios.post(`https://graph.facebook.com/v18.0/${wabaId}/subscribed_apps`, {
+                access_token: accessToken
+            });
+            console.log('Subscribed WABA to webhooks');
+        } catch (subError) {
+            console.warn('Webhook subscription warning:', subError.response?.data || subError.message);
+        }
+
+        res.json({
+            success: true,
+            message: 'WhatsApp integration successful',
+            phone: phoneNumber
+        });
 
     } catch (error) {
+        logToFile({ msg: 'Exchange Token Error', error: error.message, details: error.response?.data });
         console.error('Exchange Token Error:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Token exchange failed', details: error.response?.data });
+        console.error('Full Error Object:', error); // DEBUG LOG
+        res.status(500).json({ error: error.message || 'Token exchange failed', details: error.response?.data });
     }
 });
 
-// Webhook Verification (Existing)
+// Webhook for Incoming Messages
 router.get('/webhook', (req, res) => {
     const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
     const mode = req.query['hub.mode'];
@@ -94,7 +161,6 @@ router.get('/webhook', (req, res) => {
 
     if (mode && token) {
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
             res.status(200).send(challenge);
         } else {
             res.sendStatus(403);
@@ -103,8 +169,77 @@ router.get('/webhook', (req, res) => {
 });
 
 router.post('/webhook', async (req, res) => {
-    // ... Existing webhook logic ...
-    res.sendStatus(200);
+    try {
+        const body = req.body;
+
+        if (body.object) {
+            if (
+                body.entry &&
+                body.entry[0].changes &&
+                body.entry[0].changes[0] &&
+                body.entry[0].changes[0].value.messages &&
+                body.entry[0].changes[0].value.messages[0]
+            ) {
+                const change = body.entry[0].changes[0].value;
+                const message = change.messages[0];
+                const from = message.from; // User's phone number
+                const msgBody = message.text?.body || '';
+                const phoneNumberId = change.metadata.phone_number_id;
+
+                handleIncomingMessage(phoneNumberId, from, msgBody);
+            }
+            res.sendStatus(200);
+        } else {
+            res.sendStatus(404);
+        }
+    } catch (error) {
+        console.error('Webhook Error:', error);
+        res.sendStatus(500);
+    }
 });
+
+// Helper to handle AI interaction
+async function handleIncomingMessage(phoneId, from, text) {
+    try {
+        const salon = await prisma.salon.findFirst({
+            where: { whatsappPhoneId: phoneId }
+        });
+
+        if (!salon || !salon.whatsappAPIToken) {
+            console.log('Salon not found or not connected for phoneId:', phoneId);
+            return;
+        }
+
+        console.log(`Received WhatsApp message from ${from} for salon ${salon.name}: ${text}`);
+
+        // 1. Generate AI Response
+        const aiReply = await generateAIResponse(text, { salonName: salon.name });
+
+        // 2. Send Response via WhatsApp Cloud API
+        await sendWhatsAppMessage(salon.whatsappAPIToken, salon.whatsappPhoneId, from, aiReply);
+
+    } catch (e) {
+        console.error('Message Handling Error:', e);
+    }
+}
+
+async function sendWhatsAppMessage(accessToken, phoneId, to, message) {
+    try {
+        const url = `https://graph.facebook.com/v18.0/${phoneId}/messages`;
+        await axios.post(url, {
+            messaging_product: 'whatsapp',
+            to: to,
+            text: { body: message }
+        }, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        console.log(`Sent to ${to}: ${message}`);
+    } catch (error) {
+        console.error('Send Message Error:', error.response?.data || error.message);
+    }
+}
 
 module.exports = router;

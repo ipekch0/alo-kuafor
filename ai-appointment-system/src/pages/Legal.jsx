@@ -16,7 +16,7 @@ const Legal = () => {
                     <div className="prose prose-slate max-w-none text-slate-600">
                         <p>Son Güncelleme: 08.12.2024</p>
                         <h3>1. Veri Sorumlusu</h3>
-                        <p>AloKuaför olarak kişisel verilerinizin güvenliğine önem veriyoruz. 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu sıfatıyla hareket etmekteyiz.</p>
+                        <p>ODAKMANAGE olarak kişisel verilerinizin güvenliğine önem veriyoruz. 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu sıfatıyla hareket etmekteyiz.</p>
 
                         <h3>2. Toplanan Kişisel Veriler</h3>
                         <p>Hizmetlerimizden yararlanmanız sırasında ad, soyad, e-posta, telefon numarası gibi kimlik ve iletişim bilgileriniz işlenmektedir.</p>

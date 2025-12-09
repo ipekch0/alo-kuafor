@@ -54,7 +54,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/whatsapp', whatsappRoutes);
 const authenticateToken = require('./middleware/auth'); // Fixed import
 
-app.use('/api/whatsapp-cloud', authenticateToken, require('./routes/whatsappCloud'));
+app.use('/api/whatsapp-cloud', require('./routes/whatsappCloud'));
 app.use('/api/search', searchRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/reviews', reviewRoutes);

@@ -24,7 +24,7 @@ const NotFound = () => {
                 </Link>
             </div>
             <div className="mt-8 text-slate-400 text-sm">
-                AloKuaför AI © 2024
+                ODAKMANAGE AI © 2024
             </div>
         </div>
     );

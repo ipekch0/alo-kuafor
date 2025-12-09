@@ -6,7 +6,7 @@ services:
     region: frankfurt
     plan: free
     buildCommand: cd server && npm install && npx prisma generate
-    startCommand: cd server && node src/index.js
+    startCommand: cd server && npx prisma migrate deploy && node src/index.js
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -17,7 +17,7 @@ services:
       - key: PORT
         value: 10000
       - key: NODE_VERSION
-        value: 18.17.0
+        value: 20.9.0
 
 databases:
   - name: ai-appointment-db

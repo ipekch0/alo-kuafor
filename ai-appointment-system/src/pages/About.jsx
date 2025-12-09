@@ -24,7 +24,7 @@ const About = () => {
                         </h1>
                         <div className="space-y-6 text-slate-500 text-lg font-light leading-relaxed">
                             <p>
-                                ALOKUAFÖR, 2010 yılından bu yana güzellik ve bakım sektöründe standartları yeniden belirliyor. Amacımız sadece saç kesimi veya bakım değil, size özel bir deneyim tasarlamak.
+                                ODAKMANAGE, 2010 yılından bu yana güzellik ve bakım sektöründe standartları yeniden belirliyor. Amacımız sadece saç kesimi veya bakım değil, size özel bir deneyim tasarlamak.
                             </p>
                             <p>
                                 Teknolojinin gücünü estetikle birleştiriyoruz. Yapay zeka destekli stil önerilerimiz ve online randevu sistemimizle, kişisel bakımınızı modern çağın hızına ve konforuna taşıyoruz.
@@ -86,7 +86,7 @@ const About = () => {
                             <div key={idx} className="card-premium p-8 group">
                                 <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900 mb-6 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                                     <span className="text-xl font-bold font-serif">{idx + 1}</span>
-                                </div>  
+                                </div>
                                 <h3 className="text-xl font-bold text-slate-900 mb-3 font-serif">{value.title}</h3>
                                 <p className="text-slate-500 leading-relaxed font-light">{value.desc}</p>
                             </div>

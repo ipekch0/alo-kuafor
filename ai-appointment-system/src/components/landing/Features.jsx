@@ -50,7 +50,7 @@ const Features = () => {
                         İşletmenizi Büyütmek İçin İhtiyacınız Olan Her Şey
                     </h2>
                     <p className="text-lg text-slate-600">
-                        AloKuaför, sadece bir randevu sistemi değil, salonunuzun dijital ortağıdır.
+                        ODAKMANAGE, sadece bir randevu sistemi değil, salonunuzun dijital ortağıdır.
                     </p>
                 </div>
 

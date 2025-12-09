@@ -211,6 +211,15 @@ const Login = () => {
                                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
                                 </div>
+                                <div className="flex justify-end mt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/forgot-password')}
+                                        className="text-xs text-brand-accent-indigo hover:text-indigo-700 font-medium"
+                                    >
+                                        Şifremi Unuttum
+                                    </button>
+                                </div>
                             </div>
 
                             {!isLogin && (
@@ -403,7 +412,7 @@ const Login = () => {
                 </motion.div>
 
                 <p className="text-center text-slate-400 text-sm mt-8 font-light">
-                    © 2024 İpekManage. Tüm hakları saklıdır.
+                    © 2024 OdakManage. Tüm hakları saklıdır.
                 </p>
             </motion.div>
             {/* DEBUG OVERLAY */}
