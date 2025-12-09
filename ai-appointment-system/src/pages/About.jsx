@@ -79,40 +79,16 @@ const About = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
-                            { title: "Hijyen & Güven", desc: "En üst düzey hijyen standartları ile sağlığınız bizim için önceliktir." },
-                            { title: "Sürekli Eğitim", desc: "Ekibimiz dünyadaki trendleri takip eder ve sürekli eğitim alır." },
+                            { title: "Hijyen & Güven", desc: "En üst düzey hijyen standartları ile sağlığınız kullanıcılarımıız için önceliktir." },
+                            { title: "Süreklilik", desc: "Ekibimiz dünyadaki trendleri takip ediyor ve sürekli olarak ilerliyor." },
                             { title: "Premium Ürünler", desc: "Saçınıza ve cildinize sadece dünyanın en iyi markalarıyla dokunuyoruz." }
                         ].map((value, idx) => (
                             <div key={idx} className="card-premium p-8 group">
                                 <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-900 mb-6 group-hover:bg-slate-900 group-hover:text-white transition-colors">
                                     <span className="text-xl font-bold font-serif">{idx + 1}</span>
-                                </div>
+                                </div>  
                                 <h3 className="text-xl font-bold text-slate-900 mb-3 font-serif">{value.title}</h3>
                                 <p className="text-slate-500 leading-relaxed font-light">{value.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Team Section */}
-                <div className="mb-20">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 font-serif">Uzman Kadromuz</h2>
-                        <p className="text-slate-500 max-w-2xl mx-auto">Alanında ödüllü stilistlerimizle tanışın.</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                        {[
-                            { name: "Selin Yılmaz", role: "Art Direktör", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                            { name: "Mert Demir", role: "Senior Stilist", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                            { name: "Ayşe Kaya", role: "Renk Uzmanı", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" },
-                            { name: "Can Yıldız", role: "Kesim Uzmanı", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" }
-                        ].map((member, idx) => (
-                            <div key={idx} className="group relative overflow-hidden rounded-2xl shadow-soft-md">
-                                <img src={member.img} alt={member.name} className="w-full aspect-[3/4] object-cover transition-transform duration-500 group-hover:scale-110" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-                                    <h3 className="text-white font-bold text-lg font-serif">{member.name}</h3>
-                                    <p className="text-slate-300 text-sm">{member.role}</p>
-                                </div>
                             </div>
                         ))}
                     </div>

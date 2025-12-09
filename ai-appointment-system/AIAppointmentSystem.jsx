@@ -16,8 +16,11 @@ import {
   Search,
   Settings,
   Scissors,
-  Building2
+  Building2,
+  MessageCircle,
+  Wallet // New Icon
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import useStore from './src/store';
 import { useAuth } from './src/context/AuthContext';
 import Dashboard from './src/components/Dashboard';
@@ -32,64 +35,82 @@ import AppointmentList from './src/components/AppointmentList';
 import CreateAppointment from './src/components/CreateAppointment';
 import AIChatAssistant from './src/components/AIChatAssistant';
 import BusinessProfile from './src/components/BusinessProfile';
+import Inbox from './src/pages/Inbox';
+import Finance from './src/pages/Finance'; // New Import
 
 import CustomerAppointments from './src/components/CustomerAppointments';
 import UserProfile from './src/components/UserProfile';
-// import Settings from './src/pages/Settings';
+import SettingsPage from './src/pages/Settings';
+import AIReports from './src/components/AIReports';
+import Notifications from './src/components/Notifications';
 
 const AIAppointmentSystem = () => {
-  const { user, logout } = useAuth();
-  const selectedView = useStore((state) => state.selectedView);
-  const setSelectedView = useStore((state) => state.setSelectedView);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showResults, setShowResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState({ customers: [], appointments: [], services: [] });
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query.length > 1) {
+      setIsSearching(true);
+      setTimeout(() => {
+        setSearchResults({ customers: [], appointments: [] });
+        setIsSearching(false);
+        setShowResults(true);
+      }, 500);
+    } else {
+      setShowResults(false);
+    }
+  };
+
+  const { user, logout } = useAuth();
+  const {
+    selectedView,
+    setSelectedView,
+    sidebarOpen,
+    toggleSidebar,
+    modals,
+    closeModal,
+    openModal
+  } = useStore();
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Panel', roles: ['salon_owner', 'admin'] },
-    { id: 'customer-appointments', icon: CalendarIcon, label: 'Randevularım', roles: ['customer'] }, // New item
+    { id: 'customer-appointments', icon: CalendarIcon, label: 'Randevularım', roles: ['customer'] },
     { id: 'business-profile', icon: Building2, label: 'İşletme Profili', roles: ['salon_owner'] },
     { id: 'appointments', icon: CalendarIcon, label: 'Randevular', roles: ['salon_owner', 'admin', 'professional'] },
     { id: 'professionals', icon: Users, label: 'Personel', roles: ['salon_owner', 'admin'] },
     { id: 'customers', icon: UserCircle, label: 'Müşteriler', roles: ['salon_owner', 'admin'] },
+    { id: 'finance', icon: Wallet, label: 'Muhasebe', roles: ['salon_owner', 'admin'] },
+    { id: 'inbox', icon: MessageCircle, label: 'Mesajlar', roles: ['salon_owner', 'admin'] },
     { id: 'services', icon: Briefcase, label: 'Hizmetler', roles: ['salon_owner', 'admin'] },
+    { id: 'settings', icon: Settings, label: 'Ayarlar', roles: ['salon_owner', 'admin'] },
     { id: 'reports', icon: Bot, label: 'AI Raporlar', roles: ['salon_owner', 'admin'] },
+    { id: 'user-profile', icon: UserCircle, label: 'Profilim', roles: ['customer', 'salon_owner', 'admin', 'professional'] }
   ];
 
-  const filteredMenuItems = menuItems.filter(item => {
-    if (!user) return false;
-    if (user.role === 'admin') return true;
-    if (item.roles && !item.roles.includes(user.role)) return false;
-    return true;
-  });
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role));
 
   const renderContent = () => {
     switch (selectedView) {
       case 'dashboard': return <Dashboard />;
-      case 'customer-appointments': return <CustomerAppointments />; // New case
+      case 'customer-appointments': return <CustomerAppointments />;
       case 'business-profile': return <BusinessProfile />;
       case 'appointments': return <AppointmentList />;
       case 'create-appointment': return <CreateAppointment />;
       case 'professionals': return <ProfessionalManagement />;
       case 'customers': return <CustomerList />;
+      case 'inbox': return <Inbox />;
+      case 'finance': return <Finance />; // Added Finance case
       case 'customer-detail': return <CustomerDetail />;
       case 'services': return <ServiceManagement />;
       case 'appointment-detail': return <AppointmentDetail />;
       case 'user-profile': return <UserProfile />;
-      // case 'settings': return <Settings />;
-      case 'reports':
-        return (
-          <div className="flex flex-col items-center justify-center h-[60vh] text-center">
-            <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mb-6">
-              <Bot className="w-12 h-12 text-indigo-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Yapay Zeka Raporları</h3>
-            <p className="text-slate-500 max-w-md">
-              Gelişmiş AI algoritmalarımız verilerinizi analiz ederek size özel iş zekası raporları hazırlıyor.
-            </p>
-            <span className="mt-6 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-              Çok Yakında
-            </span>
-          </div>
-        );
+      case 'settings': return <SettingsPage />;
+      case 'reports': return <AIReports />;
       default: return <Dashboard />;
     }
   };
@@ -113,7 +134,7 @@ const AIAppointmentSystem = () => {
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 text-white flex items-center justify-between px-4 z-50">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-indigo-400" />
-          <span className="font-bold text-lg">AI Randevu</span>
+          <span className="font-bold text-lg">İpekManage</span>
         </div>
         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2">
           {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -131,7 +152,7 @@ const AIAppointmentSystem = () => {
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
               <Scissors className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight">ALOKUAFÖR</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">YÖNETİM CEPTE</h1>
           </div>
         </div>
 
@@ -187,7 +208,11 @@ const AIAppointmentSystem = () => {
               <p className="text-xs text-slate-500">Yönetici</p>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); logout(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                logout();
+                window.location.href = '/login';
+              }}
               className="p-2 text-slate-400 hover:text-red-400 transition-colors"
               title="Çıkış"
             >
@@ -211,13 +236,116 @@ const AIAppointmentSystem = () => {
               <input
                 type="text"
                 placeholder="Hızlı arama..."
+                onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => { if (searchQuery.length > 1) setShowResults(true); }}
+                // onBlur={() => setTimeout(() => setShowResults(false), 200)} // Delay to allow clicks
                 className="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full text-sm focus:ring-2 focus:ring-indigo-500 w-64 transition-all"
               />
+
+              {/* Search Results Dropdown */}
+              <AnimatePresence>
+                {showResults && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full mt-2 left-0 w-80 bg-white rounded-xl shadow-xl border border-slate-100 max-h-96 overflow-y-auto z-50 py-2"
+                  >
+                    {isSearching ? (
+                      <div className="p-4 text-center text-slate-500 text-sm">Aranıyor...</div>
+                    ) : (
+                      <>
+                        {Object.values(searchResults).every(arr => arr.length === 0) ? (
+                          <div className="p-4 text-center text-slate-500 text-sm">Sonuç bulunamadı</div>
+                        ) : (
+                          <>
+                            {/* Customers */}
+                            {searchResults.customers?.length > 0 && (
+                              <div className="mb-2">
+                                <div className="px-4 py-1 text-xs font-semibold text-slate-400 uppercase">Müşteriler</div>
+                                {searchResults.customers.map(c => (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => { setSelectedView('customers'); setShowResults(false); }}
+                                    className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
+                                      {c.name.charAt(0)}
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium text-slate-700">{c.name}</div>
+                                      <div className="text-xs text-slate-500">{c.phone}</div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Appointments */}
+                            {searchResults.appointments?.length > 0 && (
+                              <div className="mb-2">
+                                <div className="px-4 py-1 text-xs font-semibold text-slate-400 uppercase">Randevular</div>
+                                {searchResults.appointments.map(a => (
+                                  <button
+                                    key={a.id}
+                                    onClick={() => { setSelectedView('appointments'); setShowResults(false); }}
+                                    className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                                      <CalendarIcon className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium text-slate-700">{a.customer.name}</div>
+                                      <div className="text-xs text-slate-500">
+                                        {new Date(a.dateTime).toLocaleDateString('tr-TR')} - {a.service.name}
+                                      </div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Services */}
+                            {searchResults.services?.length > 0 && (
+                              <div className="mb-2">
+                                <div className="px-4 py-1 text-xs font-semibold text-slate-400 uppercase">Hizmetler</div>
+                                {searchResults.services.map(s => (
+                                  <button
+                                    key={s.id}
+                                    onClick={() => { setSelectedView('services'); setShowResults(false); }}
+                                    className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-3"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center">
+                                      <Scissors className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-medium text-slate-700">{s.name}</div>
+                                      <div className="text-xs text-slate-500">{s.duration} dk - ₺{s.price}</div>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <button className="p-2 text-slate-400 hover:text-indigo-600 transition-colors relative">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 text-slate-400 hover:text-indigo-600 transition-colors relative"
+              >
+                <Bell className="w-6 h-6" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse"></span>
+              </button>
+              <AnimatePresence>
+                {showNotifications && <Notifications isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}
+              </AnimatePresence>
+            </div>
           </div>
         </header>
 
@@ -238,12 +366,14 @@ const AIAppointmentSystem = () => {
       </main>
 
       {/* Mobile Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
+      {
+        mobileMenuOpen && (
+          <div
+            className="lg:hidden fixed inset-0 bg-black/50 z-30 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+        )
+      }
     </div>
   );
 };

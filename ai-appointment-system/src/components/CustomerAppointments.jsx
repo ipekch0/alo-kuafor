@@ -25,7 +25,7 @@ const CustomerAppointments = () => {
             }
         } catch (error) {
             console.error('Error fetching appointments:', error);
-            toast.error('Randevular yüklenirken hata oluştu');
+            toast.error('Randevular yüklenirken hata oluştu lütfen yeniden deneyiniz');
         } finally {
             setLoading(false);
         }

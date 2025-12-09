@@ -1,10 +1,10 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_URL = 'http://localhost:5000/api';
 
 export const aiApi = {
     // Send message to AI
     async sendMessage(message, sessionId = null) {
         try {
-            const response = await fetch(`${API_URL}/api/ai/chat`, {
+            const response = await fetch(`${API_URL}/ai/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ export const aiApi = {
     // Clear conversation history
     async clearHistory(sessionId) {
         try {
-            const response = await fetch(`${API_URL}/api/ai/clear`, {
+            const response = await fetch(`${API_URL}/ai/clear`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export const aiApi = {
     // Check AI service status
     async checkStatus() {
         try {
-            const response = await fetch(`${API_URL}/api/ai/status`);
+            const response = await fetch(`${API_URL}/ai/status`);
             return await response.json();
         } catch (error) {
             console.error('Status Check Error:', error);
@@ -56,3 +56,11 @@ export const aiApi = {
         }
     }
 };
+
+
+
+
+
+
+
+

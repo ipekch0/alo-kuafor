@@ -1,6 +1,7 @@
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const authMiddleware = require('../middleware/auth');
+const { checkSubscriptionLimit } = require('../utils/subscription');
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -38,40 +39,20 @@ router.post('/', async (req, res) => {
         });
 
         if (!salon) {
-            return res.status(400).json({ error: 'Salon not found.' });
+            return res.status(404).json({ error: 'Salon not found' });
         }
+
+        // Check subscription limits (optional implementation)
+        // await checkSubscriptionLimit(salon.id, 'services');
 
         const service = await prisma.service.create({
             data: {
                 salonId: salon.id,
                 name,
-                category: category || 'hair',
+                category,
                 description,
                 duration: parseInt(duration),
                 price: parseFloat(price)
-            }
-        });
-
-        res.status(201).json(service);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-// PUT update service
-router.put('/:id', async (req, res) => {
-    try {
-        const { name, category, description, duration, price, active } = req.body;
-
-        const service = await prisma.service.update({
-            where: { id: parseInt(req.params.id) },
-            data: {
-                ...(name && { name }),
-                ...(category && { category }),
-                ...(description && { description }),
-                ...(duration && { duration: parseInt(duration) }),
-                ...(price && { price: parseFloat(price) }),
-                ...(active !== undefined && { active })
             }
         });
 

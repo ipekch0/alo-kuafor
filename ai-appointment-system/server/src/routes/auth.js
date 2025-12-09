@@ -2,11 +2,24 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 
 const router = express.Router();
 const prisma = new PrismaClient();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '7d';
+
+// Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 // Register new user
 router.post('/register', async (req, res) => {
@@ -41,6 +54,12 @@ router.post('/register', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Generate Verification Code
+        // PRODUCTION: Random 6-digit code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // const verificationCode = '123456'; // DEMO MODE
+        console.log('🔒 VERIFICATION CODE:', verificationCode); // Keep logging for server admin but codes are now random
+
         // Use transaction to ensure both User and Salon (if applicable) are created
         const result = await prisma.$transaction(async (prisma) => {
             // Create user
@@ -49,14 +68,9 @@ router.post('/register', async (req, res) => {
                     name,
                     email,
                     password: hashedPassword,
-                    role: role || 'customer' // Default to customer
-                },
-                select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                    createdAt: true
+                    role: role || 'customer',
+                    isVerified: false,
+                    verificationCode: verificationCode
                 }
             });
 
@@ -65,7 +79,7 @@ router.post('/register', async (req, res) => {
                 await prisma.salon.create({
                     data: {
                         name: salonDetails.salonName,
-                        slug: salonDetails.salonName.toLowerCase().replace(/ /g, '-') + '-' + Math.floor(Math.random() * 1000), // Simple slug gen
+                        slug: salonDetails.salonName.toLowerCase().replace(/ /g, '-') + '-' + Math.floor(Math.random() * 1000),
                         address: salonDetails.address || '',
                         city: salonDetails.city || '',
                         phone: salonDetails.phone || '',
@@ -73,7 +87,8 @@ router.post('/register', async (req, res) => {
                         taxNumber: salonDetails.taxNumber,
                         taxOffice: salonDetails.taxOffice,
                         ownerName: name,
-                        isVerified: false // Default to false until admin approval or auto-check
+                        subscriptionPlan: salonDetails.subscriptionPlan || 'STARTER',
+                        isVerified: false
                     }
                 });
             }
@@ -81,20 +96,161 @@ router.post('/register', async (req, res) => {
             return user;
         });
 
-        // Generate JWT token
+        // Send Verification Email
+        try {
+            await transporter.sendMail({
+                from: `"İpekManage Güvenlik" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'İpekManage Doğrulama Kodunuz',
+                text: `Merhaba ${name}, İpekManage'e hoşgeldiniz! Doğrulama kodunuz: ${verificationCode}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                        <h2 style="color: #4F46E5;">İpekManage'e Hoşgeldiniz!</h2>
+                        <p>Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
+                        
+                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+                            <tr>
+                                <td align="center" style="background-color: #F3F4F6; padding: 15px 25px; border-radius: 8px;">
+                                    <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; font-family: monospace;">
+                                        ${verificationCode}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p style="font-size: 14px; color: #666;">Bu kodu siz talep etmediyseniz, lütfen dikkate almayınız.</p>
+                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                        <p style="font-size: 12px; color: #999;">Code: ${verificationCode}</p>
+                    </div>
+                `
+            });
+            console.log(`✅ Verification email sent to ${email} with code: ${verificationCode}`);
+        } catch (emailError) {
+            console.error('Email send error (DEMO MODE ENABLED):', emailError.message);
+            // DEMO MODE: Continue even if email fails
+            console.log(`⚠️ DEMO MODE: Verification Code for ${email} is ${verificationCode}`);
+        }
+
+        res.status(201).json({
+            message: 'User registered successfully. Please verify your email.',
+            requireVerification: true,
+            email: result.email
+        });
+    } catch (error) {
+        console.error('Register error:', error);
+        res.status(500).json({ error: 'Server error', details: error.message, stack: error.stack });
+    }
+});
+
+// Verify Email Endpoint
+router.post('/verify-email', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        if (!email || !code) {
+            return res.status(400).json({ error: 'Email and code are required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ error: 'User already verified' });
+        }
+
+        if (user.verificationCode !== code) {
+            return res.status(400).json({ error: 'Invalid verification code' });
+        }
+
+        // Update user to verified
+        const updatedUser = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isVerified: true,
+                verificationCode: null // Clear code after usage
+            }
+        });
+
+        // Generate Token immediately after verification so they can login
         const token = jwt.sign(
-            { userId: result.id, email: result.email },
+            { userId: updatedUser.id, email: updatedUser.email },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
 
-        res.status(201).json({
-            message: 'User registered successfully',
+        const { password: _, ...userWithoutPassword } = updatedUser;
+
+        res.json({
+            message: 'Email verified successfully',
             token,
-            user: result
+            user: userWithoutPassword
         });
+
     } catch (error) {
-        console.error('Register error:', error);
+        console.error('Verification error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
+// Resend Verification Code
+router.post('/resend-verification', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ error: 'User already verified' });
+        }
+
+        // Generate new verification code
+        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Update user with new code
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { verificationCode }
+        });
+
+        // Send Email
+        try {
+            await transporter.sendMail({
+                from: `"İpekManage Güvenlik" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Yeni Doğrulama Kodunuz',
+                text: `Merhaba ${user.name}, yeni doğrulama kodunuz: ${verificationCode}`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                        <h2 style="color: #4F46E5;">İpekManage Doğrulama Kodu</h2>
+                        <p>Yeni bir doğrulama kodu talep ettiniz. Lütfen aşağıdaki kodu giriniz:</p>
+                        <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; display: inline-block; margin: 10px 0;">
+                            ${verificationCode}
+                        </div>
+                    </div>
+                `
+            });
+            console.log(`Resent verification code to ${email}`);
+        } catch (emailError) {
+            console.error('Email send error:', emailError.message);
+            // In production we might want to return 500 here, but for now log it
+        }
+
+        res.json({ message: 'Verification code resent successfully' });
+
+    } catch (error) {
+        console.error('Resend verification error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -104,12 +260,10 @@ router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Validate input
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Find user
         const user = await prisma.user.findUnique({
             where: { email }
         });
@@ -118,21 +272,27 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Verify password
+        // Check verification
+        if (!user.isVerified) {
+            return res.status(403).json({
+                error: 'Email not verified',
+                requireVerification: true,
+                email: user.email
+            });
+        }
+
         const isValidPassword = await bcrypt.compare(password, user.password);
 
         if (!isValidPassword) {
             return res.status(401).json({ error: 'Invalid email or password' });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
             { userId: user.id, email: user.email },
             JWT_SECRET,
             { expiresIn: JWT_EXPIRES_IN }
         );
 
-        // Return user without password
         const { password: _, ...userWithoutPassword } = user;
 
         res.json({
@@ -149,7 +309,6 @@ router.post('/login', async (req, res) => {
 // Update current user profile
 router.put('/me', async (req, res) => {
     try {
-        // Get token from header
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -157,20 +316,12 @@ router.put('/me', async (req, res) => {
         }
 
         const token = authHeader.substring(7);
-
-        // Verify token
         const decoded = jwt.verify(token, JWT_SECRET);
-
         const { name, phone, avatar } = req.body;
 
-        // Update user
         const user = await prisma.user.update({
             where: { id: decoded.userId },
-            data: {
-                name,
-                phone,
-                avatar
-            },
+            data: { name, phone, avatar },
             select: {
                 id: true,
                 name: true,
@@ -196,7 +347,6 @@ router.put('/me', async (req, res) => {
 // Get current user (requires authentication)
 router.get('/me', async (req, res) => {
     try {
-        // Get token from header
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -204,11 +354,8 @@ router.get('/me', async (req, res) => {
         }
 
         const token = authHeader.substring(7);
-
-        // Verify token
         const decoded = jwt.verify(token, JWT_SECRET);
 
-        // Get user
         const user = await prisma.user.findUnique({
             where: { id: decoded.userId },
             select: {
@@ -240,10 +387,8 @@ router.get('/me', async (req, res) => {
     }
 });
 
-// Logout (client-side token removal, optional endpoint)
+// Logout
 router.post('/logout', (req, res) => {
-    // Since we're using stateless JWT, logout is handled on client-side
-    // This endpoint is optional and can be used for logging/analytics
     res.json({ message: 'Logout successful' });
 });
 

@@ -17,6 +17,7 @@ const Navbar = () => {
 
     const navLinks = [
         { name: 'Özellikler', href: '#features' },
+        { name: 'Paketler', href: '/subscriptions' },
         { name: 'Fiyatlandırma', href: '#pricing' },
         { name: 'SSS', href: '#faq' },
         { name: 'İletişim', href: '#contact' },
@@ -34,7 +35,7 @@ const Navbar = () => {
                         <Scissors className="w-6 h-6" />
                     </div>
                     <span className={`text-xl font-bold tracking-tight ${isScrolled ? 'text-slate-900' : 'text-slate-900'}`}>
-                        AloKuaför
+                        Yönetim Cepte
                     </span>
                 </Link>
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Plus, X, Edit, Trash2, ArrowRight } from 'lucide-react';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '../hooks/useData';
 import toast from 'react-hot-toast';
 
@@ -17,13 +17,20 @@ const ServiceManagement = () => {
         category: '',
         duration: 30,
         price: 0,
+        maxPrice: '',
         description: '',
         color: '#8B5CF6',
-        icon: '💼',
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        // Validation for price range
+        if (formData.maxPrice && parseFloat(formData.maxPrice) < parseFloat(formData.price)) {
+            toast.error('Maksimum fiyat, başlangıç fiyatından düşük olamaz!');
+            return;
+        }
+
         if (editingService) {
             updateServiceMutation.mutate({ id: editingService.id, data: formData }, {
                 onSuccess: () => {
@@ -49,9 +56,9 @@ const ServiceManagement = () => {
             category: '',
             duration: 30,
             price: 0,
+            maxPrice: '',
             description: '',
             color: '#8B5CF6',
-            icon: '💼',
         });
         setEditingService(null);
         setShowModal(false);
@@ -64,9 +71,9 @@ const ServiceManagement = () => {
             category: service.category,
             duration: service.duration,
             price: service.price,
+            maxPrice: service.maxPrice || '',
             description: service.description,
             color: service.color || '#8B5CF6',
-            icon: service.icon || '💼',
         });
         setShowModal(true);
     };
@@ -112,30 +119,27 @@ const ServiceManagement = () => {
                         style={{ borderTopColor: service.color || '#8B5CF6' }}
                     >
                         <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                                    style={{ backgroundColor: (service.color || '#8B5CF6') + '20' }}
-                                >
-                                    {service.icon}
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-800">{service.name}</h3>
-                                    <p className="text-sm text-slate-500">{service.category}</p>
-                                </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-800">{service.name}</h3>
+                                <p className="text-sm text-slate-500">{service.category}</p>
+                            </div>
+                            <div className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
+                                {service.duration} dk
                             </div>
                         </div>
 
-                        <p className="text-sm text-slate-600 mb-4 line-clamp-2">{service.description}</p>
+                        <p className="text-sm text-slate-600 mb-4 line-clamp-2 min-h-[40px]">{service.description || 'Açıklama yok'}</p>
 
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                <p className="text-xs text-slate-500 mb-1">Süre</p>
-                                <p className="text-lg font-bold text-slate-800">{service.duration} dk</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                                <p className="text-xs text-slate-500 mb-1">Fiyat</p>
-                                <p className="text-lg font-bold text-indigo-700">₺{service.price}</p>
+                        <div className="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                            <span className="text-sm text-slate-500">Fiyat</span>
+                            <div className="flex items-center gap-2">
+                                <span className="font-bold text-slate-900">₺{service.price}</span>
+                                {service.maxPrice && service.maxPrice > service.price && (
+                                    <>
+                                        <ArrowRight className="w-3 h-3 text-slate-400" />
+                                        <span className="font-bold text-slate-900">₺{service.maxPrice}</span>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -203,19 +207,18 @@ const ServiceManagement = () => {
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-600 mb-2">Kategori</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.category}
-                                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                                        className="input-field"
-                                        placeholder="Danışmanlık"
-                                    />
-                                </div>
-
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-600 mb-2">Kategori</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            className="input-field"
+                                            placeholder="Danışmanlık"
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-600 mb-2">Süre (dk)</label>
                                         <input
@@ -227,17 +230,44 @@ const ServiceManagement = () => {
                                             placeholder="30"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 mb-2">Fiyat (₺)</label>
-                                        <input
-                                            type="number"
-                                            required
-                                            value={formData.price}
-                                            onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) })}
-                                            className="input-field"
-                                            placeholder="500"
-                                        />
+                                </div>
+
+                                {/* Price Range Section */}
+                                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+                                    <label className="block text-sm font-medium text-slate-700">Fiyatlandırma (₺)</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs text-slate-500 mb-1 block">Başlangıç Fiyatı</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                value={formData.price}
+                                                onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) })}
+                                                className="input-field"
+                                                placeholder="Min"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-slate-500 mb-1 block">Maksimum (Opsiyonel)</label>
+                                            <input
+                                                type="number"
+                                                value={formData.maxPrice}
+                                                onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
+                                                className="input-field"
+                                                placeholder="Max"
+                                            />
+                                        </div>
                                     </div>
+                                    {/* Slider Placeholder - Use Range Input for simple slider effect */}
+                                    {formData.maxPrice && (
+                                        <div className="pt-2">
+                                            <div className="h-1 bg-gradient-to-r from-indigo-500 to-indigo-300 rounded-full w-full opacity-50"></div>
+                                            <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                                <span>Min: {formData.price}₺</span>
+                                                <span>Max: {formData.maxPrice}₺</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -251,25 +281,16 @@ const ServiceManagement = () => {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 mb-2">Renk</label>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-600 mb-2">Kart Rengi</label>
+                                    <div className="flex items-center gap-4">
                                         <input
                                             type="color"
                                             value={formData.color}
                                             onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                                            className="w-full h-12 rounded-xl cursor-pointer border border-slate-200"
+                                            className="w-16 h-10 rounded-lg cursor-pointer border border-slate-200 p-1 bg-white"
                                         />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-600 mb-2">İkon</label>
-                                        <input
-                                            type="text"
-                                            value={formData.icon}
-                                            onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                                            className="input-field"
-                                            placeholder="💼"
-                                        />
+                                        <span className="text-sm text-slate-500 font-mono">{formData.color}</span>
                                     </div>
                                 </div>
 

@@ -83,7 +83,11 @@ router.get('/:id', async (req, res) => {
 // POST create customer
 router.post('/', async (req, res) => {
     try {
-        const { name, email, phone, address, city, notes } = req.body;
+        const { name, email, phone, address, city, idNumber, notes } = req.body;
+
+        if (!phone || phone.trim() === '') {
+            return res.status(400).json({ error: 'Telefon numarası zorunludur.' });
+        }
 
         // Check if phone already exists
         const existingCustomer = await prisma.customer.findUnique({
@@ -91,7 +95,12 @@ router.post('/', async (req, res) => {
         });
 
         if (existingCustomer) {
-            return res.status(400).json({ error: 'Bu telefon numarası ile kayıtlı müşteri zaten var.' });
+            // Instead of error, return the existing customer
+            // This allows the frontend to proceed as if "added" to the system
+            return res.status(200).json({
+                ...existingCustomer,
+                message: 'Müşteri sistemde zaten kayıtlı. İşlem başarılı.'
+            });
         }
 
         const customer = await prisma.customer.create({
@@ -99,9 +108,10 @@ router.post('/', async (req, res) => {
                 name,
                 email: email || null,
                 phone,
+                city: city || null,
+                address: address || null,
+                idNumber: idNumber || null,
                 notes: notes || null
-                // address and city are not in Customer model in schema.prisma, so ignoring them or adding to notes if needed
-                // Wait, schema says: name, phone, email, notes. No address/city.
             }
         });
 
@@ -114,7 +124,7 @@ router.post('/', async (req, res) => {
 // PUT update customer
 router.put('/:id', async (req, res) => {
     try {
-        const { name, email, phone, notes } = req.body;
+        const { name, email, phone, address, city, idNumber, notes } = req.body;
 
         const customer = await prisma.customer.update({
             where: { id: parseInt(req.params.id) },
@@ -122,6 +132,9 @@ router.put('/:id', async (req, res) => {
                 ...(name && { name }),
                 ...(email !== undefined && { email }),
                 ...(phone && { phone }),
+                ...(city !== undefined && { city }),
+                ...(address !== undefined && { address }),
+                ...(idNumber !== undefined && { idNumber }),
                 ...(notes !== undefined && { notes })
             }
         });

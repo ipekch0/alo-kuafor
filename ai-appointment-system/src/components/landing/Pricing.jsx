@@ -5,8 +5,8 @@ import { Check } from 'lucide-react';
 const plans = [
     {
         name: "Başlangıç",
-        price: "Ücretsiz",
-        period: "/sonsuza kadar",
+        price: "700 ₺",
+        period: "/ay",
         description: "Küçük salonlar ve bireysel çalışanlar için ideal.",
         features: [
             "Aylık 50 Randevu",
@@ -19,7 +19,7 @@ const plans = [
     },
     {
         name: "Pro",
-        price: "499 ₺",
+        price: "1100 ₺",
         period: "/ay",
         description: "Büyüyen işletmeler için tam kapsamlı çözüm.",
         features: [
@@ -71,8 +71,8 @@ const Pricing = () => {
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
                             className={`relative p-8 rounded-2xl bg-white border ${plan.popular
-                                    ? 'border-indigo-500 shadow-2xl shadow-indigo-100 scale-105 z-10'
-                                    : 'border-slate-200 shadow-sm'
+                                ? 'border-indigo-500 shadow-2xl shadow-indigo-100 scale-105 z-10'
+                                : 'border-slate-200 shadow-sm'
                                 }`}
                         >
                             {plan.popular && (
@@ -101,8 +101,8 @@ const Pricing = () => {
                             </ul>
 
                             <button className={`w-full py-3 rounded-xl font-bold transition-all ${plan.popular
-                                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
-                                    : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
+                                ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-200'
+                                : 'bg-slate-100 text-slate-900 hover:bg-slate-200'
                                 }`}>
                                 {plan.cta}
                             </button>

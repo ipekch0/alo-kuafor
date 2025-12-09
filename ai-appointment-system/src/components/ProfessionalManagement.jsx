@@ -33,24 +33,34 @@ const ProfessionalManagement = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('title', formData.title);
+        data.append('email', formData.email);
+        data.append('phone', formData.phone);
+        data.append('specialties', JSON.stringify(formData.specialties.length > 0 ? formData.specialties : ['Genel']));
+
+        // Handle photo: if it's a File, append it. If it's a string (URL), append it as text.
+        if (formData.photo) {
+            data.append('photo', formData.photo);
+        }
+
         if (editingProfessional) {
-            updateProfessionalMutation.mutate({ id: editingProfessional.id, data: formData }, {
+            updateProfessionalMutation.mutate({ id: editingProfessional.id, data }, {
                 onSuccess: () => {
                     toast.success('Personel başarıyla güncellendi');
                     resetForm();
                 },
-                onError: () => toast.error('Güncelleme başarısız')
+                onError: (err) => toast.error('Güncelleme başarısız: ' + err.message)
             });
         } else {
-            createProfessionalMutation.mutate({
-                ...formData,
-                specialties: formData.specialties.length > 0 ? formData.specialties : ['Genel'],
-            }, {
+            createProfessionalMutation.mutate(data, {
                 onSuccess: () => {
                     toast.success('Personel başarıyla eklendi');
                     resetForm();
                 },
-                onError: () => toast.error('Ekleme başarısız')
+                onError: (err) => toast.error('Ekleme başarısız: ' + err.message)
             });
         }
     };
@@ -75,7 +85,7 @@ const ProfessionalManagement = () => {
             title: professional.title,
             email: professional.email || '',
             phone: professional.phone || '',
-            photo: professional.photo || '',
+            photo: professional.photo || '', // This is the URL string
             specialties: professional.specialties || [],
         });
         setShowModal(true);
@@ -232,14 +242,42 @@ const ProfessionalManagement = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-600 mb-2">Fotoğraf URL</label>
-                                    <input
-                                        type="url"
-                                        value={formData.photo}
-                                        onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
-                                        className="input-field"
-                                        placeholder="https://i.pravatar.cc/150"
-                                    />
+                                    <label className="block text-sm font-medium text-slate-600 mb-2">Fotoğraf</label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-100 border border-slate-200">
+                                            {formData.photo ? (
+                                                <img
+                                                    src={typeof formData.photo === 'string' ? formData.photo : URL.createObjectURL(formData.photo)}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full text-slate-400">
+                                                    <Plus className="w-6 h-6" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex-1">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if (file) {
+                                                        setFormData({ ...formData, photo: file });
+                                                    }
+                                                }}
+                                                className="block w-full text-sm text-slate-500
+                                                    file:mr-4 file:py-2 file:px-4
+                                                    file:rounded-full file:border-0
+                                                    file:text-sm file:font-semibold
+                                                    file:bg-indigo-50 file:text-indigo-700
+                                                    hover:file:bg-indigo-100
+                                                "
+                                            />
+                                            <p className="mt-1 text-xs text-slate-400">PNG, JPG, GIF (Max 5MB)</p>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3 pt-4">

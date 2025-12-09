@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, LogIn, UserPlus, Eye, EyeOff, Scissors, Building2, MapPin, Phone, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { cities } from '../data/cities';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -22,6 +23,7 @@ const Login = () => {
         taxOffice: '',
         address: '',
         city: '',
+        district: '',
         phone: ''
     });
 
@@ -34,10 +36,14 @@ const Login = () => {
         setLoading(true);
 
         try {
+
+
             if (isLogin) {
                 const result = await login(formData.email, formData.password);
                 if (result.success) {
                     navigate('/panel');
+                } else if (result.requireVerification) {
+                    navigate('/verify-email', { state: { email: result.email } });
                 } else {
                     setError(result.error || 'Giriş başarısız');
                 }
@@ -56,12 +62,23 @@ const Login = () => {
                         taxOffice: formData.taxOffice,
                         address: formData.address,
                         city: formData.city,
+                        district: formData.district,
                         phone: formData.phone
                     };
 
+                    if (salonDetails.taxNumber.length !== 10) {
+                        setError('Vergi numarası 10 haneli olmalıdır');
+                        setLoading(false);
+                        return;
+                    }
+
                     const result = await register(formData.name, formData.email, formData.password, 'salon_owner', salonDetails);
                     if (result.success) {
-                        navigate('/panel');
+                        if (result.requireVerification) {
+                            navigate('/verify-email', { state: { email: formData.email } });
+                        } else {
+                            navigate('/panel');
+                        }
                     } else {
                         setError(result.error || 'Kayıt başarısız');
                     }
@@ -69,7 +86,11 @@ const Login = () => {
                     // Regular customer register
                     const result = await register(formData.name, formData.email, formData.password, 'customer');
                     if (result.success) {
-                        navigate('/panel');
+                        if (result.requireVerification) {
+                            navigate('/verify-email', { state: { email: formData.email } });
+                        } else {
+                            navigate('/panel');
+                        }
                     } else {
                         setError(result.error || 'Kayıt başarısız');
                     }
@@ -101,7 +122,7 @@ const Login = () => {
                             <div className="w-12 h-12 bg-brand-accent-indigo rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-accent-indigo/20">
                                 <Scissors className="w-7 h-7" />
                             </div>
-                            <span className="text-3xl font-bold text-slate-900 tracking-tight font-serif">ALOKUAFÖR</span>
+                            <span className="text-3xl font-bold text-slate-900 tracking-tight font-serif">İPEK MANAGE</span>
                         </div>
                         <p className="text-slate-500 text-lg font-light">Yönetici Paneli</p>
                     </motion.div>
@@ -245,9 +266,10 @@ const Login = () => {
                                                     type="text"
                                                     required={isSalonOwner}
                                                     value={formData.taxNumber}
-                                                    onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value })}
                                                     className="input-premium pl-12"
                                                     placeholder="Vergi No"
+                                                    maxLength={10}
+                                                    onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value.replace(/\D/g, '') })}
                                                 />
                                             </div>
                                         </div>
@@ -270,14 +292,32 @@ const Login = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-2">Şehir</label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 required={isSalonOwner}
                                                 value={formData.city}
-                                                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                                onChange={(e) => setFormData({ ...formData, city: e.target.value, district: '' })}
                                                 className="input-premium px-4"
-                                                placeholder="İstanbul"
-                                            />
+                                            >
+                                                <option value="">İl Seçiniz</option>
+                                                {cities.map(city => (
+                                                    <option key={city.name} value={city.name}>{city.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-2">İlçe</label>
+                                            <select
+                                                required={isSalonOwner}
+                                                value={formData.district || ''}
+                                                disabled={!formData.city}
+                                                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                                                className="input-premium px-4"
+                                            >
+                                                <option value="">İlçe Seçiniz</option>
+                                                {formData.city && cities.find(c => c.name === formData.city)?.districts.map(dist => (
+                                                    <option key={dist} value={dist}>{dist}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
@@ -363,9 +403,16 @@ const Login = () => {
                 </motion.div>
 
                 <p className="text-center text-slate-400 text-sm mt-8 font-light">
-                    © 2024 ALOKUAFÖR. Tüm hakları saklıdır.
+                    © 2024 İpekManage. Tüm hakları saklıdır.
                 </p>
             </motion.div>
+            {/* DEBUG OVERLAY */}
+            {error && (
+                <div className="fixed bottom-0 left-0 w-full bg-red-600 text-white p-4 text-center z-[100] font-bold">
+                    DEBUG ERROR: {error}
+                </div>
+            )}
+
         </div>
     );
 };

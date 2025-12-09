@@ -15,41 +15,63 @@ const getAuthHeaders = () => {
     return headers;
 };
 
+// Helper to handle 401s
+const handleResponse = async (response) => {
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+        }
+        throw new Error('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
+    }
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `API Error: ${response.statusText}`);
+    }
+    return response.json();
+};
+
 class APIClient {
     async get(endpoint) {
         const response = await fetch(`${API_URL}${endpoint}`, {
             headers: getAuthHeaders(),
         });
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.statusText}`);
-        }
-        return response.json();
+        return handleResponse(response);
     }
 
     async post(endpoint, data) {
+        const headers = getAuthHeaders();
+        let body = JSON.stringify(data);
+
+        if (data instanceof FormData) {
+            delete headers['Content-Type']; // Let browser set multipart/form-data boundary
+            body = data;
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data),
+            headers,
+            body,
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'API Error');
-        }
-        return response.json();
+        return handleResponse(response);
     }
 
     async put(endpoint, data) {
+        const headers = getAuthHeaders();
+        let body = JSON.stringify(data);
+
+        if (data instanceof FormData) {
+            delete headers['Content-Type'];
+            body = data;
+        }
+
         const response = await fetch(`${API_URL}${endpoint}`, {
             method: 'PUT',
-            headers: getAuthHeaders(),
-            body: JSON.stringify(data),
+            headers,
+            body,
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'API Error');
-        }
-        return response.json();
+        return handleResponse(response);
     }
 
     async delete(endpoint) {
@@ -57,12 +79,10 @@ class APIClient {
             method: 'DELETE',
             headers: getAuthHeaders(),
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'API Error');
-        }
-        return response.json();
+        return handleResponse(response);
     }
+    // ... rest of file
+
 
     // ============================================
     // SALONS (formerly Vehicles)
@@ -181,6 +201,10 @@ class APIClient {
 
     async updateAppointment(id, data) {
         return this.put(`/appointments/${id}`, data);
+    }
+
+    async updateAppointmentStatus(id, status) {
+        return this.put(`/appointments/${id}/status`, { status });
     }
 
     async deleteAppointment(id) {

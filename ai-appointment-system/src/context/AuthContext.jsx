@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { API_URL } from '../api/aiApi';
 
 const AuthContext = createContext(null);
 
@@ -11,10 +12,12 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const checkAuth = async () => {
             const savedToken = localStorage.getItem('token');
+
+
             if (savedToken) {
                 try {
 
-                    const response = await fetch('/api/auth/me', {
+                    const response = await fetch(`${API_URL}/auth/me`, {
                         headers: {
                             'Authorization': `Bearer ${savedToken}`
                         }
@@ -42,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const response = await fetch('/api/auth/login', {
+            const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -53,6 +56,15 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (!response.ok) {
+                // If verification required, return specific object without throwing generic error
+                if (data.requireVerification) {
+                    return {
+                        success: false,
+                        requireVerification: true,
+                        email: data.email,
+                        error: data.error
+                    };
+                }
                 throw new Error(data.error || 'Login failed');
             }
 
@@ -67,7 +79,7 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (name, email, password, role = 'customer', salonDetails = null) => {
         try {
-            const response = await fetch('/api/auth/register', {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -81,6 +93,11 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.error || 'Registration failed');
             }
 
+            if (data.requireVerification) {
+                return { success: true, requireVerification: true, email: data.email };
+            }
+
+            // Normal login if no verification needed
             localStorage.setItem('token', data.token);
             setToken(data.token);
             setUser(data.user);

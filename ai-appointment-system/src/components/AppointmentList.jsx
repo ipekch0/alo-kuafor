@@ -13,13 +13,15 @@ import {
     Eye,
     Briefcase
 } from 'lucide-react';
-import { useAppointments } from '../hooks/useData';
+import { useAppointments, useUpdateAppointmentStatus } from '../hooks/useData';
 import useStore from '../store';
+import { toast } from 'react-hot-toast';
 
 const AppointmentList = () => {
     const { data: appointmentsData = [], isLoading } = useAppointments();
     const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
     const { setSelectedView, setCurrentAppointmentId } = useStore();
+    const updateStatusMutation = useUpdateAppointmentStatus();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
@@ -232,10 +234,27 @@ const AppointmentList = () => {
                                     <span className={`text-sm font-medium ${statusConfig.text}`}>
                                         {statusConfig.label}
                                     </span>
-                                    <button className="flex items-center gap-1 text-sm text-indigo-700 hover:text-indigo-600 transition-colors">
-                                        <Eye className="w-4 h-4" />
-                                        <span>Detay</span>
-                                    </button>
+                                    <div className="flex gap-2">
+                                        {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    updateStatusMutation.mutate({ id: appointment.id, status: 'completed' }, {
+                                                        onSuccess: () => toast.success('Randevu tamamlandı!'),
+                                                        onError: () => toast.error('Hata oluştu')
+                                                    });
+                                                }}
+                                                className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700 transition-colors px-3 py-1 bg-emerald-50 hover:bg-emerald-100 rounded-lg"
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                                <span>Tamamla</span>
+                                            </button>
+                                        )}
+                                        <button className="flex items-center gap-1 text-sm text-indigo-700 hover:text-indigo-600 transition-colors">
+                                            <Eye className="w-4 h-4" />
+                                            <span>Detay</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </motion.div>
                         );

@@ -3,38 +3,25 @@ import { motion } from 'framer-motion';
 import {
     Calendar,
     Clock,
-    Users,
-    DollarSign,
     Check,
-    AlertCircle,
-    ArrowUp,
-    Briefcase,
-    TrendingUp,
+    DollarSign,
     Plus,
     UserPlus,
-    Zap,
-    Activity,
     Scissors,
-    Star,
-    Sparkles
+    Sparkles,
+    Users,
+    Zap // Added Zap import
 } from 'lucide-react';
-import { useAppointments, useProfessionals, useCustomers, useServices } from '../hooks/useData';
+import { useAppointments, useCustomers, useMySalon, useUpdateAppointmentStatus } from '../hooks/useData';
 import useStore from '../store';
 import { useAuth } from '../context/AuthContext';
 
-import {
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Legend
-} from 'recharts';
+import StatCard from './dashboard/StatCard';
+import RevenueChart from './dashboard/RevenueChart';
+import ServiceDistribution from './dashboard/ServiceDistribution';
+import RecentActivity from './dashboard/RecentActivity';
+import { CheckCircle } from 'lucide-react'; // Added icon
+import { toast } from 'react-hot-toast';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -42,6 +29,15 @@ const Dashboard = () => {
     const appointments = Array.isArray(appointmentsData) ? appointmentsData : [];
     const { data: customers = [], isLoading: loadingCustomers } = useCustomers();
     const { openModal } = useStore();
+
+    const updateStatusMutation = useUpdateAppointmentStatus();
+
+    const handleCompleteAppointment = (id) => {
+        updateStatusMutation.mutate({ id, status: 'completed' }, {
+            onSuccess: () => toast.success('Randevu tamamlandı ve ciroya işlendi!'),
+            onError: () => toast.error('İşlem başarısız')
+        });
+    };
 
     // --- Data Processing ---
     const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -76,8 +72,6 @@ const Dashboard = () => {
         .sort((a, b) => b.value - a.value)
         .slice(0, 5);
 
-    const COLORS = ['#8b5cf6', '#06b6d4', '#ec4899', '#f59e0b', '#10b981'];
-
     const stats = {
         totalAppointments: appointments.length,
         completedAppointments: appointments.filter((i) => i.status === 'completed').length,
@@ -105,38 +99,6 @@ const Dashboard = () => {
             data: c
         }))
     ].sort((a, b) => b.date - a.date).slice(0, 5);
-
-    // --- Components ---
-
-    const StatCard = ({ title, value, icon: Icon, trend, trendValue, gradientClass, delay }) => (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: delay * 0.1 }}
-            className={`p-6 rounded-2xl relative overflow-hidden group ${gradientClass}`}
-        >
-            {/* Background Pattern */}
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
-                <Icon className="w-24 h-24 transform rotate-12 translate-x-4 -translate-y-4" />
-            </div>
-
-            <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="p-3 bg-white/20 backdrop-blur-sm rounded-xl">
-                        <Icon className="w-6 h-6 text-white" />
-                    </div>
-                    {trend && (
-                        <div className="flex items-center gap-1 text-white/90 text-sm font-medium bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm">
-                            <TrendingUp className="w-3 h-3" />
-                            <span>{trendValue}</span>
-                        </div>
-                    )}
-                </div>
-                <h3 className="text-white/80 text-sm font-medium mb-1">{title}</h3>
-                <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
-            </div>
-        </motion.div>
-    );
 
     return (
         <motion.div
@@ -183,8 +145,6 @@ const Dashboard = () => {
                     title="Toplam Randevu"
                     value={stats.totalAppointments}
                     icon={Calendar}
-                    trend={true}
-                    trendValue="12%"
                     gradientClass="card-gradient-1"
                     delay={1}
                 />
@@ -192,8 +152,6 @@ const Dashboard = () => {
                     title="Tamamlanan"
                     value={stats.completedAppointments}
                     icon={Check}
-                    trend={true}
-                    trendValue="8%"
                     gradientClass="card-gradient-2"
                     delay={2}
                 />
@@ -208,8 +166,6 @@ const Dashboard = () => {
                     title="Toplam Ciro"
                     value={`₺${stats.totalRevenue.toLocaleString()}`}
                     icon={DollarSign}
-                    trend={true}
-                    trendValue="15%"
                     gradientClass="card-gradient-3"
                     delay={4}
                 />
@@ -220,37 +176,7 @@ const Dashboard = () => {
                 {/* Left Column (Charts) */}
                 <div className="lg:col-span-2 space-y-8">
                     {/* Revenue Chart */}
-                    <div className="card-premium p-6 relative overflow-hidden">
-                        <div className="flex items-center justify-between mb-8">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                    <Zap className="w-5 h-5 text-indigo-500" />
-                                    Haftalık Gelir Analizi
-                                </h3>
-                                <p className="text-sm text-slate-500">Son 7 günlük performans</p>
-                            </div>
-                        </div>
-                        <div className="h-80 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} tickFormatter={(value) => `₺${value}`} />
-                                    <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="3 3" />
-                                    <Tooltip
-                                        contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
-                                        formatter={(value) => [`₺${value}`, 'Gelir']}
-                                    />
-                                    <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+                    <RevenueChart data={revenueData} />
 
                     {/* Today's Schedule */}
                     <div className="card-premium p-6">
@@ -307,7 +233,16 @@ const Dashboard = () => {
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="ml-4">
+                                        <div className="ml-4 flex items-center gap-2">
+                                            {appointment.status !== 'completed' && (
+                                                <button
+                                                    onClick={() => handleCompleteAppointment(appointment.id)}
+                                                    className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-all"
+                                                    title="Tamamlandı Olarak İşaretle"
+                                                >
+                                                    <CheckCircle size={20} />
+                                                </button>
+                                            )}
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${appointment.status === 'completed'
                                                     ? 'bg-emerald-100 text-emerald-800'
@@ -327,73 +262,15 @@ const Dashboard = () => {
                 {/* Right Column */}
                 <div className="space-y-8">
                     {/* Service Distribution */}
-                    <div className="card-premium p-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <Star className="w-5 h-5 text-yellow-500" />
-                            Popüler Hizmetler
-                        </h3>
-                        <div className="h-64 w-full relative">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={serviceData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {serviceData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip />
-                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none pb-8">
-                                <span className="text-3xl font-bold text-slate-800">{serviceData.reduce((a, b) => a + b.value, 0)}</span>
-                                <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">İşlem</p>
-                            </div>
-                        </div>
-                    </div>
+                    <ServiceDistribution data={serviceData} />
 
                     {/* Recent Activity */}
-                    <div className="card-premium p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <Activity className="w-5 h-5 text-blue-500" />
-                                Son Aktiviteler
-                            </h3>
-                        </div>
-                        <div className="space-y-6 relative">
-                            {/* Vertical Line */}
-                            <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-100" />
+                    <RecentActivity activity={recentActivity} />
 
-                            {recentActivity.map((item, idx) => (
-                                <div key={idx} className="flex gap-4 relative">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 z-10 border-4 border-white shadow-sm ${item.type === 'appointment' ? 'bg-violet-100 text-violet-600' : 'bg-cyan-100 text-cyan-600'
-                                        }`}>
-                                        {item.type === 'appointment' ? <Calendar className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                                    </div>
-                                    <div className="pt-1">
-                                        <p className="text-sm text-slate-900 font-medium">
-                                            {item.type === 'appointment'
-                                                ? `Yeni randevu: ${item.data.customer?.name || 'Müşteri'}`
-                                                : `Yeni müşteri: ${item.data.name}`}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {new Date(item.date).toLocaleString('tr-TR')}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Pro Widget */}
-                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 shadow-xl">
+                    <div
+                        onClick={() => window.location.href = '/subscriptions'}
+                        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 shadow-xl cursor-pointer hover:scale-[1.02] transition-transform"
+                    >
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <Sparkles className="w-32 h-32" />
                         </div>
@@ -403,16 +280,16 @@ const Dashboard = () => {
                                     <Zap className="w-6 h-6 text-indigo-400" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg">Pro Plan</h3>
-                                    <p className="text-slate-400 text-xs">Premium Özellikler</p>
+                                    <h3 className="font-bold text-lg">Paket Yükselt</h3>
+                                    <p className="text-slate-400 text-xs">Daha fazla özellik keşfet</p>
                                 </div>
                             </div>
                             <div className="w-full bg-slate-700/50 rounded-full h-2 mb-2">
                                 <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full h-2 w-[75%] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
                             </div>
                             <div className="flex justify-between text-xs text-slate-400">
-                                <span>Kullanım</span>
-                                <span>%75</span>
+                                <span>Mevcut: Silver</span>
+                                <span className="text-indigo-300 font-bold">Yükselt &rarr;</span>
                             </div>
                         </div>
                     </div>

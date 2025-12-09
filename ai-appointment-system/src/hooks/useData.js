@@ -172,7 +172,16 @@ export const useCreateCustomer = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data) => apiClient.createCustomer(data),
-        onSuccess: () => {
+        onSuccess: (newCustomer) => {
+            // Optimistically update the list
+            queryClient.setQueryData(['customers'], (oldData) => {
+                if (!oldData) return [newCustomer];
+                // Check if already exists (for the "already exists" case)
+                if (oldData.some(c => c.id === newCustomer.id)) return oldData;
+                return [...oldData, newCustomer];
+            });
+            // Also invalidate to be sure, though it might return empty for unconnected customers
+            // We rely on the optimistic update for immediate feedback
             queryClient.invalidateQueries({ queryKey: ['customers'] });
         },
     });
@@ -233,6 +242,18 @@ export const useUpdateAppointment = () => {
         mutationFn: ({ id, data }) => apiClient.updateAppointment(id, data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        },
+    });
+};
+
+export const useUpdateAppointmentStatus = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, status }) => apiClient.updateAppointmentStatus(id, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['appointments'] });
+            // Also invalidate stats if we have them cached separately, though Dashboard re-calculates from appointments list usually
+            queryClient.invalidateQueries({ queryKey: ['stats'] });
         },
     });
 };

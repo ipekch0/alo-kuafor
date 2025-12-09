@@ -1,12 +1,15 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const MainLayout = () => {
+    const location = useLocation();
+    const isSearchPage = location.pathname === '/search';
+
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen">
             <Navbar />
-            <div className="pt-20">
+            <div className={isSearchPage ? "" : "pt-20"}>
                 <Outlet />
             </div>
         </div>

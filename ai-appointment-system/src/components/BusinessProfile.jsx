@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import {
     Building2,
@@ -10,12 +11,11 @@ import {
     Image as ImageIcon,
     Loader2,
     Globe,
-    Mail,
     Instagram,
-    Facebook,
     CheckCircle2
 } from 'lucide-react';
 import { useMySalon, useUpdateMySalon } from '../hooks/useData';
+import { cities } from '../data/cities';
 
 const BusinessProfile = () => {
     const { data: salon, isLoading } = useMySalon();
@@ -31,6 +31,7 @@ const BusinessProfile = () => {
         email: '',
         website: '',
         instagram: '',
+        image: '', // For logo/cover
         workingHours: {
             monday: { start: '09:00', end: '19:00', closed: false },
             tuesday: { start: '09:00', end: '19:00', closed: false },
@@ -55,6 +56,7 @@ const BusinessProfile = () => {
                 email: salon.email || '',
                 website: salon.website || '',
                 instagram: salon.instagram || '',
+                image: salon.image || '',
                 workingHours: salon.workingHours ? JSON.parse(salon.workingHours) : prev.workingHours
             }));
         }
@@ -81,10 +83,22 @@ const BusinessProfile = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await updateSalonMutation.mutateAsync(formData);
-            // Ideally show a toast notification here
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (key === 'workingHours') {
+                    data.append(key, JSON.stringify(formData[key]));
+                } else if (key === 'image') {
+                    if (formData[key]) data.append(key, formData[key]);
+                } else {
+                    data.append(key, formData[key]);
+                }
+            });
+
+            await updateSalonMutation.mutateAsync(data);
+            toast.success('İşletme profili ve logo başarıyla güncellendi.');
         } catch (error) {
             console.error('Update error:', error);
+            toast.error('Güncelleme başarısız: ' + (error.message || 'Bir hata oluştu'));
         }
     };
 
@@ -148,6 +162,52 @@ const BusinessProfile = () => {
                         </div>
 
                         <div className="p-8 space-y-6">
+                            {/* Logo Upload Section - Reverted to useRef pattern as requested */}
+                            {/* Logo Upload Section - Fixed to use Label pattern */}
+                            <label className="flex items-center gap-6 pb-6 border-b border-slate-100 cursor-pointer group relative -mx-4 px-4 hover:bg-slate-50 transition-colors rounded-xl">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (file) {
+                                            setFormData({ ...formData, image: file });
+                                        }
+                                    }}
+                                    className="hidden"
+                                />
+
+                                <div className="relative">
+                                    <div className="w-24 h-24 rounded-2xl bg-slate-100 border-2 border-slate-200 overflow-hidden flex items-center justify-center relative z-10">
+                                        {formData.image ? (
+                                            <img
+                                                src={typeof formData.image === 'string' ? formData.image : URL.createObjectURL(formData.image)}
+                                                alt="Logo"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <ImageIcon className="w-8 h-8 text-slate-400" />
+                                        )}
+                                        {/* Overlay */}
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-20">
+                                            <Upload className="w-6 h-6 text-white" />
+                                        </div>
+                                    </div>
+                                    {/* Additional visual hint */}
+                                    <div className="absolute -bottom-2 -right-2 bg-indigo-600 text-white p-1.5 rounded-full shadow-lg z-30 group-hover:scale-110 transition-transform">
+                                        <Upload className="w-3 h-3" />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h3 className="font-semibold text-slate-800 group-hover:text-indigo-700 transition-colors">İşletme Logosu</h3>
+                                    <div className="text-sm text-indigo-600 font-medium mt-1">
+                                        Fotoğrafı Değiştir
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">Önerilen boyut: 500x500px (JPG, PNG)</p>
+                                </div>
+                            </label>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">İşletme Adı</label>
@@ -205,27 +265,34 @@ const BusinessProfile = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">İl</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="city"
                                         value={formData.city}
-                                        onChange={handleInputChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none bg-slate-50 focus:bg-white"
-                                        placeholder="İstanbul"
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value, district: '' })}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none bg-slate-50 focus:bg-white appearance-none cursor-pointer"
                                         required
-                                    />
+                                    >
+                                        <option value="">İl Seçiniz</option>
+                                        {cities.map(city => (
+                                            <option key={city.name} value={city.name}>{city.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-700">İlçe</label>
-                                    <input
-                                        type="text"
+                                    <select
                                         name="district"
                                         value={formData.district}
                                         onChange={handleInputChange}
-                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none bg-slate-50 focus:bg-white"
-                                        placeholder="Kadıköy"
+                                        disabled={!formData.city}
+                                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none bg-slate-50 focus:bg-white appearance-none cursor-pointer disabled:opacity-50"
                                         required
-                                    />
+                                    >
+                                        <option value="">İlçe Seçiniz</option>
+                                        {formData.city && cities.find(c => c.name === formData.city)?.districts.map(dist => (
+                                            <option key={dist} value={dist}>{dist}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
                             <div className="space-y-2">

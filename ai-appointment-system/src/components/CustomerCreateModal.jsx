@@ -139,6 +139,9 @@ const CustomerCreateModal = () => {
                                         <input
                                             type="tel"
                                             required
+                                            minLength="10"
+                                            pattern=".{10,11}"
+                                            title="En az 10 haneli telefon numarası giriniz"
                                             value={formData.phone}
                                             onChange={(e) => {
                                                 const val = e.target.value.replace(/\D/g, '');

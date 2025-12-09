@@ -1,115 +1,88 @@
 const express = require('express');
 const router = express.Router();
-const aiService = require('../services/aiService');
-const axios = require('axios');
+const whatsappManager = require('../services/whatsappManager');
+const authenticateToken = require('../middleware/auth');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
-// WhatsApp API Configuration
-const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN;
-const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID;
-const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-
-// Helper to send message back to WhatsApp
-// Helper to send message back to WhatsApp
-const sendWhatsAppMessage = async (to, text) => {
-    const fs = require('fs');
-    const logFile = require('path').join(__dirname, '../../webhook.log');
-
-    const log = (msg) => {
-        const timestamp = new Date().toISOString();
-        fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
-    };
-
+// Middleware to get salonId from user
+const getSalonId = async (req, res, next) => {
     try {
-        await axios.post(
-            `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`,
-            {
-                messaging_product: 'whatsapp',
-                to: to,
-                text: { body: text }
-            },
-            {
-                headers: {
-                    'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        const salon = await prisma.salon.findFirst({
+            where: { ownerId: req.user.id }
+        });
+        if (!salon) return res.status(404).json({ error: 'Salon not found' });
+        req.salonId = salon.id;
+        next();
     } catch (error) {
-        const errorMsg = error.response ? JSON.stringify(error.response.data) : error.message;
-        log(`Error sending WhatsApp message: ${errorMsg}`);
-        console.error('Error sending WhatsApp message:', errorMsg);
-        throw new Error(errorMsg); // Re-throw to be caught by caller
+        res.status(500).json({ error: 'Database error' });
     }
 };
 
-// GET /api/whatsapp/webhook - Verification
-router.get('/webhook', (req, res) => {
-    const mode = req.query['hub.mode'];
-    const token = req.query['hub.verify_token'];
-    const challenge = req.query['hub.challenge'];
+// GET /api/whatsapp/status
+router.get('/status', authenticateToken, getSalonId, (req, res) => {
+    const status = whatsappManager.getSessionStatus(req.salonId);
+    res.json(status);
+});
 
-    if (mode && token) {
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            console.log('WEBHOOK_VERIFIED');
-            res.status(200).send(challenge);
-        } else {
-            res.sendStatus(403);
-        }
-    } else {
-        res.sendStatus(400);
+// POST /api/whatsapp/connect
+router.post('/connect', authenticateToken, getSalonId, async (req, res) => {
+    try {
+        await whatsappManager.startSession(req.salonId);
+        res.json({ message: 'Session initialization started' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
-// POST /api/whatsapp/webhook - Receive Messages
-router.post('/webhook', async (req, res) => {
-    const fs = require('fs');
-    const logFile = require('path').join(__dirname, '../../webhook.log');
-
-    const log = (msg) => {
-        const timestamp = new Date().toISOString();
-        fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
-        console.log(msg);
-    };
-
-    log('Incoming Webhook Request: ' + JSON.stringify(req.body, null, 2));
+// POST /api/whatsapp/disconnect
+router.post('/disconnect', authenticateToken, getSalonId, async (req, res) => {
     try {
-        const body = req.body;
+        await whatsappManager.logout(req.salonId);
 
-        if (body.object) {
-            if (
-                body.entry &&
-                body.entry[0].changes &&
-                body.entry[0].changes[0].value.messages &&
-                body.entry[0].changes[0].value.messages[0]
-            ) {
-                const message = body.entry[0].changes[0].value.messages[0];
-                const from = message.from; // Sender's phone number
-                const msgBody = message.text ? message.text.body : '';
-
-                if (msgBody) {
-                    log(`Received message from ${from}: ${msgBody}`);
-
-                    // Process with AI
-                    // We pass 'from' as sessionId to keep conversation history per user
-                    try {
-                        const aiResponse = await aiService.chat(msgBody, from);
-                        log(`AI Response: ${JSON.stringify(aiResponse)}`);
-
-                        // Send AI response back to user
-                        await sendWhatsAppMessage(from, aiResponse.message);
-                        log(`Message sent to ${from}`);
-                    } catch (aiError) {
-                        log(`AI Processing Error: ${aiError.message}`);
-                    }
-                }
+        // Also update the database to remove the connected number
+        await prisma.salon.update({
+            where: { id: req.salonId },
+            data: {
+                whatsappPhoneId: null,
+                // whatsappAPIToken: null // If we were storing token
             }
-            res.sendStatus(200);
-        } else {
-            res.sendStatus(404);
-        }
+        });
+
+        res.json({ success: true });
     } catch (error) {
-        log('Webhook Error: ' + error.message);
-        res.sendStatus(500);
+        res.status(500).json({ error: error.message });
+    }
+});
+// POST /api/whatsapp/config
+router.post('/config', authenticateToken, getSalonId, async (req, res) => {
+    try {
+        const { phoneId, accessToken, wabaId } = req.body;
+
+        // Basic validation
+        if (!phoneId || !accessToken) {
+            return res.status(400).json({ error: 'Phone ID and Access Token are required' });
+        }
+
+        // Update the salon's WhatsApp configuration
+        await prisma.salon.update({
+            where: { id: req.salonId },
+            data: {
+                whatsappPhoneId: phoneId,
+                whatsappAPIToken: accessToken,
+                whatsappBusinessId: wabaId
+            }
+        });
+
+        console.log(`✅ WhatsApp Connected for Salon ${req.salonId}: ID ${phoneId}`);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update WhatsApp Config Error:', error);
+        // Handle unique constraint error if another salon used this ID (unlikely in this flow but possible)
+        if (error.code === 'P2002') {
+            return res.status(409).json({ error: 'This WhatsApp number is already connected to another account.' });
+        }
+        res.status(500).json({ error: 'Failed to update configuration' });
     }
 });
 

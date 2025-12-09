@@ -9,11 +9,17 @@ import Contact from './pages/Contact';
 import AIAppointmentSystem from '../AIAppointmentSystem';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import RegisterSalon from './pages/RegisterSalon';
 import AIStudio from './pages/AIStudio';
 import SearchPage from './pages/SearchPage';
 import SalonDetail from './pages/SalonDetail';
+import SubscriptionPlans from './pages/SubscriptionPlans';
+import VerifyEmail from './pages/VerifyEmail';
+import Legal from './pages/Legal';
+import UserProfile from './pages/UserProfile';
+import ForgotPassword from './pages/ForgotPassword';
 import MainLayout from './layouts/MainLayout';
-
+import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
 
 function App() {
@@ -45,6 +51,7 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
 
                 {/* Public Pages with Main Layout */}
+                {/* Public Pages with Main Layout */}
                 <Route element={<MainLayout />}>
                     <Route path="/hizmetler" element={<Services />} />
                     <Route path="/hakkimizda" element={<About />} />
@@ -53,9 +60,15 @@ function App() {
                     <Route path="/ai-studio" element={<AIStudio />} />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/salon/:id" element={<SalonDetail />} />
+                    <Route path="/subscriptions" element={<SubscriptionPlans />} />
+                    <Route path="/legal" element={<Legal />} />
+                    <Route path="/profile" element={<UserProfile />} />
+                    <Route path="/avg" element={<ForgotPassword />} />
                 </Route>
 
                 <Route path="/login" element={<Login />} />
+                <Route path="/register-salon" element={<RegisterSalon />} />
+                <Route path="/verify-email" element={<VerifyEmail />} />
                 <Route
                     path="/panel/*"
                     element={
@@ -64,7 +77,9 @@ function App() {
                         </ProtectedRoute>
                     }
                 />
-                {/* Redirect legacy root to landing page if needed, but root is already landing page */}
+
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
         </>
     );

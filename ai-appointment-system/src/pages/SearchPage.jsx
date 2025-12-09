@@ -1,23 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Filter, ArrowRight, Scissors, SlidersHorizontal, Check } from 'lucide-react';
+import { Search, MapPin, Star, Filter, ArrowRight, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { cities } from '../data/cities';
 
 const SearchPage = () => {
     const [salons, setSalons] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showMobileFilters, setShowMobileFilters] = useState(false);
+    const location = useLocation();
+
+    // Filters State
     const [filters, setFilters] = useState({
         query: '',
         city: '',
+        district: '',
         serviceCategory: '',
         minPrice: '',
         maxPrice: ''
     });
 
+    // Expand/Collapse state for filter sections
+    const [openSections, setOpenSections] = useState({
+        location: true,
+        category: true,
+        price: true
+    });
+
+    const toggleSection = (section) => {
+        setOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        setFilters(prev => ({
+            ...prev,
+            query: params.get('query') || '',
+            city: params.get('city') || '',
+            district: params.get('district') || '',
+            serviceCategory: params.get('category') || ''
+        }));
+    }, [location.search]);
+
     useEffect(() => {
         fetchSalons();
-    }, []);
+    }, [filters]);
 
     const fetchSalons = async () => {
         setLoading(true);
@@ -26,295 +53,266 @@ const SearchPage = () => {
             for (const [key, value] of params.entries()) {
                 if (!value) params.delete(key);
             }
-            // Simulate API delay for smooth transition feel
-            // await new Promise(resolve => setTimeout(resolve, 800)); 
-
-            const response = await fetch(`http://localhost:5000/api/salons/search?${params.toString()}`);
+            const response = await fetch(`/api/salons/search?${params.toString()}`);
+            if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
-            setSalons(data);
+            setSalons(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error('Error fetching salons:', error);
+            setSalons([]);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        fetchSalons();
-    };
-
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
+    const handleFilterChange = (name, value) => {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 pt-20 pb-20">
-            {/* Header Section */}
-            <div className="bg-white border-b border-slate-200 mb-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="max-w-3xl"
-                    >
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-4">
-                            Size En Uygun <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Kuaförü Bulun</span>
-                        </h1>
-                        <p className="text-lg text-slate-600 font-light">
-                            Binlerce seçkin salon arasından tarzınıza, bütçenize ve konumunuza en uygun olanı keşfedin.
-                        </p>
-                    </motion.div>
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Top Bar - Minimal */}
+            <div className="border-b border-gray-100 bg-white sticky top-0 z-40">
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+                    <h1 className="text-xl font-bold tracking-tight text-slate-900">İsteklerinize Özel Salonlar Bulun</h1>
+                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                        <span>{salons.length} işletme listeleniyor</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-[1800px] mx-auto px-4 sm:px-6 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
 
-                    {/* Mobile Filter Toggle */}
-                    <button
-                        className="lg:hidden flex items-center justify-center gap-2 bg-white p-4 rounded-xl shadow-sm border border-slate-200 font-medium text-slate-700"
-                        onClick={() => setShowMobileFilters(!showMobileFilters)}
-                    >
-                        <SlidersHorizontal className="w-5 h-5" />
-                        Filtreleri Göster
-                    </button>
+                    {/* Filters Sidebar - Shopier Style */}
+                    <aside className={`lg:w-80 flex-shrink-0 ${showMobileFilters ? 'fixed inset-0 z-50 bg-white p-6 overflow-y-auto' : 'hidden lg:block'}`}>
+                        {showMobileFilters && (
+                            <div className="flex justify-between items-center mb-6 lg:hidden">
+                                <h2 className="text-xl font-bold">Filtrele</h2>
+                                <button onClick={() => setShowMobileFilters(false)} className="p-2 bg-gray-100 rounded-full">
+                                    <Filter size={20} />
+                                </button>
+                            </div>
+                        )}
 
-                    {/* Filters Sidebar */}
-                    <motion.div
-                        className={`lg:w-1/4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                    >
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 sticky top-24">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-2 text-slate-900 font-bold text-lg">
-                                    <Filter className="w-5 h-5 text-indigo-600" />
-                                    <span>Filtreler</span>
-                                </div>
-                                {Object.values(filters).some(x => x) && (
-                                    <button
-                                        onClick={() => {
-                                            setFilters({ query: '', city: '', serviceCategory: '', minPrice: '', maxPrice: '' });
-                                            fetchSalons();
-                                        }}
-                                        className="text-xs text-red-500 hover:text-red-700 font-medium"
-                                    >
-                                        Temizle
-                                    </button>
+                        <div className="space-y-8 sticky top-24 bg-white border border-gray-100 shadow-xl shadow-gray-200/50 rounded-2xl p-6">
+                            {/* Search Input */}
+                            <div className="relative group">
+                                <input
+                                    type="text"
+                                    placeholder="Salon veya hizmet ara..."
+                                    value={filters.query}
+                                    onChange={(e) => handleFilterChange('query', e.target.value)}
+                                    className="w-full bg-slate-50 border border-gray-200 rounded-xl px-4 py-3.5 pl-11 text-sm font-medium text-slate-700 outline-none transition-all duration-300 hover:border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 placeholder:text-gray-400"
+                                />
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+                            </div>
+
+                            {/* Location Filter */}
+                            <div className="border-b border-gray-100 pb-6">
+                                <button
+                                    onClick={() => toggleSection('location')}
+                                    className="flex items-center justify-between w-full font-bold text-xs uppercase tracking-widest mb-4 text-slate-400 hover:text-indigo-600 transition-colors"
+                                >
+                                    Konum
+                                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openSections.location ? 'rotate-180' : ''}`} />
+                                </button>
+                                {openSections.location && (
+                                    <div className="space-y-3 animation-slide-down">
+                                        <div className="relative">
+                                            <select
+                                                value={filters.city}
+                                                onChange={(e) => {
+                                                    handleFilterChange('city', e.target.value);
+                                                    handleFilterChange('district', '');
+                                                }}
+                                                className="w-full p-3.5 bg-slate-50 border border-gray-200 rounded-xl text-sm font-medium text-slate-700 cursor-pointer outline-none appearance-none transition-all duration-300 hover:border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50"
+                                            >
+                                                <option value="">Tüm Şehirler</option>
+                                                {cities.map(city => (
+                                                    <option key={city.name} value={city.name}>{city.name}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                <ChevronDown size={16} strokeWidth={2.5} />
+                                            </div>
+                                        </div>
+
+                                        <div className="relative">
+                                            <select
+                                                value={filters.district}
+                                                onChange={(e) => handleFilterChange('district', e.target.value)}
+                                                disabled={!filters.city}
+                                                className="w-full p-3.5 bg-slate-50 border border-gray-200 rounded-xl text-sm font-medium text-slate-700 cursor-pointer outline-none appearance-none transition-all duration-300 hover:border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">Tüm İlçeler</option>
+                                                {filters.city && cities.find(c => c.name === filters.city)?.districts.map(dist => (
+                                                    <option key={dist} value={dist}>{dist}</option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                                <ChevronDown size={16} strokeWidth={2.5} />
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
 
-                            <form onSubmit={handleSearch} className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Arama</label>
-                                    <div className="relative group">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                            {/* Price Filter */}
+                            <div className="border-b border-gray-100 pb-6">
+                                <button
+                                    onClick={() => toggleSection('price')}
+                                    className="flex items-center justify-between w-full font-bold text-xs uppercase tracking-widest mb-4 text-slate-400 hover:text-indigo-600 transition-colors"
+                                >
+                                    Fiyat Aralığı
+                                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openSections.price ? 'rotate-180' : ''}`} />
+                                </button>
+                                {openSections.price && (
+                                    <div className="flex items-center gap-2 animation-slide-down">
                                         <input
-                                            type="text"
-                                            name="query"
-                                            value={filters.query}
-                                            onChange={handleFilterChange}
-                                            placeholder="Salon adı ara..."
-                                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm"
+                                            type="number"
+                                            placeholder="Min TL"
+                                            value={filters.minPrice}
+                                            onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                                            className="w-full p-3.5 bg-slate-50 border border-gray-200 rounded-xl text-sm font-medium outline-none transition-all duration-300 hover:border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+                                        />
+                                        <span className="text-gray-400 font-medium">-</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Max TL"
+                                            value={filters.maxPrice}
+                                            onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                                            className="w-full p-3.5 bg-slate-50 border border-gray-200 rounded-xl text-sm font-medium outline-none transition-all duration-300 hover:border-gray-300 focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
                                         />
                                     </div>
-                                </div>
+                                )}
+                            </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Şehir</label>
-                                    <select
-                                        name="city"
-                                        value={filters.city}
-                                        onChange={handleFilterChange}
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm appearance-none cursor-pointer"
-                                    >
-                                        <option value="">Tüm Şehirler</option>
-                                        <option value="İstanbul">İstanbul</option>
-                                        <option value="Ankara">Ankara</option>
-                                        <option value="İzmir">İzmir</option>
-                                        <option value="Bursa">Bursa</option>
-                                        <option value="Antalya">Antalya</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Hizmet Kategorisi</label>
-                                    <div className="space-y-2">
+                            {/* Category Filter - Button List Style */}
+                            <div className="border-b border-gray-100 pb-6">
+                                <button
+                                    onClick={() => toggleSection('category')}
+                                    className="flex items-center justify-between w-full font-bold text-xs uppercase tracking-widest mb-4 text-slate-400 hover:text-indigo-600 transition-colors"
+                                >
+                                    Kategori
+                                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openSections.category ? 'rotate-180' : ''}`} />
+                                </button>
+                                {openSections.category && (
+                                    <div className="space-y-2 animation-slide-down">
                                         {[
                                             { id: '', label: 'Tümü' },
                                             { id: 'hair', label: 'Saç Tasarım' },
                                             { id: 'makeup', label: 'Makyaj' },
                                             { id: 'skincare', label: 'Cilt Bakımı' },
-                                            { id: 'nails', label: 'Tırnak Bakımı' }
-                                        ].map(category => (
-                                            <label key={category.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-                                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${filters.serviceCategory === category.id ? 'border-indigo-600 bg-indigo-600' : 'border-slate-300'}`}>
-                                                    {filters.serviceCategory === category.id && <Check className="w-3 h-3 text-white" />}
-                                                </div>
-                                                <input
-                                                    type="radio"
-                                                    name="serviceCategory"
-                                                    value={category.id}
-                                                    checked={filters.serviceCategory === category.id}
-                                                    onChange={handleFilterChange}
-                                                    className="hidden"
-                                                />
-                                                <span className={`text-sm ${filters.serviceCategory === category.id ? 'font-medium text-indigo-700' : 'text-slate-600'}`}>
-                                                    {category.label}
-                                                </span>
-                                            </label>
+                                            { id: 'nails', label: 'Tırnak Bakımı' },
+                                            { id: 'spa', label: 'Spa & Masaj' }
+                                        ].map(cat => (
+                                            <button
+                                                key={cat.id}
+                                                onClick={() => handleFilterChange('serviceCategory', cat.id)}
+                                                className={`flex items-center gap-3 w-full p-3 rounded-xl transition-all duration-200 text-sm font-medium ${filters.serviceCategory === cat.id ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' : 'text-slate-600 hover:bg-slate-100'}`}
+                                            >
+                                                <div className={`w-2 h-2 rounded-full ${filters.serviceCategory === cat.id ? 'bg-indigo-400' : 'bg-slate-300'}`} />
+                                                {cat.label}
+                                            </button>
                                         ))}
                                     </div>
-                                </div>
+                                )}
+                            </div>
 
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Fiyat Aralığı</label>
-                                    <div className="flex items-center gap-2">
-                                        <input
-                                            type="number"
-                                            name="minPrice"
-                                            value={filters.minPrice}
-                                            onChange={handleFilterChange}
-                                            placeholder="Min"
-                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm"
-                                        />
-                                        <span className="text-slate-400">-</span>
-                                        <input
-                                            type="number"
-                                            name="maxPrice"
-                                            value={filters.maxPrice}
-                                            onChange={handleFilterChange}
-                                            placeholder="Max"
-                                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none text-sm"
-                                        />
-                                    </div>
-                                </div>
-
+                            {/* Reset Button */}
+                            {Object.values(filters).some(x => x) && (
                                 <button
-                                    type="submit"
-                                    className="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-indigo-600 transition-all shadow-lg shadow-slate-900/20 active:scale-95"
+                                    onClick={() => setFilters({ query: '', city: '', district: '', serviceCategory: '', minPrice: '', maxPrice: '' })}
+                                    className="w-full py-3.5 text-sm font-bold text-red-600 border border-red-100 bg-red-50 hover:bg-red-100 rounded-xl transition-colors"
                                 >
-                                    Sonuçları Filtrele
+                                    Filtreleri Temizle
                                 </button>
-                            </form>
+                            )}
                         </div>
-                    </motion.div>
+                    </aside>
 
-                    {/* Results Grid */}
-                    <div className="w-full lg:w-3/4">
+                    {/* Main Content Grid */}
+                    <div className="flex-1">
+                        {/* Mobile Toggle */}
+                        <div className="lg:hidden mb-6 sticky top-20 z-30 bg-white/80 backdrop-blur-md py-4 -mx-4 px-4 border-b border-gray-100">
+                            <button
+                                onClick={() => setShowMobileFilters(true)}
+                                className="w-full flex items-center justify-center gap-2 py-3 bg-slate-900 text-white rounded-xl font-bold shadow-lg shadow-slate-900/20 active:scale-95 transition-all"
+                            >
+                                <Filter size={18} />
+                                Filtrele ve Sırala
+                            </button>
+                        </div>
+
                         {loading ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {[1, 2, 3, 4].map(i => (
-                                    <div key={i} className="bg-white rounded-2xl p-4 h-96 animate-pulse border border-slate-100">
-                                        <div className="w-full h-48 bg-slate-200 rounded-xl mb-4"></div>
-                                        <div className="h-6 bg-slate-200 rounded w-3/4 mb-2"></div>
-                                        <div className="h-4 bg-slate-200 rounded w-1/2 mb-4"></div>
-                                        <div className="space-y-2">
-                                            <div className="h-4 bg-slate-200 rounded w-full"></div>
-                                            <div className="h-4 bg-slate-200 rounded w-full"></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
+                                    <div key={n} className="animate-pulse bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                                        <div className="bg-gray-200 aspect-square" />
+                                        <div className="p-5 space-y-3">
+                                            <div className="h-5 bg-gray-200 rounded w-3/4" />
+                                            <div className="h-4 bg-gray-200 rounded w-1/2" />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : salons.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-slate-200 border-dashed">
-                                <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                                    <Scissors className="w-10 h-10 text-slate-300" />
+                            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Search className="w-8 h-8 text-gray-300" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 mb-2">Sonuç Bulunamadı</h3>
-                                <p className="text-slate-500 text-center max-w-md">
-                                    Arama kriterlerinize uygun salon bulamadık. Lütfen filtreleri değiştirip tekrar deneyin.
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        setFilters({ query: '', city: '', serviceCategory: '', minPrice: '', maxPrice: '' });
-                                        fetchSalons();
-                                    }}
-                                    className="mt-6 text-indigo-600 font-medium hover:underline"
-                                >
-                                    Filtreleri Temizle
-                                </button>
+                                <h3 className="text-lg font-bold text-slate-900">Sonuç bulunamadı</h3>
+                                <p className="text-slate-500 mt-2">Arama kriterlerinizi değiştirerek tekrar deneyebilirsiniz.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {salons.map((salon, index) => (
-                                    <motion.div
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                {salons.map((salon) => (
+                                    <Link
+                                        to={`/salon/${salon.id}`}
                                         key={salon.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-xl hover:shadow-indigo-900/5 transition-all duration-300 group flex flex-col"
+                                        className="group bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative"
                                     >
-                                        {/* Salon Image */}
-                                        <div className="h-56 bg-slate-200 relative overflow-hidden">
-                                            {salon.image ? (
-                                                <img
-                                                    src={salon.image}
-                                                    alt={salon.name}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                                                    <Scissors className="w-12 h-12 text-slate-300" />
-                                                </div>
-                                            )}
+                                        <div className="relative aspect-square bg-gray-100 overflow-hidden">
+                                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors z-10" />
+                                            <img
+                                                src={salon.image || `https://source.unsplash.com/random/800x800/?salon,beauty,${salon.id}`}
+                                                alt={salon.name}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                            {/* Rating Badge */}
+                                            <div className="absolute top-3 right-3 z-20 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-xs font-bold text-slate-900 shadow-sm flex items-center gap-1">
+                                                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                {salon.rating || 'Yeni'}
+                                            </div>
+                                        </div>
 
-                                            {/* Badges */}
-                                            <div className="absolute top-4 left-4 flex gap-2">
-                                                {salon.isContracted && (
-                                                    <span className="bg-white/90 backdrop-blur-sm text-indigo-700 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1">
-                                                        <Star className="w-3 h-3 fill-indigo-700" />
-                                                        Premium
+                                        <div className="p-5">
+                                            <div className="flex items-start justify-between mb-2">
+                                                <h3 className="font-bold text-slate-900 text-lg leading-tight group-hover:text-indigo-600 transition-colors line-clamp-1">
+                                                    {salon.name}
+                                                </h3>
+                                            </div>
+
+                                            <div className="flex items-center text-sm text-slate-500 mb-4">
+                                                <MapPin className="w-3.5 h-3.5 mr-1.5 text-slate-400" />
+                                                <span className="line-clamp-1">{salon.district}, {salon.city}</span>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2">
+                                                {salon.services?.slice(0, 2).map((s, i) => (
+                                                    <span key={i} className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg border border-slate-100 group-hover:border-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                                        {s.name}
+                                                    </span>
+                                                ))}
+                                                {salon.services?.length > 2 && (
+                                                    <span className="text-[10px] font-bold px-2 py-1 bg-slate-50 text-slate-400 rounded-lg border border-slate-100">
+                                                        +{salon.services.length - 2}
                                                     </span>
                                                 )}
                                             </div>
-
-                                            <div className="absolute bottom-4 right-4">
-                                                <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1">
-                                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                                    <span className="font-bold text-slate-900">{salon.rating}</span>
-                                                    <span className="text-xs text-slate-500">({salon.reviewCount})</span>
-                                                </div>
-                                            </div>
                                         </div>
-
-                                        <div className="p-6 flex-1 flex flex-col">
-                                            <div className="mb-4">
-                                                <h3 className="text-xl font-serif font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
-                                                    {salon.name}
-                                                </h3>
-                                                <div className="flex items-center gap-1.5 text-slate-500 text-sm">
-                                                    <MapPin className="w-4 h-4 text-slate-400" />
-                                                    <span>{salon.district}, {salon.city}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Services Preview */}
-                                            <div className="space-y-2 mb-6 flex-1">
-                                                {salon.services.slice(0, 3).map(service => (
-                                                    <div key={service.id} className="flex justify-between items-center text-sm p-2 rounded-lg bg-slate-50 group-hover:bg-white group-hover:shadow-sm transition-all border border-transparent group-hover:border-slate-100">
-                                                        <span className="text-slate-700 font-medium">{service.name}</span>
-                                                        <span className="text-indigo-600 font-bold">{service.price} ₺</span>
-                                                    </div>
-                                                ))}
-                                                {salon.services.length > 3 && (
-                                                    <p className="text-xs text-center text-slate-400 font-medium mt-2">
-                                                        + {salon.services.length - 3} diğer hizmet
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <Link
-                                                to={`/salon/${salon.id}`}
-                                                className="w-full py-3 rounded-xl border-2 border-slate-900 text-slate-900 font-bold flex items-center justify-center gap-2 hover:bg-slate-900 hover:text-white transition-all group-hover:shadow-lg group-hover:shadow-indigo-500/20"
-                                            >
-                                                Randevu Al
-                                                <ArrowRight className="w-4 h-4" />
-                                            </Link>
-                                        </div>
-                                    </motion.div>
+                                    </Link>
                                 ))}
                             </div>
                         )}

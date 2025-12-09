@@ -1,5 +1,6 @@
 import React from 'react';
 import { Scissors, Instagram, Twitter, Facebook } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
     return (
@@ -41,9 +42,9 @@ const Footer = () => {
                     <div>
                         <h4 className="text-white font-bold mb-6">Yasal</h4>
                         <ul className="space-y-3 text-sm">
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Gizlilik Politikası</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">Kullanım Şartları</a></li>
-                            <li><a href="#" className="hover:text-indigo-400 transition-colors">KVKK</a></li>
+                            <li><Link to="/legal" className="hover:text-indigo-400 transition-colors">Gizlilik Politikası</Link></li>
+                            <li><Link to="/legal" className="hover:text-indigo-400 transition-colors">Kullanım Şartları</Link></li>
+                            <li><Link to="/legal" className="hover:text-indigo-400 transition-colors">KVKK</Link></li>
                         </ul>
                     </div>
                 </div>
