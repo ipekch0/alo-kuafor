@@ -26,7 +26,7 @@ async function main() {
         update: {
             whatsappBusinessId: '1179874353536283',
             whatsappPhoneId: '822137460992821',
-            whatsappAPIToken: 'EAAZAZAMaAliCIBQGz8lzu5b0GboBgZCXdpJhqLjpTCIXW2tgNZCabahbkvebhwZAztSjjm6nP3ReZCTrJEuEKcDLvqIwyZCq6vAaeRxF9WNdwHNUrbpR8u5QPHDzq3wSH5b9TlEyXEgZCIR4SiLPTc2k4RQwjeZAj7YT4A2ZA3mp4E7KInED7EdWr9uZBu3fAI12gSCxogS0e4Vms7scYeM2qY4PZBi21leGLZCJewfMYAxHoHrF4ZC6RJ1YWj7ZApAKczXmahwZBCPj0ikSulrihS9oGkvh'
+            whatsappAPIToken: 'EAAZAZAMaAliCIBQLToGaB3XgUdV9nPt77LIPiFrE9kEeoonx6MrUWJBfGXCsIoUAeXx2ZBJuxWAsBzZBFBHzoBVUautRj4CNRz0fL0kHa5NXw84OeclLpZBG9ewMvN7EYbFmlWeOQEDCksZCdWK2yhZCDWxRCzssZAqtfcrx0tCsZCjXl14G6DQLLFupfrgonmlMHELHPiawAJNkdBykAE5Ds2xFKi7eCZCfScZBeEOhYN1L7DN61YaHGOkGXTRAPVCFVIvGDE1Jo13S2rGYcPscXnZC'
         },
         create: {
             name: 'OdakManage',
