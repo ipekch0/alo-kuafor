@@ -171,6 +171,7 @@ router.get('/webhook', (req, res) => {
 router.post('/webhook', async (req, res) => {
     try {
         const body = req.body;
+        console.log('🚀 WEBHOOK HIT! Body:', JSON.stringify(body, null, 2));
 
         if (body.object) {
             if (
