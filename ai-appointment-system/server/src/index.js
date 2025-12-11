@@ -1,5 +1,8 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Load from server/.env
+const validateEnv = require('./utils/validateEnv');
+
+validateEnv();
 
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +13,8 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || "temp_secret_key_123";
+const JWT_SECRET = process.env.JWT_SECRET;
+
 
 // Manual ENV Injection removed to allow .env usage
 
@@ -37,7 +41,12 @@ app.use((req, res, next) => {
 });
 
 // CORS Configuration - MUST BE FIRST
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3002'];
+// CORS Configuration - MUST BE FIRST
+const allowedOrigins = [
+    process.env.CLIENT_URL || 'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:3002'
+];
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl requests)
@@ -88,7 +97,7 @@ const serviceRoutes = require('./routes/services');
 const customerRoutes = require('./routes/customers');
 const appointmentRoutes = require('./routes/appointments');
 const aiRoutes = require('./routes/ai');
-const whatsappRoutes = require('./routes/whatsapp');
+// const whatsappRoutes = require('./routes/whatsapp'); // Legacy generic route
 const searchRoutes = require('./routes/search');
 const reviewRoutes = require('./routes/reviews');
 const chatRoutes = require('./routes/chat');
@@ -102,10 +111,12 @@ app.use('/api/services', serviceRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
-const authenticateToken = require('./middleware/auth'); // Fixed import
+// app.use('/api/whatsapp', whatsappRoutes); // Legacy
 
-app.use('/api/whatsapp-cloud', require('./routes/whatsappCloud'));
+const authenticateToken = require('./middleware/auth');
+
+// OFFICIAL CLOUD API ROUTES
+app.use('/api/whatsapp', require('./routes/whatsappCloud')); // Now serving at /api/whatsapp directly
 app.use('/api/search', searchRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/reviews', reviewRoutes);

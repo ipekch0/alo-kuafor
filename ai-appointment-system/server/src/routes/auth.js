@@ -10,11 +10,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Fallback for JWT_SECRET to prevent crash
-let JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    console.warn('⚠️ WARNING: JWT_SECRET is not defined in .env. Using fallback secret.');
-    JWT_SECRET = 'temp_secret_key_123_fallback_secure';
-}
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES_IN = '7d';
 
 // Nodemailer Transporter

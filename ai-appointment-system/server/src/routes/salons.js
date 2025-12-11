@@ -6,36 +6,12 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const prisma = new PrismaClient();
+const upload = require('../config/cloudinary'); // Import Cloudinary config
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 const authenticateToken = require('../middleware/auth');
 
-// Multer Config
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../../uploads');
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true });
-        }
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'salon-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Not an image! Please upload an image.'), false);
-        }
-    }
-});
+// Multer Config Removed - Replaced with Cloudinary import above
 
 // GET /api/salons/mine - Get Current User's Salon
 router.get('/mine', authenticateToken, async (req, res) => {
@@ -89,11 +65,10 @@ router.put('/mine', authenticateToken, upload.single('image'), async (req, res) 
             workingHours: workingHours ? JSON.stringify(workingHours) : undefined
         };
 
-        // Handle Image Upload
+        // Handle Image Upload (Cloudinary)
         if (req.file) {
-            const protocol = req.protocol;
-            const host = req.get('host');
-            dataToUpdate.image = `${protocol}://${host}/uploads/${req.file.filename}`;
+            // Cloudinary returns the URL in req.file.path
+            dataToUpdate.image = req.file.path;
         }
 
         // Remove undefined keys
