@@ -78,18 +78,18 @@ const AIAppointmentSystem = () => {
   } = useStore();
 
   const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: 'Panel', roles: ['salon_owner', 'admin'] },
-    { id: 'customer-appointments', icon: CalendarIcon, label: 'Randevularım', roles: ['customer'] },
-    { id: 'business-profile', icon: Building2, label: 'İşletme Profili', roles: ['salon_owner'] },
-    { id: 'appointments', icon: CalendarIcon, label: 'Randevular', roles: ['salon_owner', 'admin', 'professional'] },
-    { id: 'professionals', icon: Users, label: 'Personel', roles: ['salon_owner', 'admin'] },
-    { id: 'customers', icon: UserCircle, label: 'Müşteriler', roles: ['salon_owner', 'admin'] },
-    { id: 'finance', icon: Wallet, label: 'Muhasebe', roles: ['salon_owner', 'admin'] },
-    { id: 'inbox', icon: MessageCircle, label: 'Mesajlar', roles: ['salon_owner', 'admin'] },
-    { id: 'services', icon: Briefcase, label: 'Hizmetler', roles: ['salon_owner', 'admin'] },
-    { id: 'settings', icon: Settings, label: 'Ayarlar', roles: ['salon_owner', 'admin'] },
-    { id: 'reports', icon: Bot, label: 'AI Raporlar', roles: ['salon_owner', 'admin'] },
-    { id: 'user-profile', icon: UserCircle, label: 'Profilim', roles: ['customer', 'salon_owner', 'admin', 'professional'] }
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Panel', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'customer-appointments', icon: CalendarIcon, label: 'Randevularım', roles: ['CUSTOMER'] },
+    { id: 'business-profile', icon: Building2, label: 'İşletme Profili', roles: ['SALON_OWNER'] },
+    { id: 'appointments', icon: CalendarIcon, label: 'Randevular', roles: ['SALON_OWNER', 'SUPER_ADMIN', 'STAFF'] },
+    { id: 'professionals', icon: Users, label: 'Personel', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'customers', icon: UserCircle, label: 'Müşteriler', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'finance', icon: Wallet, label: 'Muhasebe', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'inbox', icon: MessageCircle, label: 'Mesajlar', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'services', icon: Briefcase, label: 'Hizmetler', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'settings', icon: Settings, label: 'Ayarlar', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'reports', icon: Bot, label: 'AI Raporlar', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    { id: 'user-profile', icon: UserCircle, label: 'Profilim', roles: ['CUSTOMER', 'SALON_OWNER', 'SUPER_ADMIN', 'STAFF'] }
   ];
 
   const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role));
@@ -119,7 +119,7 @@ const AIAppointmentSystem = () => {
 
   // Set default view based on role
   React.useEffect(() => {
-    if (user?.role === 'customer' && selectedView === 'dashboard') {
+    if (user?.role === 'CUSTOMER' && selectedView === 'dashboard') {
       setSelectedView('customer-appointments');
     }
   }, [user, selectedView, setSelectedView]);
@@ -152,7 +152,7 @@ const AIAppointmentSystem = () => {
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
               <Scissors className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight">YÖNETİM CEPTE</h1>
+            <h1 className="text-xl font-black text-white tracking-tight font-sans uppercase">ODAKMANAGE</h1>
           </div>
         </div>
 

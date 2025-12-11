@@ -19,7 +19,7 @@ const SubscriptionPlans = () => {
                 "Temel Müşteri Yönetimi",
                 "Web Paneli"
             ],
-            cta: "Hemen Başla",
+            cta: "Satın Al",
             popular: false
         },
         {
@@ -35,7 +35,7 @@ const SubscriptionPlans = () => {
                 "Otomatik Hatırlatmalar",
                 "Gelişmiş Raporlar"
             ],
-            cta: "Ücretsiz Dene",
+            cta: "Satın Al",
             popular: true
         },
         {
@@ -57,15 +57,16 @@ const SubscriptionPlans = () => {
     ];
 
     const handleSelectPlan = (planId) => {
+        const plan = plans.find(p => p.id === planId);
+
         if (planId === 'ENTERPRISE') {
-            window.open('https://wa.me/905555555555?text=Enterprise%20paket%20hakkında%20bilgi%20almak%20istiyorum', '_blank');
-        } else if (planId === 'STARTER') {
-            // Already active or downgrade logic
-            alert('Başlangıç paketi zaten aktif.');
+            window.open('https://wa.me/905387405669?text=Enterprise%20paket%20hakkında%20bilgi%20almak%20istiyorum', '_blank');
         } else {
-            // Navigate to payment
-            // navigate('/payment', { state: { plan: planId } });
-            alert(`${planId} paketi seçildi. Ödeme entegrasyonu bekleniyor.`);
+            // Navigate to payment for both Starter and Pro
+            // Using parseInt to remove non-numeric chars for backend safety if needed, 
+            // but passing string is fine for display. Passing clean number for price.
+            const numericPrice = parseInt(plan.price.replace(/\D/g, ''));
+            navigate('/payment', { state: { plan: planId, price: numericPrice, planName: plan.name + ' Paket' } });
         }
     };
 

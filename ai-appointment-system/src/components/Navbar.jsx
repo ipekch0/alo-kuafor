@@ -44,8 +44,8 @@ const Navbar = () => {
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform duration-300">
                             <Scissors className="w-5 h-5" />
                         </div>
-                        <span className="text-2xl font-bold tracking-tight font-serif text-slate-900 group-hover:text-indigo-600 transition-colors">
-                            OdakManage
+                        <span className="text-2xl font-black tracking-tighter font-sans text-slate-900 group-hover:text-indigo-600 transition-colors uppercase">
+                            ODAKMANAGE
                         </span>
                     </Link>
 

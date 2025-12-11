@@ -212,7 +212,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/salons/upgrade - Upgrade Subscription Plan
-router.post('/upgrade', authenticateToken, async (req, res) => {
+router.post('/upgrade', authenticateToken, authenticateToken.requireRole('SALON_OWNER'), async (req, res) => {
     try {
         const { plan } = req.body;
 

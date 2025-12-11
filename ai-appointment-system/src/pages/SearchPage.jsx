@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, MapPin, Star, Filter, ArrowRight, ChevronDown } from 'lucide-react';
+import { Search, MapPin, Star, Filter, ArrowRight, ChevronDown, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { cities } from '../data/cities';
@@ -308,69 +308,153 @@ const SearchPage = () => {
                             </motion.div>
                         ) : (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-                                {salons.map((salon, index) => (
-                                    <motion.div
-                                        key={salon.id}
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ duration: 0.4, delay: index * 0.05 }}
-                                    >
-                                        <Link
-                                            to={`/salon/${salon.id}`}
-                                            className="group block bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-500 relative h-full flex flex-col"
+                                {salons.map((salon, index) => {
+                                    // Calculate Min Price
+                                    const prices = salon.services?.map(s => parseFloat(s.price)) || [];
+                                    const minPrice = prices.length > 0 ? Math.min(...prices) : null;
+
+                                    // Check Status (Real-time)
+                                    let isOpen = false;
+                                    try {
+                                        if (salon.workingHours) {
+                                            const hours = typeof salon.workingHours === 'string' ? JSON.parse(salon.workingHours) : salon.workingHours;
+                                            const now = new Date();
+                                            const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                                            const today = days[now.getDay()];
+
+                                            const todayHours = hours[today];
+                                            if (todayHours && todayHours.isOpen !== false) { // Check if explicitly closed
+                                                const [startH, startM] = todayHours.start.split(':').map(Number);
+                                                const [endH, endM] = todayHours.end.split(':').map(Number);
+
+                                                const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                                                const startMinutes = startH * 60 + startM;
+                                                const endMinutes = endH * 60 + endM;
+
+                                                if (currentMinutes >= startMinutes && currentMinutes < endMinutes) {
+                                                    isOpen = true;
+                                                }
+                                            }
+                                        }
+                                    } catch (e) {
+                                        console.warn('Error parsing working hours', e);
+                                    }
+
+                                    return (
+                                        <motion.div
+                                            key={salon.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.4, delay: index * 0.05 }}
                                         >
-                                            {/* Image Container */}
-                                            <div className="relative aspect-[4/3] overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent z-10 opacity-60 group-hover:opacity-80 transition-opacity" />
-                                                <img
-                                                    src={salon.image || `https://source.unsplash.com/random/800x600/?beauty_salon,hair_${salon.id}`}
-                                                    alt={salon.name}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                                />
+                                            <Link
+                                                to={`/salon/${salon.id}`}
+                                                className="group block bg-white border border-gray-100 rounded-[24px] overflow-hidden hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-500 relative h-full flex flex-col"
+                                            >
+                                                {/* Image Container */}
+                                                <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 opacity-60" />
+                                                    <img
+                                                        src={salon.image || `https://source.unsplash.com/random/800x600/?beauty_salon,hair_${salon.id}`}
+                                                        alt={salon.name}
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                        onError={(e) => { e.target.src = 'https://source.unsplash.com/random/800x600/?beauty_salon'; }} // Fallback
+                                                    />
 
-                                                {/* Badges */}
-                                                <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
-                                                    <div className="bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-bold text-slate-900 shadow-lg flex items-center gap-1.5">
-                                                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                                                        {salon.rating || 'Yeni'}
-                                                    </div>
-                                                </div>
-
-                                                {/* Quick Action */}
-                                                <div className="absolute bottom-4 left-4 right-4 z-20 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                                                    <div className="bg-white/95 backdrop-blur-lg text-slate-900 font-bold text-center py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-indigo-600 hover:text-white transition-colors">
-                                                        Randevu Al <ArrowRight size={16} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Content */}
-                                            <div className="p-5 flex flex-col flex-1">
-                                                <h3 className="font-bold text-slate-900 text-xl mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
-                                                    {salon.name}
-                                                </h3>
-
-                                                <div className="flex items-center text-sm text-slate-500 mb-4">
-                                                    <MapPin className="w-4 h-4 mr-1.5 text-indigo-400 shrink-0" />
-                                                    <span className="line-clamp-1 font-medium">{salon.district}, {salon.city}</span>
-                                                </div>
-
-                                                <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-gray-50">
-                                                    {salon.services?.slice(0, 3).map((s, i) => (
-                                                        <span key={i} className="text-[11px] font-bold px-2.5 py-1.5 bg-gray-50 text-slate-600 rounded-lg group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                                                            {s.name}
-                                                        </span>
-                                                    ))}
-                                                    {salon.services?.length > 3 && (
-                                                        <span className="text-[11px] font-bold px-2.5 py-1.5 bg-gray-50 text-slate-400 rounded-lg">
-                                                            +{salon.services.length - 3}
-                                                        </span>
+                                                    {/* Open Status Badge */}
+                                                    {salon.workingHours && (
+                                                        <div className="absolute top-4 left-4 z-20 flex gap-2">
+                                                            <span className={`backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm border ${isOpen ? 'bg-emerald-500/90 border-emerald-400/20' : 'bg-red-500/90 border-red-400/20'}`}>
+                                                                {isOpen ? 'AÇIK' : 'KAPALI'}
+                                                            </span>
+                                                        </div>
                                                     )}
+
+                                                    {/* Rating Badge */}
+                                                    <div className="absolute top-4 right-4 z-20">
+                                                        <div className="bg-white/95 backdrop-blur-md pl-2 pr-3 py-1 rounded-full text-xs font-bold text-slate-900 shadow-xl flex items-center gap-1.5 box-border border-2 border-white/20">
+                                                            <Star className={`w-3 h-3 ${salon.rating > 0 ? 'text-orange-400 fill-orange-400' : 'text-gray-300'}`} />
+                                                            {salon.rating ? salon.rating.toFixed(1) : 'Yeni'}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Link>
-                                    </motion.div>
-                                ))}
+
+                                                {/* Content Body */}
+                                                <div className="p-5 flex flex-col flex-1 ">
+                                                    {/* Header & Location */}
+                                                    <div className="mb-4">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <h3 className="font-serif font-bold text-slate-900 text-xl group-hover:text-indigo-600 transition-colors line-clamp-1">
+                                                                {salon.name}
+                                                            </h3>
+                                                            <Shield className="w-4 h-4 text-sky-500 fill-sky-500/20" />
+                                                        </div>
+                                                        <div className="flex items-center text-xs text-slate-500 font-medium">
+                                                            <MapPin className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                                                            {salon.district ? `${salon.district}, ${salon.city}` : salon.city}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Middle: Staff & Price */}
+                                                    <div className="flex items-center justify-between mb-5 pb-5 border-b border-gray-50 border-dashed">
+                                                        {/* Real Staff Avatars or Count */}
+                                                        <div className="flex items-center -space-x-2">
+                                                            {salon.professionals && salon.professionals.length > 0 ? (
+                                                                <>
+                                                                    {salon.professionals.slice(0, 3).map((pro, i) => (
+                                                                        <div key={pro.id || i} className="w-7 h-7 rounded-full border-2 border-white bg-gray-200 overflow-hidden relative" title={pro.name}>
+                                                                            {pro.photo ? (
+                                                                                <img
+                                                                                    src={pro.photo}
+                                                                                    alt={pro.name}
+                                                                                    className="w-full h-full object-cover"
+                                                                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                                                                                />
+                                                                            ) : null}
+                                                                            <div className="w-full h-full flex items-center justify-center bg-indigo-100 text-indigo-700 text-[9px] font-bold absolute inset-0 -z-10" style={{ display: pro.photo ? 'none' : 'flex' }}>
+                                                                                {pro.name ? pro.name.charAt(0) : 'U'}
+                                                                            </div>
+                                                                        </div>
+                                                                    ))}
+                                                                    {salon.professionals.length > 3 && (
+                                                                        <div className="w-7 h-7 rounded-full border-2 border-white bg-gray-50 flex items-center justify-center text-[9px] font-bold text-slate-500">
+                                                                            +{salon.professionals.length - 3}
+                                                                        </div>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <span className="text-xs text-slate-400 font-medium italic">Henüz ekip yok</span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Real Min Price Badge */}
+                                                        {minPrice !== null && (
+                                                            <div className="text-right">
+                                                                <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Başlangıç</p>
+                                                                <p className="text-sm font-bold text-indigo-600">{minPrice} ₺</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Bottom: Services & Button */}
+                                                    <div className="flex items-center justify-between mt-auto gap-3">
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {salon.services?.slice(0, 2).map((s, i) => (
+                                                                <span key={i} className="text-[10px] font-semibold px-2 py-1 bg-indigo-50/50 text-indigo-700 rounded-md border border-indigo-100/50">
+                                                                    {s.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+
+                                                        <button className="bg-slate-900 text-white p-2.5 rounded-xl shadow-lg shadow-slate-900/10 hover:bg-indigo-600 hover:shadow-indigo-600/20 transition-all active:scale-95 group-hover:scale-110">
+                                                            <ArrowRight size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>

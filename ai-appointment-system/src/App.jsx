@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
+import Payment from './pages/Payment';
 import Services from './pages/Services';
 import About from './pages/About';
 import Gallery from './pages/Gallery';
@@ -11,6 +12,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 import RegisterSalon from './pages/RegisterSalon';
 import AIStudio from './pages/AIStudio';
+
 import SearchPage from './pages/SearchPage';
 import SalonDetail from './pages/SalonDetail';
 import SubscriptionPlans from './pages/SubscriptionPlans';
@@ -22,6 +24,7 @@ import ResetPassword from './pages/ResetPassword';
 import MainLayout from './layouts/MainLayout';
 import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
 
 function App() {
     return (
@@ -59,6 +62,7 @@ function App() {
                     <Route path="/galeri" element={<Gallery />} />
                     <Route path="/iletisim" element={<Contact />} />
                     <Route path="/ai-studio" element={<AIStudio />} />
+
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/salon/:id" element={<SalonDetail />} />
                     <Route path="/subscriptions" element={<SubscriptionPlans />} />
@@ -71,6 +75,25 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/register-salon" element={<RegisterSalon />} />
                 <Route path="/verify-email" element={<VerifyEmail />} />
+                <Route
+                    path="/payment"
+                    element={
+                        <ProtectedRoute>
+                            <Payment />
+                        </ProtectedRoute>
+                    }
+                />
+
+                {/* Super Admin Route */}
+                <Route
+                    path="/super-admin"
+                    element={
+                        <ProtectedRoute>
+                            <SuperAdminDashboard />
+                        </ProtectedRoute>
+                    }
+                />
+
                 <Route
                     path="/panel/*"
                     element={

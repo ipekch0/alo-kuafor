@@ -6,11 +6,12 @@ const path = require('path');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { generateAIResponse } = require('../services/aiService');
+const crypto = require('crypto');
 
 // Helper for file logging
 const logToFile = (data) => {
     try {
-        const logPath = path.join(__dirname, '../../debug_log.txt');
+        const logPath = path.join(__dirname, '../../debug_log_new.txt');
         const timestamp = new Date().toISOString();
         const message = `[${timestamp}] ${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}\n`;
         fs.appendFileSync(logPath, message);
@@ -19,6 +20,12 @@ const logToFile = (data) => {
     }
 };
 
+// Test Route
+router.get('/test', (req, res) => {
+    logToFile('Test route hit!');
+    res.json({ message: 'Cloud API Router is working!' });
+});
+
 // Note: authenticateToken is applied in index.js for this router -> MOVED to specific routes
 const authenticateToken = require('../middleware/auth');
 
@@ -26,7 +33,9 @@ const authenticateToken = require('../middleware/auth');
 router.post('/exchange-token', authenticateToken, async (req, res) => {
     try {
         const { code } = req.body;
-        logToFile(`Received request with code/token: ${code.substring(0, 20)}...`);
+        const msg = `Received request with code/token: ${code ? code.substring(0, 10) + '...' : 'NULL'}`;
+        console.log(msg);
+        logToFile(msg);
 
         const userId = req.user.id;
 
@@ -152,6 +161,100 @@ router.post('/exchange-token', authenticateToken, async (req, res) => {
     }
 });
 
+// Manual Connection (Bypass Meta Permission Issues)
+router.post('/manual-connect', authenticateToken, async (req, res) => {
+    try {
+        const { phoneId, wabaId, token } = req.body;
+        const userId = req.user.id;
+
+        if (!phoneId || !wabaId || !token) {
+            return res.status(400).json({ error: 'Eksik bilgi.' });
+        }
+
+        const salon = await prisma.salon.findFirst({ where: { ownerId: userId } });
+        if (!salon) return res.status(404).json({ error: 'Salon bulunamadı.' });
+
+        // Check if this Phone ID is already used by ANOTHER salon
+        const existingSalon = await prisma.salon.findFirst({
+            where: {
+                whatsappPhoneId: phoneId,
+                NOT: { id: salon.id }
+            }
+        });
+
+        if (existingSalon) {
+            console.log(`Phone ID ${phoneId} is used by salon ${existingSalon.id}. Disconnecting it first.`);
+            await prisma.salon.update({
+                where: { id: existingSalon.id },
+                data: { whatsappPhoneId: null, whatsappBusinessId: null, whatsappAPIToken: null }
+            });
+        }
+
+        await prisma.salon.update({
+            where: { id: salon.id },
+            data: {
+                whatsappAPIToken: token,
+                whatsappBusinessId: wabaId,
+                whatsappPhoneId: phoneId
+            }
+        });
+
+        // Try webhook sub (best effort)
+        try {
+            await axios.post(`https://graph.facebook.com/v18.0/${wabaId}/subscribed_apps`, {
+                access_token: token
+            });
+        } catch (e) {
+            console.log('Webhook sub skipped/failed (expected on localhost).');
+        }
+
+        res.json({ success: true, message: 'Bağlantı güncellendi.' });
+
+    } catch (error) {
+        logToFile({ msg: 'Manual Connect Error', error: error.message, stack: error.stack });
+        console.error('Manual Connect Error:', error);
+        res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+    }
+});
+
+// Middleware: Verify Webhook Signature
+const verifyWebhookSignature = (req, res, next) => {
+    try {
+        // Skip if secret is missing (dev mode warning)
+        if (!process.env.FACEBOOK_APP_SECRET) {
+            console.warn('⚠️ WARNING: FACEBOOK_APP_SECRET is not set. Skipping signature verification.');
+            return next();
+        }
+
+        const signature = req.headers['x-hub-signature-256'];
+        if (!signature) {
+            console.warn('⚠️ Webhook received without signature.');
+            return res.status(401).json({ error: 'No signature found' });
+        }
+
+        const elements = signature.split('=');
+        const signatureHash = elements[1];
+
+        // Use rawBody if available (from index.js), otherwise stringify (unreliable but fallback)
+        const payload = req.rawBody || JSON.stringify(req.body);
+
+        const expectedHash = crypto
+            .createHmac('sha256', process.env.FACEBOOK_APP_SECRET)
+            .update(payload)
+            .digest('hex');
+
+        if (signatureHash !== expectedHash) {
+            console.error('❌ Signature mismatch!');
+            return res.status(401).json({ error: 'Invalid signature' });
+        }
+
+        next();
+    } catch (err) {
+        console.error('Signature verification error:', err);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
 // Webhook for Incoming Messages
 router.get('/webhook', (req, res) => {
     const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
@@ -168,12 +271,24 @@ router.get('/webhook', (req, res) => {
     }
 });
 
-router.post('/webhook', async (req, res) => {
+router.post('/webhook', verifyWebhookSignature, async (req, res) => {
     try {
         const body = req.body;
         console.log('🚀 WEBHOOK HIT! Body:', JSON.stringify(body, null, 2));
 
         if (body.object) {
+            // 1. Handle Status Updates (Delivered, Read, etc.) to prevent 404s
+            if (
+                body.entry &&
+                body.entry[0].changes &&
+                body.entry[0].changes[0] &&
+                body.entry[0].changes[0].value.statuses
+            ) {
+                // We acknowledge status updates but don't process them yet
+                return res.sendStatus(200);
+            }
+
+            // 2. Handle Messages
             if (
                 body.entry &&
                 body.entry[0].changes &&

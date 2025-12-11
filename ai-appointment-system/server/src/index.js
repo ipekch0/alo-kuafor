@@ -3,6 +3,8 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Load fro
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
@@ -20,10 +22,59 @@ process.on('unhandledRejection', (reason, promise) => {
     console.log('Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-
 // Middleware
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+const fs = require('fs');
+app.use((req, res, next) => {
+    try {
+        const logPath = path.join(__dirname, '../debug_log_new.txt');
+        const timestamp = new Date().toISOString();
+        const msg = `[${timestamp}] ${req.method} ${req.originalUrl}\n`;
+        fs.appendFileSync(logPath, msg);
+    } catch (e) {
+        console.error('Logging failed');
+    }
+    next();
+});
+
+// CORS Configuration - MUST BE FIRST
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3002'];
+app.use(cors({
+    origin: function (origin, callback) {
+        // allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    }
+}));
+
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" } // Allow resource sharing for images
+}));
+
+// Rate Limiting
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // Limit each IP to 20 login requests per windowMs
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000, // INCREASED LIMIT for Dev/Polling
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+app.use(globalLimiter);
+app.use(express.json({
+    limit: '50mb',
+    verify: (req, res, buf) => {
+        req.rawBody = buf;
+    }
+}));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads'))); // Serve uploads
 
@@ -43,7 +94,7 @@ const reviewRoutes = require('./routes/reviews');
 const chatRoutes = require('./routes/chat');
 
 // Enable critical routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/salons', salonRoutes);
 app.use('/api/accounting', accountingRoutes);
 app.use('/api/professionals', professionalRoutes);
@@ -60,6 +111,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -94,3 +146,9 @@ process.on('SIGINT', async () => {
     await prisma.$disconnect();
     process.exit();
 });
+// restart
+// restart 2
+// restart 3
+// restart 4
+// restart with gemini-pro
+// restart with flash-latest

@@ -36,7 +36,7 @@ const Payment = () => {
 
         try {
 
-            const response = await api.post('/api/salons/upgrade', { plan });
+            const response = await api.post('/salons/upgrade', { plan });
 
             if (response.data.success) {
                 toast.success('Ödeme başarılı! Paketiniz yükseltildi. 🎉');

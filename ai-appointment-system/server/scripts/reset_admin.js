@@ -29,10 +29,12 @@ async function resetAdmin() {
             console.log('User not found. Creating new admin user...');
             user = await prisma.user.create({
                 data: {
-                    name: 'Demo Admin',
+                    name: 'Super Admin', // Changed from 'Demo Admin'
                     email,
                     password: hashedPassword,
-                    role: 'salon_owner',
+                    role: 'SUPER_ADMIN', // Changed from 'salon_owner'
+                    permissions: JSON.stringify(["VIEW_FINANCE", "MANAGE_SALONS", "MANAGE_SYSTEM", "MANAGE_USERS"]), // Grant all permissions
+                    phone: '5555555555', // Added phone
                     isVerified: true
                 }
             });

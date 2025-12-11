@@ -4,6 +4,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const authenticateToken = require('../middleware/auth');
 
+// Apply auth and permission check to all routes
+router.use(authenticateToken);
+router.use(authenticateToken.requirePermission('VIEW_FINANCE'));
 // Helper to check if user owns the salon or is admin
 const checkAccess = async (req, res, next) => {
     try {
@@ -28,7 +31,7 @@ const checkAccess = async (req, res, next) => {
 };
 
 // GET /stats - Financial Overview
-router.get('/stats', authenticateToken, async (req, res) => {
+router.get('/stats', async (req, res) => {
     try {
         const userId = req.user.id;
         const { salonId, startDate, endDate } = req.query;

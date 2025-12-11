@@ -72,7 +72,7 @@ const Login = () => {
                         return;
                     }
 
-                    const result = await register(formData.name, formData.email, formData.password, 'salon_owner', salonDetails);
+                    const result = await register(formData.name, formData.email, formData.password, formData.phone, 'salon_owner', salonDetails);
                     if (result.success) {
                         if (result.requireVerification) {
                             navigate('/verify-email', { state: { email: formData.email } });
@@ -84,10 +84,10 @@ const Login = () => {
                     }
                 } else {
                     // Regular customer register
-                    const result = await register(formData.name, formData.email, formData.password, 'customer');
+                    const result = await register(formData.name, formData.email, formData.password, formData.phone, 'customer');
                     if (result.success) {
                         if (result.requireVerification) {
-                            navigate('/verify-email', { state: { email: formData.email } });
+                            navigate('/verify-email', { state: { email: formData.email, debugCode: result.debugCode } });
                         } else {
                             navigate('/panel');
                         }
@@ -122,7 +122,7 @@ const Login = () => {
                             <div className="w-12 h-12 bg-brand-accent-indigo rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-accent-indigo/20">
                                 <Scissors className="w-7 h-7" />
                             </div>
-                            <span className="text-3xl font-bold text-slate-900 tracking-tight font-serif">İPEK MANAGE</span>
+                            <span className="text-3xl font-black text-slate-900 tracking-tighter font-sans uppercase">ODAKMANAGE</span>
                         </div>
                         <p className="text-slate-500 text-lg font-light">Yönetici Paneli</p>
                     </motion.div>
@@ -190,6 +190,23 @@ const Login = () => {
                             </div>
                         </div>
 
+                        {!isLogin && !isSalonOwner && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
+                                <div className="relative">
+                                    <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                    <input
+                                        type="tel"
+                                        required
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        className="input-premium pl-12"
+                                        placeholder="0555 555 55 55"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className={`${isLogin ? 'md:col-span-2' : ''}`}>
                                 <label className="block text-sm font-medium text-slate-700 mb-2">Şifre</label>
@@ -240,136 +257,124 @@ const Login = () => {
                             )}
                         </div>
 
-                        {/* Salon Owner Specific Fields */}
-                        <AnimatePresence>
-                            {!isLogin && isSalonOwner && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 'auto' }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="space-y-4 pt-4 border-t border-slate-100"
-                                >
-                                    <h3 className="text-sm font-semibold text-brand-accent-indigo uppercase tracking-wider">İşletme Bilgileri</h3>
+                        {!isLogin && isSalonOwner && (
+                            <div className="space-y-4 pt-4 border-t border-slate-100 transition-all duration-300">
+                                <h3 className="text-sm font-semibold text-brand-accent-indigo uppercase tracking-wider">İşletme Bilgileri</h3>
 
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">İşletme Adı</label>
+                                    <div className="relative">
+                                        <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            required={isSalonOwner}
+                                            value={formData.salonName}
+                                            onChange={(e) => setFormData({ ...formData, salonName: e.target.value })}
+                                            className="input-premium pl-12"
+                                            placeholder="Örn: Stil Kuaför"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">İşletme Adı</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Vergi No</label>
+                                        <div className="relative">
+                                            <FileText className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                required={isSalonOwner}
+                                                value={formData.taxNumber}
+                                                className="input-premium pl-12"
+                                                placeholder="Vergi No"
+                                                maxLength={10}
+                                                onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value.replace(/\D/g, '') })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Vergi Dairesi</label>
                                         <div className="relative">
                                             <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                                             <input
                                                 type="text"
                                                 required={isSalonOwner}
-                                                value={formData.salonName}
-                                                onChange={(e) => setFormData({ ...formData, salonName: e.target.value })}
+                                                value={formData.taxOffice}
+                                                onChange={(e) => setFormData({ ...formData, taxOffice: e.target.value })}
                                                 className="input-premium pl-12"
-                                                placeholder="Örn: Stil Kuaför"
+                                                placeholder="Vergi Dairesi"
                                             />
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Vergi No</label>
-                                            <div className="relative">
-                                                <FileText className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                                <input
-                                                    type="text"
-                                                    required={isSalonOwner}
-                                                    value={formData.taxNumber}
-                                                    className="input-premium pl-12"
-                                                    placeholder="Vergi No"
-                                                    maxLength={10}
-                                                    onChange={(e) => setFormData({ ...formData, taxNumber: e.target.value.replace(/\D/g, '') })}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Vergi Dairesi</label>
-                                            <div className="relative">
-                                                <Building2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                                <input
-                                                    type="text"
-                                                    required={isSalonOwner}
-                                                    value={formData.taxOffice}
-                                                    onChange={(e) => setFormData({ ...formData, taxOffice: e.target.value })}
-                                                    className="input-premium pl-12"
-                                                    placeholder="Vergi Dairesi"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Şehir</label>
-                                            <select
-                                                required={isSalonOwner}
-                                                value={formData.city}
-                                                onChange={(e) => setFormData({ ...formData, city: e.target.value, district: '' })}
-                                                className="input-premium px-4"
-                                            >
-                                                <option value="">İl Seçiniz</option>
-                                                {cities.map(city => (
-                                                    <option key={city.name} value={city.name}>{city.name}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">İlçe</label>
-                                            <select
-                                                required={isSalonOwner}
-                                                value={formData.district || ''}
-                                                disabled={!formData.city}
-                                                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                                                className="input-premium px-4"
-                                            >
-                                                <option value="">İlçe Seçiniz</option>
-                                                {formData.city && cities.find(c => c.name === formData.city)?.districts.map(dist => (
-                                                    <option key={dist} value={dist}>{dist}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
-                                            <div className="relative">
-                                                <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                                <input
-                                                    type="tel"
-                                                    required={isSalonOwner}
-                                                    value={formData.phone}
-                                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                                    className="input-premium pl-12"
-                                                    placeholder="0555 555 55 55"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Açık Adres</label>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Şehir</label>
+                                        <select
+                                            required={isSalonOwner}
+                                            value={formData.city}
+                                            onChange={(e) => setFormData({ ...formData, city: e.target.value, district: '' })}
+                                            className="input-premium px-4"
+                                        >
+                                            <option value="">İl Seçiniz</option>
+                                            {cities.map(city => (
+                                                <option key={city.name} value={city.name}>{city.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">İlçe</label>
+                                        <select
+                                            required={isSalonOwner}
+                                            value={formData.district || ''}
+                                            disabled={!formData.city}
+                                            onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                                            className="input-premium px-4"
+                                        >
+                                            <option value="">İlçe Seçiniz</option>
+                                            {formData.city && cities.find(c => c.name === formData.city)?.districts.map(dist => (
+                                                <option key={dist} value={dist}>{dist}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Telefon</label>
                                         <div className="relative">
-                                            <MapPin className="absolute left-4 top-3 w-5 h-5 text-slate-400" />
-                                            <textarea
+                                            <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="tel"
                                                 required={isSalonOwner}
-                                                value={formData.address}
-                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                                className="input-premium pl-12 pt-2"
-                                                placeholder="Adres detayları..."
-                                                rows="2"
-                                            ></textarea>
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="input-premium pl-12"
+                                                placeholder="0555 555 55 55"
+                                            />
                                         </div>
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Açık Adres</label>
+                                    <div className="relative">
+                                        <MapPin className="absolute left-4 top-3 w-5 h-5 text-slate-400" />
+                                        <textarea
+                                            required={isSalonOwner}
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="input-premium pl-12 pt-2"
+                                            placeholder="Adres detayları..."
+                                            rows="2"
+                                        ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {error && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm"
-                            >
+                            <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-sm animate-pulse">
                                 {error}
-                            </motion.div>
+                            </div>
                         )}
 
                         <button
@@ -412,7 +417,7 @@ const Login = () => {
                 </motion.div>
 
                 <p className="text-center text-slate-400 text-sm mt-8 font-light">
-                    © 2024 OdakManage. Tüm hakları saklıdır.
+                    © 2024 <span className="font-black font-sans tracking-tight">ODAKMANAGE</span>. Tüm hakları saklıdır.
                 </p>
             </motion.div>
             {/* DEBUG OVERLAY */}

@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 // ============================================
@@ -19,12 +19,15 @@ model User {
   email           String           @unique
   password        String
   name            String
-  role            String           @default("customer") // admin, salon_owner, professional, customer
+  role            String           @default("CUSTOMER") // SUPER_ADMIN, SALON_OWNER, STAFF, CUSTOMER
+  permissions     String?          // JSON string: ["VIEW_FINANCE", "MANAGE_APPOINTMENTS"]
   phone           String?
   avatar          String?
 
   isVerified      Boolean          @default(false)
+  isActive        Boolean          @default(true) // For banning
   verificationCode String?
+  phoneVerified   Boolean          @default(false)
   
   // Relations
   ownedSalons     Salon[]          @relation("SalonOwner")
@@ -225,8 +228,6 @@ model Message {
   
   createdAt      DateTime     @default(now())
 }
-
-
 
 model Expense {
   id          Int      @id @default(autoincrement())

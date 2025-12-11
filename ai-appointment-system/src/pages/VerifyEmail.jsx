@@ -23,8 +23,11 @@ const VerifyEmail = () => {
         if (resendCooldown > 0) return;
         setLoading(true);
         try {
-            await axios.post(`${API_URL}/auth/resend-verification`, { email });
+            const res = await axios.post(`${API_URL}/auth/resend-verification`, { email });
             toast.success('Doğrulama kodu tekrar gönderildi.');
+            if (res.data.debugCode) {
+                toast.success(`TEST MODU: Kodunuz: ${res.data.debugCode}`, { duration: 10000 });
+            }
             setResendCooldown(60); // 60 seconds cooldown
         } catch (err) {
             toast.error(err.response?.data?.error || 'Kod gönderilemedi.');
@@ -43,6 +46,9 @@ const VerifyEmail = () => {
     useEffect(() => {
         if (location.state?.email) {
             setEmail(location.state.email);
+            if (location.state.debugCode) {
+                toast.success(`TEST MODU: Kodunuz: ${location.state.debugCode}`, { duration: 10000 });
+            }
         } else {
             // Fallback or redirect if no email found
             // navigate('/login');
@@ -82,7 +88,7 @@ const VerifyEmail = () => {
         }
 
         try {
-            const response = await axios.post(`${API_URL}/auth/verify-email`, {
+            const response = await axios.post(`${API_URL}/auth/verify-otp`, {
                 email,
                 code: fullCode
             });
@@ -115,16 +121,16 @@ const VerifyEmail = () => {
             >
                 <div className="bg-gradient-to-r from-indigo-600 to-violet-600 p-8 text-center">
                     <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                        <ShieldCheck className="w-8 h-8 text-white" />
+                        <Mail className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white font-serif">Hesap Doğrulama</h2>
-                    <p className="text-indigo-100 mt-2 text-sm">Güvenliğiniz için mail adresinizi doğrulayın.</p>
+                    <h2 className="text-2xl font-bold text-white font-serif">E-Posta Doğrulama</h2>
+                    <p className="text-indigo-100 mt-2 text-sm">E-postanıza gönderilen 6 haneli kodu giriniz.</p>
                 </div>
 
                 <div className="p-8">
                     <div className="text-center mb-8">
-                        <p className="text-slate-600 mb-2">Lütfen <span className="font-bold text-slate-900">{email}</span> adresine gönderilen 6 haneli kodu girin.</p>
-                        <button onClick={() => navigate('/login')} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Mail adresi yanlış mı?</button>
+                        <p className="text-slate-600 mb-2"><span className="font-bold text-slate-900">{email}</span> adresine kod gönderildi.</p>
+                        <button onClick={() => navigate('/login')} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">Adres yanlış mı?</button>
                     </div>
 
                     <form onSubmit={handleVerify}>

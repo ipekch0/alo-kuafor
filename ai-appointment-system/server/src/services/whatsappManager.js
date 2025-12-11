@@ -10,9 +10,23 @@ class WhatsappManager {
     }
 
     async startSession(salonId) {
-        if (this.sessions.has(salonId) && this.sessions.get(salonId).status === 'READY') {
-            console.log(`Session already active for salon ${salonId}`);
-            return;
+        // Check if session exists and is stuck or needs restart
+        if (this.sessions.has(salonId)) {
+            const oldSession = this.sessions.get(salonId);
+            if (oldSession.status === 'READY') {
+                console.log(`Session already active for salon ${salonId}`);
+                return;
+            }
+            // Cleanup old/stuck session
+            console.log(`Cleaning up old session for salon ${salonId}...`);
+            if (oldSession.client) {
+                try {
+                    await oldSession.client.destroy();
+                } catch (e) {
+                    console.warn('Failed to destroy old client:', e.message);
+                }
+            }
+            this.sessions.delete(salonId);
         }
 
         console.log(`Starting WhatsApp session for salon: ${salonId}`);
@@ -32,7 +46,15 @@ class WhatsappManager {
             }),
             puppeteer: {
                 headless: true,
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu'
+                ]
             }
         });
 
@@ -107,10 +129,27 @@ class WhatsappManager {
         });
 
         // Event: Disconnected
-        client.on('disconnected', (reason) => {
+        client.on('disconnected', async (reason) => {
             console.log(`Client disconnected for salon ${salonId}:`, reason);
             session.status = 'DISCONNECTED';
+
+            // Clean up the client to prevent memory leaks
+            try {
+                await client.destroy();
+            } catch (e) {
+                console.warn('Error destroying client on disconnect:', e);
+            }
+
             this.sessions.delete(salonId);
+
+            // Auto-reconnect if not manually logged out (logic could be refined)
+            // For now, always try to reconnect if it was an unexpected disconnect
+            if (reason !== 'LOGOUT') {
+                console.log(`Attempting auto-reconnect for salon ${salonId} in 5s...`);
+                setTimeout(() => {
+                    this.startSession(salonId).catch(e => console.error('Reconnection failed:', e));
+                }, 5000);
+            }
         });
 
         try {
@@ -143,6 +182,25 @@ class WhatsappManager {
         }
         this.sessions.delete(salonId);
         return { success: true };
+    }
+    async sendMessage(salonId, phone, message) {
+        const session = this.sessions.get(salonId);
+        if (!session || session.status !== 'READY' || !session.client) {
+            console.warn(`WhatsApp not ready for salon ${salonId}`);
+            return { success: false, error: 'WhatsApp not connected' };
+        }
+
+        try {
+            // Whatsapp-web.js requires phone in specific format: 905551234567@c.us
+            const cleanPhone = phone.replace(/\D/g, '');
+            const chatId = `${cleanPhone}@c.us`;
+
+            await session.client.sendMessage(chatId, message);
+            return { success: true };
+        } catch (error) {
+            console.error(`Failed to send message to ${phone} for salon ${salonId}:`, error);
+            return { success: false, error: error.message };
+        }
     }
 }
 

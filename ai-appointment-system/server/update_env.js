@@ -9,7 +9,7 @@ try {
     }
 
     const whatsappToken = 'EAAZAZAMaAliCIBQCu4ufaHgILZAo1xCSqkqdArufsMxHz1pZAdrmxkRNHoK6Fvy7lVFhMrgHyS1AVCWsdkvwfMXZCSpsOnLvEt2D1XiPHCICnQ0qA5W4oJScaVUoTRzKx0XDR7l9pbz3BLntF42ZCDqzhyfFnkHChHTskewEdRzYpY0kaRHsrTFFAdZAZC7a5V5TjZAOwpf575fxyUTQ7Mc7oG9wXpQCbzbiuuYUlawATMhSi7J87ZAJzsESeyrfdzApYsxgvkr5dNasvOS14ZCuMZAU';
-    const geminiKey = 'AIzaSyBhdzyUW10uEa2eqxLzyvAMeyArwBoibSE';
+    const geminiKey = 'AIzaSyDdkpMGUFXoo0KJ5-U5fjI0lZliwIjzgBc';
 
     // Update WhatsApp Token
     if (content.includes('WHATSAPP_ACCESS_TOKEN=')) {

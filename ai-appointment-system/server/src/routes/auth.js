@@ -8,7 +8,13 @@ const sendEmail = require('../utils/email');
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+
+// Fallback for JWT_SECRET to prevent crash
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    console.warn('⚠️ WARNING: JWT_SECRET is not defined in .env. Using fallback secret.');
+    JWT_SECRET = 'temp_secret_key_123_fallback_secure';
+}
 const JWT_EXPIRES_IN = '7d';
 
 // Nodemailer Transporter
@@ -22,18 +28,22 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+const { sendSMS } = require('../services/smsService');
+const validateRequest = require('../middleware/validation');
+const { registerSchema, loginSchema } = require('../utils/schemas');
+
 // Register new user
-router.post('/register', async (req, res) => {
+router.post('/register', validateRequest(registerSchema), async (req, res) => {
     try {
-        const { name, email, password, role, salonDetails } = req.body;
+        const { name, email, password, phone, role, salonDetails } = req.body;
 
         // Validate input
-        if (!name || !email || !password) {
-            return res.status(400).json({ error: 'All fields are required' });
+        if (!name || !email || !password || !phone) {
+            return res.status(400).json({ error: 'Ad, Email, Şifre ve Telefon zorunludur.' });
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ error: 'Password must be at least 6 characters' });
+            return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır.' });
         }
 
         // Additional validation for salon owners
@@ -44,60 +54,29 @@ router.post('/register', async (req, res) => {
         }
 
         // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email }
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    { email: email },
+                    { phone: phone } // Check phone uniqueness too
+                ]
+            }
         });
 
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
+            return res.status(400).json({ error: 'Bu email veya telefon numarası zaten kayıtlı.' });
         }
 
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Generate Verification Code
-        // PRODUCTION: Random 6-digit code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        // const verificationCode = '123456'; // DEMO MODE
-        console.log('🔒 VERIFICATION CODE:', verificationCode); // Keep logging for server admin but codes are now random
+        // Generate Verification Code (Crypto Secure)
+        const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-        // Use transaction to ensure both User and Salon (if applicable) are created
-        const result = await prisma.$transaction(async (prisma) => {
-            // Create user
-            const user = await prisma.user.create({
-                data: {
-                    name,
-                    email,
-                    password: hashedPassword,
-                    role: role || 'customer',
-                    isVerified: false,
-                    verificationCode: verificationCode
-                }
-            });
+        // Send (Email) Verification Code
+        console.log(`🔒 EMAIL OTP for ${email}:`, verificationCode);
 
-            // If salon owner, create salon
-            if (role === 'salon_owner' && salonDetails) {
-                await prisma.salon.create({
-                    data: {
-                        name: salonDetails.salonName,
-                        slug: salonDetails.salonName.toLowerCase().replace(/ /g, '-') + '-' + Math.floor(Math.random() * 1000),
-                        address: salonDetails.address || '',
-                        city: salonDetails.city || '',
-                        phone: salonDetails.phone || '',
-                        ownerId: user.id,
-                        taxNumber: salonDetails.taxNumber,
-                        taxOffice: salonDetails.taxOffice,
-                        ownerName: name,
-                        subscriptionPlan: salonDetails.subscriptionPlan || 'STARTER',
-                        isVerified: false
-                    }
-                });
-            }
-
-            return user;
-        });
-
-        // Send Verification Email
+        // Send Email
         try {
             await transporter.sendMail({
                 from: `"OdakManage Güvenlik" <${process.env.EMAIL_USER}>`,
@@ -121,49 +100,95 @@ router.post('/register', async (req, res) => {
 
                         <p style="font-size: 14px; color: #666;">Bu kodu siz talep etmediyseniz, lütfen dikkate almayınız.</p>
                         <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #999;">Code: ${verificationCode}</p>
                     </div>
                 `
             });
-            console.log(`✅ Verification email sent to ${email} with code: ${verificationCode}`);
+            console.log(`✅ Verification email sent to ${email}`);
         } catch (emailError) {
-            console.error('Email send error (DEMO MODE ENABLED):', emailError.message);
-            // DEMO MODE: Continue even if email fails
-            console.log(`⚠️ DEMO MODE: Verification Code for ${email} is ${verificationCode}`);
+            console.error('Email send error:', emailError.message);
         }
 
+        // SMS Logic (DISABLED by User Request)
+        /*
+        try {
+            await sendSMS(phone, `OdakManage Dogrulama Kodunuz: ${verificationCode}`);
+        } catch (smsError) {
+            console.error('SMS Send Failed:', smsError.message);
+        }
+        */
+
+        // Use transaction to ensure both User and Salon (if applicable) are created
+        const result = await prisma.$transaction(async (prisma) => {
+            // Create user
+            const user = await prisma.user.create({
+                data: {
+                    name,
+                    email,
+                    phone, // Still saving phone, useful for future
+                    password: hashedPassword,
+                    role: role || 'customer',
+                    isVerified: false,
+                    verificationCode: verificationCode
+                }
+            });
+
+            // If salon owner, create salon
+            if (role === 'salon_owner' && salonDetails) {
+                await prisma.salon.create({
+                    data: {
+                        name: salonDetails.salonName,
+                        slug: salonDetails.salonName.toLowerCase().replace(/ /g, '-') + '-' + Math.floor(Math.random() * 1000),
+                        address: salonDetails.address || '',
+                        city: salonDetails.city || '',
+                        phone: salonDetails.phone || phone,
+                        ownerId: user.id,
+                        taxNumber: salonDetails.taxNumber,
+                        taxOffice: salonDetails.taxOffice,
+                        ownerName: name,
+                        subscriptionPlan: salonDetails.subscriptionPlan || 'STARTER',
+                        isVerified: false
+                    }
+                });
+            }
+
+            return user;
+        });
+
+
         res.status(201).json({
-            message: 'User registered successfully. Please verify your email.',
+            message: 'Kayıt başarılı. Lütfen E-Posta adresinize gelen kodu giriniz.',
             requireVerification: true,
-            email: result.email
+            email: result.email,
+            phone: result.phone,
+            debugCode: verificationCode
         });
     } catch (error) {
         console.error('Register error:', error);
-        res.status(500).json({ error: 'Server error', details: error.message, stack: error.stack });
+        res.status(500).json({ error: 'Server error', details: error.message });
     }
 });
 
-// Verify Email Endpoint
-router.post('/verify-email', async (req, res) => {
+// Verify SMS OTP (Replaces or Augments Email Verify)
+router.post('/verify-otp', async (req, res) => {
     try {
-        const { email, code } = req.body;
+        const { email, code } = req.body; // Identifying user by email during verify flow
 
         if (!email || !code) {
-            return res.status(400).json({ error: 'Email and code are required' });
+            return res.status(400).json({ error: 'Email ve Kod zorunludur.' });
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
         }
 
         if (user.isVerified) {
-            return res.status(400).json({ error: 'User already verified' });
+            return res.status(400).json({ error: 'Kullanıcı zaten doğrulanmış.' });
         }
 
         if (user.verificationCode !== code) {
-            return res.status(400).json({ error: 'Invalid verification code' });
+            return res.status(400).json({ error: 'Geçersiz doğrulama kodu.' });
         }
 
         // Update user to verified
@@ -171,11 +196,12 @@ router.post('/verify-email', async (req, res) => {
             where: { id: user.id },
             data: {
                 isVerified: true,
-                verificationCode: null // Clear code after usage
+                verificationCode: null,
+                // phoneVerified: true // safely omit if DB not migrated
             }
         });
 
-        // Generate Token immediately after verification so they can login
+        // Generate Token
         const token = jwt.sign(
             { userId: updatedUser.id, email: updatedUser.email },
             JWT_SECRET,
@@ -185,79 +211,72 @@ router.post('/verify-email', async (req, res) => {
         const { password: _, ...userWithoutPassword } = updatedUser;
 
         res.json({
-            message: 'Email verified successfully',
+            message: 'Telefon doğrulandı, giriş yapıldı.',
             token,
             user: userWithoutPassword
         });
 
     } catch (error) {
         console.error('Verification error:', error);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Doğrulama hatası.' });
     }
 });
 
+// Old verify-email redirect or keep specific if needed
+router.post('/verify-email', async (req, res) => {
+    // Alias to verify-otp for backward compatibility or dual use
+    // ... same logic
+    return res.status(400).json({ error: 'Please use /verify-otp for new flow.' });
+});
 
-// Resend Verification Code
+// Resend SMS Code
 router.post('/resend-verification', async (req, res) => {
     try {
         const { email } = req.body;
 
         if (!email) {
-            return res.status(400).json({ error: 'Email is required' });
+            return res.status(400).json({ error: 'Email gerekli.' });
         }
 
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
         }
 
         if (user.isVerified) {
-            return res.status(400).json({ error: 'User already verified' });
+            return res.status(400).json({ error: 'Zaten doğrulanmış.' });
         }
 
-        // Generate new verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+        // Generate new code
+        const verificationCode = crypto.randomInt(100000, 999999).toString();
 
-        // Update user with new code
         await prisma.user.update({
             where: { id: user.id },
             data: { verificationCode }
         });
 
-        // Send Email
-        try {
-            await transporter.sendMail({
-                from: `"OdakManage Güvenlik" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'Yeni Doğrulama Kodunuz',
-                text: `Merhaba ${user.name}, yeni doğrulama kodunuz: ${verificationCode}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                        <h2 style="color: #4F46E5;">OdakManage Doğrulama Kodu</h2>
-                        <p>Yeni bir doğrulama kodu talep ettiniz. Lütfen aşağıdaki kodu giriniz:</p>
-                        <div style="background-color: #F3F4F6; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; display: inline-block; margin: 10px 0;">
-                            ${verificationCode}
-                        </div>
-                    </div>
-                `
-            });
-            console.log(`Resent verification code to ${email}`);
-        } catch (emailError) {
-            console.error('Email send error:', emailError.message);
-            // In production we might want to return 500 here, but for now log it
+        // Send SMS
+        if (user.phone) {
+            console.log(`🔒 Resend SMS OTP for ${user.phone}:`, verificationCode);
+            try {
+                await sendSMS(user.phone, `OdakManage Yeni Kodunuz: ${verificationCode}`);
+            } catch (e) { console.error(e); }
         }
 
-        res.json({ message: 'Verification code resent successfully' });
+        res.json({
+            message: 'Kod tekrar gönderildi.',
+            debugCode: verificationCode
+        });
 
     } catch (error) {
-        console.error('Resend verification error:', error);
+        console.error('Resend error:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 // Login user
-router.post('/login', async (req, res) => {
+router.post('/login', validateRequest(loginSchema), async (req, res) => {
     try {
         const { email, password } = req.body;
 

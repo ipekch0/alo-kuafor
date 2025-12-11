@@ -4,7 +4,7 @@ import { Scissors, Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
-    const [scrolled, setScrolled] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     useEffect(() => {
@@ -34,8 +34,8 @@ const Navbar = () => {
                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
                         <Scissors className="w-6 h-6" />
                     </div>
-                    <span className={`text-xl font-bold tracking-tight ${isScrolled ? 'text-slate-900' : 'text-slate-900'}`}>
-                        Yönetim Cepte
+                    <span className={`text-xl font-black tracking-tight font-sans uppercase ${isScrolled ? 'text-slate-900' : 'text-slate-900'}`}>
+                        ODAKMANAGE
                     </span>
                 </Link>
 
