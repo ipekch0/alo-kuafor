@@ -1,4 +1,15 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+// LEGACY SERVICE - DISABLED FOR CLOUD API MIGRATION
+// This file used 'whatsapp-web.js' which requires Chromium and is too heavy for Render Free Tier.
+// We have switched to the Official WhatsApp Cloud API (services/whatsappCloud.js).
+
+const whatsappManager = {
+    initialize: async () => console.log('Legacy WhatsApp Manager is disabled.'),
+    getSessionStatus: () => ({ status: 'DISABLED', qrCode: null }),
+    startSession: async () => { },
+    logout: async () => { }
+};
+
+module.exports = whatsappManager;
 const qrcode = require('qrcode');
 const aiService = require('./aiService');
 const { PrismaClient } = require('@prisma/client');
