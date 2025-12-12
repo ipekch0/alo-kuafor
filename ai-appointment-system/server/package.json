@@ -1,7 +1,7 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "description": "",
+  "description": "AI Destekli Randevu Yönetim Sistemi API",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
