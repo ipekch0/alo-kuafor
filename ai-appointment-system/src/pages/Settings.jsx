@@ -8,110 +8,82 @@ import { useMySalon, useUpdateMySalon } from '../hooks/useData';
 import toast from 'react-hot-toast';
 import { cities } from '../data/cities';
 
-// Cloud API Connection Manager
+// QR Code Connection Manager
 const WhatsAppConnectionManager = () => {
-    const [status, setStatus] = useState('DISCONNECTED'); // DISCONNECTED, CONNECTED
+    const [status, setStatus] = useState('DISCONNECTED'); // DISCONNECTED, INITIALIZING, QR_READY, READY
+    const [qrCode, setQrCode] = useState(null);
     const [loading, setLoading] = useState(false);
     const [connectedPhone, setConnectedPhone] = useState(null);
 
-    // Check status on load
+    // Poll status every 3 seconds if initializing or qr ready
     useEffect(() => {
+        let interval;
         const checkStatus = async () => {
             try {
                 const token = localStorage.getItem('token');
-                // We use a new endpoint or the existing salon check. 
-                // For now reusing the generic status endpoint if compatible, or checking salon profile.
-                // Assuming /api/salons/me returns whatsapp status
-                // Correct endpoint is /mine (see salons.js)
-                const res = await fetch('/api/salons/mine', {
+                const res = await fetch('/api/whatsapp/status', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                if (data.whatsappAPIToken) {
+
+                // Map backend status to frontend state
+                // Backend: INITIALIZING, QR_READY, READY, AUTHENTICATED, CONNECTED, DISCONNECTED
+                if (data.status === 'READY' || data.status === 'AUTHENTICATED') {
                     setStatus('CONNECTED');
-                    setConnectedPhone(data.whatsappPhoneId); // Showing ID for now, ideal would be phone number
+                    setConnectedPhone(data.phone);
+                    setQrCode(null);
+                } else if (data.status === 'QR_READY') {
+                    setStatus('QR_READY');
+                    setQrCode(data.qr);
+                } else if (data.status === 'INITIALIZING') {
+                    setStatus('INITIALIZING');
+                } else {
+                    setStatus('DISCONNECTED');
                 }
             } catch (e) { console.error(e); }
         };
-        checkStatus();
-    }, []);
 
-    const launchFacebookSignup = () => {
-        setLoading(true);
-        toast.dismiss();
+        checkStatus(); // Initial check
 
-        // Safety timeout - stop spinning after 60 seconds
-        setTimeout(() => {
-            setLoading(prev => {
-                if (prev) {
-                    toast.error('Facebook yanıt vermedi (Zaman aşımı).');
-                    return false;
-                }
-                return prev;
-            });
-        }, 60000);
-
-        // Ensure FB SDK is loaded
-        if (!window.FB) {
-            toast.error('Facebook SDK yüklenemedi. Lütfen sayfayı yenileyin veya reklam engelleyiciyi kapatın.');
-            setLoading(false);
-            return;
+        // Start polling if we are in a pending state
+        if (status === 'INITIALIZING' || status === 'QR_READY' || loading) {
+            interval = setInterval(checkStatus, 3000);
         }
 
-        toast.loading('Facebook penceresi açılıyor...');
+        return () => clearInterval(interval);
+    }, [status, loading]);
 
-        window.FB.login(async function (response) {
-            if (response.authResponse) {
-                const accessToken = response.authResponse.accessToken;
-                toast.dismiss();
-                toast.loading('Facebook onayı alındı, sunucuya bağlanıyor...');
-
-                try {
-                    const token = localStorage.getItem('token');
-                    const res = await fetch('/api/whatsapp-cloud/exchange-token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ code: accessToken })
-                    });
-
-                    const data = await res.json();
-
-                    if (data.success) {
-                        toast.dismiss();
-                        toast.success('WhatsApp başarıyla bağlandı! 🎉');
-                        setStatus('CONNECTED');
-                        setConnectedPhone(data.phone);
-                    } else {
-                        throw new Error(data.error || 'Bağlantı hatası');
-                    }
-                } catch (error) {
-                    toast.dismiss();
-                    toast.error(`Hata: ${error.message}`);
-                    console.error("Exchange Error:", error);
-                }
-            } else {
-                toast.dismiss();
-                toast.error('Facebook girişi iptal edildi.');
-            }
+    const handleConnect = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('/api/whatsapp/connect', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setStatus('INITIALIZING');
+            toast.loading('WhatsApp başlatılıyor, lütfen bekleyin...');
+        } catch (error) {
+            toast.error('Bağlantı başlatılamadı');
             setLoading(false);
-        }, {
-            scope: 'whatsapp_business_management,whatsapp_business_messaging',
-            extras: {
-                feature: 'whatsapp_embedded_signup',
-                version: 2
-            }
-        });
+        }
     };
 
     const handleDisconnect = async () => {
         if (!confirm('Bağlantıyı kesmek istediğinize emin misiniz?')) return;
-        // TODO: Implement disconnect logic if needed, for now just clear local state implies logic needed on backend
-        // Since backend logic for disconnect wasn't explicitly shown in cloud file, skipping backend call for safety or using generic
-        toast.success('Bağlantı kesildi (Local).');
-        setStatus('DISCONNECTED');
+        try {
+            const token = localStorage.getItem('token');
+            await fetch('/api/whatsapp/disconnect', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setStatus('DISCONNECTED');
+            setQrCode(null);
+            setConnectedPhone(null);
+            toast.success('Bağlantı kesildi.');
+        } catch (error) {
+            toast.error('Çıkış yapılamadı');
+        }
     };
 
     if (status === 'CONNECTED') {
@@ -122,14 +94,17 @@ const WhatsAppConnectionManager = () => {
                         <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                     </div>
                     <div>
-                        <h4 className="font-bold text-slate-900">WhatsApp Cloud API Aktif</h4>
+                        <h4 className="font-bold text-slate-900">WhatsApp Bağlandı</h4>
                         <p className="text-sm text-slate-500">
-                            İşletme hesabınız başarıyla bağlandı.
+                            {connectedPhone ? `Bağlı Numara: ${connectedPhone}` : 'Yapay Zeka Asistanı Aktif'}
                         </p>
                     </div>
                 </div>
-                <button className="px-4 py-2 text-sm text-slate-400 cursor-not-allowed" disabled>
-                    Bağlı
+                <button
+                    onClick={handleDisconnect}
+                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                >
+                    Bağlantıyı Kes
                 </button>
             </div>
         );
@@ -138,31 +113,46 @@ const WhatsAppConnectionManager = () => {
     return (
         <div className="bg-white p-8 rounded-xl border border-slate-200 text-center">
             <div className="py-6">
-                <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg viewBox="0 0 24 24" className="w-8 h-8 text-blue-600 fill-current">
-                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.791-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                </div>
+                {status === 'QR_READY' && qrCode ? (
+                    <div className="mb-6">
+                        <div className="bg-white p-4 inline-block rounded-xl border-2 border-slate-900 shadow-xl">
+                            <img src={qrCode} alt="WhatsApp QR" className="w-64 h-64" />
+                        </div>
+                        <p className="mt-4 text-emerald-600 font-semibold animate-pulse">
+                            WhatsApp uygulamasından QR kodu okutun
+                        </p>
+                    </div>
+                ) : (
+                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Smartphone className="w-8 h-8 text-emerald-600" />
+                    </div>
+                )}
+
                 <h3 className="text-lg font-bold text-slate-900 mb-2">WhatsApp'ı Bağla</h3>
                 <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-                    Meta (Facebook) hesabınızla giriş yaparak WhatsApp Business profilinizi saniyeler içinde bağlayın.
+                    {status === 'INITIALIZING'
+                        ? 'QR Kod oluşturuluyor, lütfen bekleyin...'
+                        : 'Yapay zeka asistanını aktifleştirmek için WhatsApp Web QR kodunu okutun.'}
                 </p>
-                <button
-                    onClick={launchFacebookSignup}
-                    disabled={loading}
-                    className="btn-primary bg-[#1877F2] hover:bg-[#166fe5] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 transition-transform hover:scale-105 flex items-center gap-2 mx-auto disabled:opacity-70 disabled:scale-100"
-                >
-                    {loading ? (
-                        <>
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            <span>Bağlanıyor...</span>
-                        </>
-                    ) : (
-                        <>
-                            <span>Facebook ile Bağlan</span>
-                        </>
-                    )}
-                </button>
+
+                {status !== 'QR_READY' && status !== 'INITIALIZING' && (
+                    <button
+                        onClick={handleConnect}
+                        disabled={loading}
+                        className="btn-primary bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-100 transition-transform hover:scale-105 flex items-center gap-2 mx-auto disabled:opacity-70 disabled:scale-100"
+                    >
+                        {loading ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Başlatılıyor...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>QR Kod Oluştur</span>
+                            </>
+                        )}
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -189,24 +179,10 @@ const Settings = () => {
         image: ''
     });
 
-    // Initialize Facebook SDK (Keep existing logic if needed for potential future use or analytics, though not used for QR)
-    useEffect(() => {
-        window.fbAsyncInit = function () {
-            window.FB.init({
-                appId: '1786919535347746',
-                cookie: true,
-                xfbml: true,
-                version: 'v18.0'
-            });
-        };
-        (function (d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) { return; }
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-    }, []);
+    // Initialize Facebook SDK removed
+    // useEffect(() => {
+    //    window.fbAsyncInit = ...
+    // }, []);
 
     // Sync Data
     useEffect(() => {
@@ -407,7 +383,7 @@ const Settings = () => {
                                         className="space-y-6"
                                     >
                                         <div className="pb-6 border-b border-slate-100">
-                                            <h2 className="text-lg font-bold text-slate-900">WhatsApp & Entegrasyon</h2>
+                                            <h2 className="text-lg font-bold text-slate-900">WhatsApp & Yapay Zeka (QR)</h2>
                                             <p className="text-sm text-slate-500">Otomatik bildirimler için WhatsApp Web bağlantısı.</p>
                                         </div>
 
