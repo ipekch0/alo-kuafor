@@ -119,7 +119,8 @@ app.use('/api/ai', aiRoutes);
 const authenticateToken = require('./middleware/auth');
 
 // OFFICIAL CLOUD API ROUTES
-app.use('/api/whatsapp', require('./routes/whatsappCloud')); // Now serving at /api/whatsapp directly
+// app.use('/api/whatsapp', require('./routes/whatsappCloud')); // Now serving at /api/whatsapp directly
+app.use('/api/whatsapp', require('./routes/whatsapp')); // Legacy QR based route
 app.use('/api/search', searchRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/reviews', reviewRoutes);

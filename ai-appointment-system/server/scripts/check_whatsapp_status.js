@@ -10,7 +10,7 @@ async function check() {
                 whatsappPhoneId: true,
                 whatsappBusinessId: true,
                 // Do not print full token for security, just length
-                whatsappAPIToken: true 
+                whatsappAPIToken: true
             }
         });
 

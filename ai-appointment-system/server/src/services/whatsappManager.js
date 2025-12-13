@@ -1,15 +1,4 @@
-// LEGACY SERVICE - DISABLED FOR CLOUD API MIGRATION
-// This file used 'whatsapp-web.js' which requires Chromium and is too heavy for Render Free Tier.
-// We have switched to the Official WhatsApp Cloud API (services/whatsappCloud.js).
-
-const whatsappManager = {
-    initialize: async () => console.log('Legacy WhatsApp Manager is disabled.'),
-    getSessionStatus: () => ({ status: 'DISABLED', qrCode: null }),
-    startSession: async () => { },
-    logout: async () => { }
-};
-
-module.exports = whatsappManager;
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const aiService = require('./aiService');
 const { PrismaClient } = require('@prisma/client');
@@ -55,6 +44,8 @@ class WhatsappManager {
                 clientId: `salon-${salonId}`,
                 dataPath: './.wwebjs_auth'
             }),
+            authTimeoutMs: 60000, // Wait longer for auth on slow servers
+            qrMaxRetries: 5,
             puppeteer: {
                 headless: true,
                 args: [
@@ -64,7 +55,13 @@ class WhatsappManager {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu'
+                    '--single-process', // Critical for some containers
+                    '--disable-gpu',
+                    '--disable-extensions',
+                    '--disable-software-rasterizer',
+                    '--disable-gl-drawing-for-tests',
+                    '--window-size=1280,800', // Define size to avoid issues
+                    '--disable-notifications'
                 ]
             }
         });

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// const whatsappManager = require('../services/whatsappManager');
+const whatsappManager = require('../services/whatsappManager');
 const authenticateToken = require('../middleware/auth');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
