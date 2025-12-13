@@ -14,9 +14,22 @@ const UserProfile = () => {
     const [activeTab, setActiveTab] = useState('appointments');
     const [appointments, setAppointments] = useState([]);
 
+
+
     // Mock Appointments for Demo (Since we might not have real ones yet or complicated DB fetch)
     // Ideally this should fetch from /api/appointments/my-appointments
     useEffect(() => {
+        if (user) {
+            if (user.role === 'admin' || user.role === 'SUPER_ADMIN') {
+                navigate('/panel', { replace: true });
+                return;
+            }
+            if (user.role === 'salon_owner' || user.role === 'SALON_OWNER') {
+                navigate('/panel', { replace: true });
+                return;
+            }
+        }
+
         // Simulating fetch
         const mockAppointments = [
             {
@@ -39,7 +52,7 @@ const UserProfile = () => {
             }
         ];
         setAppointments(mockAppointments);
-    }, []);
+    }, [user, navigate]);
 
     if (loading) return <div>Loading...</div>;
 
@@ -62,6 +75,7 @@ const UserProfile = () => {
                                 </div>
                                 <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
                                 <p className="text-slate-500 text-sm">{user.email}</p>
+
                             </div>
 
                             <div className="space-y-2">

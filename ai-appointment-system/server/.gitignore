@@ -3,3 +3,8 @@ node_modules
 .env
 
 /generated/prisma
+.wwebjs_auth
+.wwebjs_cache
+*.log
+*.txt
+dev.db

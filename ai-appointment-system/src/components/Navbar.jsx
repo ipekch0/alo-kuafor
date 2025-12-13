@@ -36,6 +36,16 @@ const Navbar = () => {
 
     const isSearchPage = location.pathname === '/search';
 
+    const getDashboardPath = () => {
+        if (user?.role === 'admin' || user?.role === 'SUPER_ADMIN') return '/panel';
+        if (user?.role === 'salon_owner' || user?.role === 'SALON_OWNER') return '/panel';
+        return '/profile';
+    };
+
+    const getDashboardLabel = () => {
+        return 'Profilim';
+    };
+
     return (
         <>
             <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isSearchPage ? 'bg-white shadow-md py-3' : (isScrolled ? 'glass-premium py-3' : 'bg-transparent py-6')}`}>
@@ -81,13 +91,6 @@ const Navbar = () => {
                                                 <p className="text-xs text-slate-500">Aramıza katıldığınız için teşekkürler.</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-3 items-start">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                                            <div>
-                                                <p className="text-sm text-slate-800 font-medium">Hesabınız Onaylandı</p>
-                                                <p className="text-xs text-slate-500">Artık tüm özellikleri kullanabilirsiniz.</p>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </button>
@@ -95,20 +98,11 @@ const Navbar = () => {
                         {isAuthenticated ? (
                             <div className="flex items-center gap-3">
                                 <Link
-                                    to={location.pathname.startsWith('/panel') ? '/' : user?.role === 'salon_owner' ? '/panel' : '/profile'}
+                                    to={location.pathname.startsWith('/panel') || location.pathname.startsWith('/super-admin') ? '/' : getDashboardPath()}
                                     className="btn-premium py-2 px-6 text-sm flex items-center gap-2"
                                 >
-                                    {user?.role === 'salon_owner' ? (
-                                        <>
-                                            <LayoutDashboard className="w-4 h-4" />
-                                            Yönetim Paneli
-                                        </>
-                                    ) : (
-                                        <>
-                                            <User className="w-4 h-4" />
-                                            Profilim
-                                        </>
-                                    )}
+                                    <User className="w-4 h-4" />
+                                    {getDashboardLabel()}
                                 </Link>
                             </div>
                         ) : (
@@ -160,12 +154,12 @@ const Navbar = () => {
                             <hr className="border-slate-200 my-4" />
                             {isAuthenticated ? (
                                 <Link
-                                    to="/panel"
+                                    to={getDashboardPath()}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="text-lg font-sans text-indigo-600 font-bold flex items-center gap-2"
                                 >
-                                    <LayoutDashboard className="w-5 h-5" />
-                                    Yönetim Paneli
+                                    <User className="w-5 h-5" />
+                                    {getDashboardLabel()}
                                 </Link>
                             ) : (
                                 <>
