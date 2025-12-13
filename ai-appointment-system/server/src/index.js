@@ -43,10 +43,13 @@ app.use((req, res, next) => {
 // CORS Configuration - MUST BE FIRST
 // CORS Configuration - MUST BE FIRST
 const allowedOrigins = [
-    process.env.CLIENT_URL || 'http://localhost:5173',
+    process.env.CLIENT_URL,
+    process.env.RENDER_EXTERNAL_URL, // Render automatically sets this
+    'https://odak-manage.onrender.com', // Fallback explicit
+    'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:3002'
-];
+].filter(Boolean);
 app.use(cors({
     origin: function (origin, callback) {
         // allow requests with no origin (like mobile apps or curl requests)
