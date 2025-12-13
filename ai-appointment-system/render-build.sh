@@ -12,7 +12,7 @@ ls -la
 
 if [ -d "server" ]; then
   echo "📦 Installing Dependencies (Root)..."
-  npm install
+  npm install --legacy-peer-deps
   
   echo "🏗️  Building Frontend..."
   npm run build
