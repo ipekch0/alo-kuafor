@@ -11,11 +11,16 @@ echo "📂 Listing Root Files:"
 ls -la
 
 if [ -d "server" ]; then
-  echo "✅ 'server' directory found."
+  echo "📦 Installing Dependencies (Root)..."
+  npm install
+  
+  echo "🏗️  Building Frontend..."
+  npm run build
+
   echo "➡️  Entering server directory..."
   cd server
   
-  echo "📦 Installing Dependencies..."
+  echo "📦 Installing Dependencies (Server)..."
   npm install
   
   echo "🛠️  Generating Prisma Client..."
