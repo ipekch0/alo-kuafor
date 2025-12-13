@@ -15,7 +15,7 @@ if [ -d "server" ]; then
   npm install --legacy-peer-deps
   
   echo "🏗️  Building Frontend..."
-  npm run build
+  npx vite build
 
   echo "➡️  Entering server directory..."
   cd server
