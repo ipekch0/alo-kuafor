@@ -27,7 +27,7 @@ const ChatWidget = ({ salonId, salonName, user, whatsappEnabled, salonPhone }) =
         try {
             setLoading(true);
             // First, try to start/get conversation
-            const res = await axios.post('http://localhost:5000/api/chat/conversations', {
+            const res = await axios.post('/api/chat/conversations', {
                 salonId
             }, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
@@ -36,7 +36,7 @@ const ChatWidget = ({ salonId, salonName, user, whatsappEnabled, salonPhone }) =
             setConversationId(res.data.id);
 
             // Then fetch messages
-            const msgRes = await axios.get(`http://localhost:5000/api/chat/conversations/${res.data.id}/messages`, {
+            const msgRes = await axios.get(`/api/chat/conversations/${res.data.id}/messages`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
             });
             setMessages(msgRes.data);
@@ -62,7 +62,7 @@ const ChatWidget = ({ salonId, salonName, user, whatsappEnabled, salonPhone }) =
         setNewMessage('');
 
         try {
-            const res = await axios.post('http://localhost:5000/api/chat/messages', {
+            const res = await axios.post('/api/chat/messages', {
                 conversationId,
                 content: tempMsg.content
             }, {
