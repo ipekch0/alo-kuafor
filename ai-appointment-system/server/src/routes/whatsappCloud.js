@@ -318,7 +318,8 @@ router.post('/webhook', verifyWebhookSignature, async (req, res) => {
 async function handleIncomingMessage(phoneId, from, text) {
     try {
         const salon = await prisma.salon.findFirst({
-            where: { whatsappPhoneId: phoneId }
+            where: { whatsappPhoneId: phoneId },
+            include: { services: true }
         });
 
         if (!salon || !salon.whatsappAPIToken) {
@@ -329,7 +330,13 @@ async function handleIncomingMessage(phoneId, from, text) {
         console.log(`Received WhatsApp message from ${from} for salon ${salon.name}: ${text}`);
 
         // 1. Generate AI Response
-        const aiReply = await generateAIResponse(text, { salonName: salon.name });
+        // aiService now expects { salonName, services, salonId, senderPhone }
+        const aiReply = await generateAIResponse(text, {
+            salonName: salon.name,
+            services: salon.services,
+            salonId: salon.id,
+            senderPhone: from
+        });
 
         // 2. Send Response via WhatsApp Cloud API
         await sendWhatsAppMessage(salon.whatsappAPIToken, salon.whatsappPhoneId, from, aiReply);
