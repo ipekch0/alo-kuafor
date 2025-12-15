@@ -8,151 +8,99 @@ import { useMySalon, useUpdateMySalon } from '../hooks/useData';
 import toast from 'react-hot-toast';
 import { cities } from '../data/cities';
 
-// QR Code Connection Manager
+// Cloud API Connection Manager
 const WhatsAppConnectionManager = () => {
-    const [status, setStatus] = useState('DISCONNECTED'); // DISCONNECTED, INITIALIZING, QR_READY, READY
-    const [qrCode, setQrCode] = useState(null);
+    // No polling needed for manual entry, just saving keys
+    // We can fetch current status or just show the form
     const [loading, setLoading] = useState(false);
-    const [connectedPhone, setConnectedPhone] = useState(null);
 
-    // Poll status every 3 seconds if initializing or qr ready
-    useEffect(() => {
-        let interval;
-        const checkStatus = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const res = await fetch('/api/whatsapp/status', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-
-                // Map backend status to frontend state
-                // Backend: INITIALIZING, QR_READY, READY, AUTHENTICATED, CONNECTED, DISCONNECTED
-                if (data.status === 'READY' || data.status === 'AUTHENTICATED') {
-                    setStatus('CONNECTED');
-                    setConnectedPhone(data.phone);
-                    setQrCode(null);
-                } else if (data.status === 'QR_READY') {
-                    setStatus('QR_READY');
-                    setQrCode(data.qr);
-                } else if (data.status === 'INITIALIZING') {
-                    setStatus('INITIALIZING');
-                } else {
-                    setStatus('DISCONNECTED');
-                }
-            } catch (e) { console.error(e); }
-        };
-
-        checkStatus(); // Initial check
-
-        // Start polling if we are in a pending state
-        if (status === 'INITIALIZING' || status === 'QR_READY' || loading) {
-            interval = setInterval(checkStatus, 3000);
-        }
-
-        return () => clearInterval(interval);
-    }, [status, loading]);
-
-    const handleConnect = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem('token');
-            await fetch('/api/whatsapp/connect', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setStatus('INITIALIZING');
-            toast.loading('WhatsApp başlatılıyor, lütfen bekleyin...');
-        } catch (error) {
-            toast.error('Bağlantı başlatılamadı');
-            setLoading(false);
-        }
-    };
-
-    const handleDisconnect = async () => {
-        if (!confirm('Bağlantıyı kesmek istediğinize emin misiniz?')) return;
-        try {
-            const token = localStorage.getItem('token');
-            await fetch('/api/whatsapp/disconnect', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            setStatus('DISCONNECTED');
-            setQrCode(null);
-            setConnectedPhone(null);
-            toast.success('Bağlantı kesildi.');
-        } catch (error) {
-            toast.error('Çıkış yapılamadı');
-        }
-    };
-
-    if (status === 'CONNECTED') {
-        return (
-            <div className="bg-white p-6 rounded-xl border border-emerald-100 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-900">WhatsApp Bağlandı</h4>
-                        <p className="text-sm text-slate-500">
-                            {connectedPhone ? `Bağlı Numara: ${connectedPhone}` : 'Yapay Zeka Asistanı Aktif'}
-                        </p>
-                    </div>
-                </div>
-                <button
-                    onClick={handleDisconnect}
-                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-                >
-                    Bağlantıyı Kes
-                </button>
-            </div>
-        );
-    }
+    const API_URL = '/api'; // Relative path proxy
 
     return (
-        <div className="bg-white p-8 rounded-xl border border-slate-200 text-center">
-            <div className="py-6">
-                {status === 'QR_READY' && qrCode ? (
-                    <div className="mb-6">
-                        <div className="bg-white p-4 inline-block rounded-xl border-2 border-slate-900 shadow-xl">
-                            <img src={qrCode} alt="WhatsApp QR" className="w-64 h-64" />
-                        </div>
-                        <p className="mt-4 text-emerald-600 font-semibold animate-pulse">
-                            WhatsApp uygulamasından QR kodu okutun
-                        </p>
-                    </div>
-                ) : (
-                    <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Smartphone className="w-8 h-8 text-emerald-600" />
-                    </div>
-                )}
+        <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <span className="text-2xl">☁️</span> WhatsApp Cloud API Bağlantısı
+            </h2>
 
-                <h3 className="text-lg font-bold text-slate-900 mb-2">WhatsApp'ı Bağla</h3>
-                <p className="text-slate-500 text-sm mb-6 max-w-sm mx-auto">
-                    {status === 'INITIALIZING'
-                        ? 'QR Kod oluşturuluyor, lütfen bekleyin...'
-                        : 'Yapay zeka asistanını aktifleştirmek için WhatsApp Web QR kodunu okutun.'}
-                </p>
+            <div className="space-y-6">
+                <div className="bg-blue-50 p-4 rounded-lg text-blue-800 text-sm border border-blue-100">
+                    <p className="font-semibold mb-1">Yeni Sistem (Stabil & Hızlı)</p>
+                    <p>Resmi WhatsApp Cloud API kullanıyorsunuz. Lütfen Meta Developer panelinden aldığınız bilgileri girin.</p>
+                </div>
 
-                {status !== 'QR_READY' && status !== 'INITIALIZING' && (
+                <div className="grid gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number ID</label>
+                        <input
+                            type="text"
+                            placeholder="Örn: 321654987..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            id="phoneIdInput"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Business Account ID</label>
+                        <input
+                            type="text"
+                            placeholder="Örn: 123456789..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            id="wabaIdInput"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Permanent Access Token (Sistem Kullanıcısı)</label>
+                        <input
+                            type="password"
+                            placeholder="EAA..."
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                            id="tokenInput"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2 mt-4">
                     <button
-                        onClick={handleConnect}
                         disabled={loading}
-                        className="btn-primary bg-[#25D366] hover:bg-[#20bd5a] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-100 transition-transform hover:scale-105 flex items-center gap-2 mx-auto disabled:opacity-70 disabled:scale-100"
+                        onClick={async () => {
+                            const phoneId = document.getElementById('phoneIdInput').value;
+                            const wabaId = document.getElementById('wabaIdInput').value;
+                            const token = document.getElementById('tokenInput').value;
+
+                            if (!phoneId || !wabaId || !token) {
+                                toast.error('Lütfen tüm alanları doldurun.');
+                                return;
+                            }
+
+                            setLoading(true);
+                            try {
+                                const res = await fetch(`${API_URL}/whatsapp/manual-connect`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                    },
+                                    body: JSON.stringify({ phoneId, wabaId, token })
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    toast.success('✅ Bağlantı Başarıyla Kaydedildi!');
+                                    // Optional: Clear form or show success state
+                                } else {
+                                    toast.error('Hata: ' + (data.error || 'Bilinmeyen hata'));
+                                }
+                            } catch (err) {
+                                toast.error('Bağlantı hatası: ' + err.message);
+                            } finally {
+                                setLoading(false);
+                            }
+                        }}
+                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-70"
                     >
-                        {loading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                <span>Başlatılıyor...</span>
-                            </>
-                        ) : (
-                            <>
-                                <span>QR Kod Oluştur</span>
-                            </>
-                        )}
+                        {loading ? 'Kaydediliyor...' : 'Kaydet ve Bağlan'}
                     </button>
-                )}
+                </div>
             </div>
         </div>
     );
