@@ -257,7 +257,7 @@ const verifyWebhookSignature = (req, res, next) => {
 
 // Webhook for Incoming Messages
 router.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'my_secure_verify_token_123';
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
