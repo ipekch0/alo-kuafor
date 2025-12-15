@@ -39,10 +39,17 @@ class WhatsappManager {
             info: null
         });
 
+        // Check for Render Persistent Disk
+        const fs = require('fs');
+        const PERISTENT_PATH = '/var/data/whatsapp';
+        const authPath = fs.existsSync(PERISTENT_PATH) ? PERISTENT_PATH : './.wwebjs_auth';
+
+        console.log(`Using WhatsApp Auth Path: ${authPath}`);
+
         const client = new Client({
             authStrategy: new LocalAuth({
                 clientId: `salon-${salonId}`,
-                dataPath: './.wwebjs_auth'
+                dataPath: authPath
             }),
             authTimeoutMs: 60000, // Wait longer for auth on slow servers
             qrMaxRetries: 5,
