@@ -1,78 +1,161 @@
 
 const axios = require('axios');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Initialize Gemini
-// using direct REST API to avoid SDK/Fetch issues in some environments
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent";
 
 async function generateAIResponse(message, context = {}) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
         console.warn('GEMINI_API_KEY is missing.');
-        // Fallback Mock
-        const lowerMsg = message.toLowerCase();
-        let reply = "Sistem şu an Yapay Zeka anahtarı eksik olduğu için tam kapasite çalışamıyor.";
-        if (lowerMsg.includes('merhaba')) reply = "Merhaba! (API Key Eksik)";
-        return reply;
+        return "Sistem şu an Yapay Zeka anahtarı eksik olduğu için tam kapasite çalışamıyor.";
     }
 
-    const salonName = context.salonName || 'OdakManage';
+    const { salonName, services, salonId, senderPhone } = context;
 
+    // 1. Format Services for Prompt
+    let servicesText = "Henüz hizmet bilgisi girilmemiş.";
+    if (services && services.length > 0) {
+        servicesText = services.map(s => `- ${s.name} (${s.duration} dk) - ${s.price} TL`).join('\n');
+    }
+
+    // 2. Construct System Prompt with Tool Definitions
     const systemPrompt = `
-    Sen '${salonName}' için çalışan profesyonel ve yardımsever bir yapay zeka asistanısın.
-    İsmin: '${salonName} Asistan'.
-        Görevin: Müşterilerin sorularını nazik, profesyonel, kısa ve satış odaklı bir dille yanıtlamak.
+    Sen '${salonName}' için çalışan profesyonel bir randevu asistanısın.
+    Görevin: Müşterilere bilgi vermek ve RANDEVU ALMAK.
 
-            Bilgiler:
-- Salon Adı: ${salonName}
-- Randevu: Müşteriyi nazikçe 'Randevu Al' butonuna veya web sitesine yönlendir.
-    - Dil: Türkçe konuş.
-    - Tarzın: Emoji kullanabilirsin 💇‍♀️✨. Samimi ama saygılı ol.Çok uzun paragraflar yazma.
+    SALON HİZMETLERİ:
+    ${servicesText}
 
+    KURALLAR:
+    - Asla yalan söyleme.
+    - Randevu talep edilirse ÖNCE müsaitlik kontrolü yap.
+    - Müsaitse ve müşteri onaylarsa randevuyu oluştur.
+    - Tarih formatı: YYYY-MM-DD HH:mm (Örn: 2025-12-16 14:30)
+    - Bugünün Tarihi: ${new Date().toISOString().split('T')[0]} (${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })})
+
+    ARAÇLAR (TOOLS):
+    Eğer bir işlem yapman gerekiyorsa, cevabını SADECE aşağıdaki JSON formatında ver (yorum ekleme):
+
+    1. Müsaitlik Kontrolü:
+    { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm" }
+
+    2. Randevu Oluşturma (Sadece müşteri net onay verirse):
+    { "tool": "create_appointment", "serviceName": "Hizmet Adı Tam Eşleşme", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
+
+    Eğer işlem gerekmiyorsa, sadece normal Türkçe cevap ver.
     Müşteri Mesajı: "${message}"
-Cevabın:
-`;
+    `;
 
     try {
-        const response = await axios.post(
-            `${GEMINI_API_URL}?key=${apiKey}`,
-            {
-                contents: [{
-                    parts: [{ text: systemPrompt }]
-                }]
-            },
-            {
-                headers: { 'Content-Type': 'application/json' }
-            }
-        );
+        // --- STEP 1: INITIAL CALL ---
+        let response = await callGemini(apiKey, systemPrompt);
+        let text = response.text;
 
-        if (response.data && response.data.candidates && response.data.candidates.length > 0) {
-            const content = response.data.candidates[0].content;
-            if (content && content.parts && content.parts.length > 0) {
-                return content.parts[0].text;
+        // --- STEP 2: TOOL EXECUTION LOOP ---
+        // Check if response is JSON (Tool Call)
+        if (text.trim().startsWith('{') && text.trim().includes('"tool"')) {
+            try {
+                const toolCall = JSON.parse(text.match(/\{[\s\S]*\}/)[0]); // Extract JSON robustly
+                console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
+
+                let toolResult = "";
+
+                if (toolCall.tool === 'check_availability') {
+                    // MOCK Implementation for now - Real implementation needs simple date clash check
+                    // For MVP: Check if any appointment exists at that exact time for the salon
+                    // We assume 1 professional for simplicity in this auto-response mode
+                    const existing = await prisma.appointment.findFirst({
+                        where: {
+                            salonId: salonId,
+                            dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
+                            status: { not: 'cancelled' }
+                        }
+                    });
+                    toolResult = existing ? "DOLU" : "MÜSAİT";
+                }
+
+                if (toolCall.tool === 'create_appointment') {
+                    // Find service
+                    const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
+                    if (!service) {
+                        toolResult = "HATA: Hizmet bulunamadı.";
+                    } else {
+                        // Create Database Record
+                        // Retrieve or create customer
+                        let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
+                        if (!customer) {
+                            customer = await prisma.customer.create({
+                                data: { name: "WhatsApp Müşterisi", phone: senderPhone }
+                            });
+                        }
+
+                        // Need a professional ID. Pick the first one or default one.
+                        // Assuming salon has at least one professional.
+                        const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
+                        if (!professional) {
+                            toolResult = "HATA: Salonda personel tanımlı değil.";
+                        } else {
+                            const aptDate = new Date(`${toolCall.date}T${toolCall.time}:00`);
+                            await prisma.appointment.create({
+                                data: {
+                                    salonId: salonId,
+                                    customerId: customer.id,
+                                    serviceId: service.id,
+                                    professionalId: professional.id,
+                                    dateTime: aptDate,
+                                    totalPrice: service.price,
+                                    status: 'confirmed',
+                                    notes: 'WhatsApp Yapay Zeka tarafından oluşturuldu.'
+                                }
+                            });
+                            toolResult = `BAŞARILI: Randevu oluşturuldu. Tarih: ${toolCall.date} ${toolCall.time}, Hizmet: ${service.name}`;
+                        }
+                    }
+                }
+
+                // --- STEP 3: FINAL CALL WITH RESULT ---
+                const followUpPrompt = `${systemPrompt}\n\nSİSTEM ÇIKTISI (TOOL RESULT): ${toolResult}\n\nBu bilgiye göre müşteriye son cevabı ver:`;
+                const finalRes = await callGemini(apiKey, followUpPrompt);
+                return finalRes.text;
+
+            } catch (jsonErr) {
+                console.error('Tool parsing error:', jsonErr);
+                return "İşleminizi yaparken bir hata oluştu, ancak size nasıl yardımcı olabilirim?";
             }
         }
 
-        return "⚠️ Yanıt üretilemedi.";
+        return text; // No tool called, return original text
 
     } catch (apiError) {
         console.error('Gemini API Failed:', apiError.response ? apiError.response.data : apiError.message);
-        // Fallback logic
-        return "⚠️ Üzgünüm, şu an bağlantımda bir sorun var. Lütfen daha sonra tekrar yazın veya salonu arayın.";
+        return "⚠️ Üzgünüm, şu an bağlantımda bir sorun var.";
     }
 }
 
-// Alias for compatibility
-const chat = async (message, sessionId, context = {}) => {
-    // If context is passed as 3rd arg (from whatsappManager), use it.
-    // generateAIResponse uses (message, context)
-    // We can merge sessionId info into context if needed, but for now just map arguments.
-    // whatsappManager calls: chat(message.body, message.from, salon) -> (msg, sessionId/userId, salonObj)
+async function callGemini(apiKey, prompt) {
+    const response = await axios.post(
+        `${GEMINI_API_URL}?key=${apiKey}`,
+        { contents: [{ parts: [{ text: prompt }] }] },
+        { headers: { 'Content-Type': 'application/json' } }
+    );
+    if (response.data?.candidates?.[0]?.content?.parts?.[0]) {
+        return { text: response.data.candidates[0].content.parts[0].text };
+    }
+    throw new Error("No response candidates");
+}
 
-    // Careful: generateAIResponse expects context.salonName
+const chat = async (message, sessionId, context = {}) => {
+    // context needs: name, id, services (array)
     const salonName = context?.name || 'OdakManage';
+    const services = context?.services || [];
+    const salonId = context?.id;
+    const senderPhone = sessionId; // Using sessionId as phone for now, assuming format '90555...'
+
     return {
-        message: await generateAIResponse(message, { salonName })
+        message: await generateAIResponse(message, { salonName, services, salonId, senderPhone })
     };
 };
 

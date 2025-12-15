@@ -102,7 +102,7 @@ const WhatsAppConnectionManager = () => {
                 </div>
                 <button
                     onClick={handleDisconnect}
-                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                    className="px-8 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
                 >
                     Bağlantıyı Kes
                 </button>
