@@ -55,12 +55,11 @@ class WhatsappManager {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--single-process', // Critical for some containers
                     '--disable-gpu',
                     '--disable-extensions',
                     '--disable-software-rasterizer',
                     '--disable-gl-drawing-for-tests',
-                    '--window-size=1280,800', // Define size to avoid issues
+                    '--window-size=1280,800',
                     '--disable-notifications'
                 ]
             }
