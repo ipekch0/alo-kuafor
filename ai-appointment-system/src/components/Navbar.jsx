@@ -130,45 +130,106 @@ const Navbar = () => {
                 </div>
             </nav>
 
-            {/* Mobile Menu Overlay */}
-            <AnimatePresence>
+            {/* Mobile Menu Drawer (Side Panel) */}
+            <AnimatePresence mode="wait">
                 {isMobileMenuOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl pt-28 px-6 lg:hidden"
-                    >
-                        <div className="flex flex-col gap-6 text-2xl font-serif font-medium text-slate-900">
-                            {navLinks.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    to={item.path}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="hover:text-indigo-600 transition-colors flex items-center gap-3"
-                                >
-                                    {item.isSpecial && <Sparkles className="w-6 h-6 text-indigo-500" />}
-                                    {item.name}
+                    <>
+                        {/* Backdrop Blur Overlay */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+                        />
+
+                        {/* Side Drawer */}
+                        <motion.div
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                            className="fixed top-0 left-0 bottom-0 w-[280px] bg-white z-[70] shadow-2xl flex flex-col h-full overflow-hidden"
+                        >
+                            {/* Drawer Header */}
+                            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <Link to="/" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md">
+                                        <Scissors className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xl font-black tracking-tighter text-slate-900 uppercase">
+                                        ODAK
+                                    </span>
                                 </Link>
-                            ))}
-                            <hr className="border-slate-200 my-4" />
-                            {isAuthenticated ? (
-                                <Link
-                                    to={getDashboardPath()}
+                                <button
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="text-lg font-sans text-indigo-600 font-bold flex items-center gap-2"
+                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
                                 >
-                                    <User className="w-5 h-5" />
-                                    {getDashboardLabel()}
-                                </Link>
-                            ) : (
-                                <>
-                                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans text-slate-600">Giriş Yap</Link>
-                                    <Link to="/search" onClick={() => setIsMobileMenuOpen(false)} className="text-lg font-sans text-indigo-600 font-bold">Randevu Al</Link>
-                                </>
-                            )}
-                        </div>
-                    </motion.div>
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Drawer Links */}
+                            <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
+                                {navLinks.map((item) => (
+                                    <Link
+                                        key={item.name}
+                                        to={item.path}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                                            ${item.isSpecial
+                                                ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-100'
+                                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                                            }
+                                        `}
+                                    >
+                                        {item.isSpecial ? (
+                                            <Sparkles className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
+                                        ) : (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-500 transition-colors" />
+                                        )}
+                                        {item.name}
+                                    </Link>
+                                ))}
+
+                                <hr className="border-slate-100 my-4" />
+
+                                {/* Auth Actions in Drawer */}
+                                {isAuthenticated ? (
+                                    <Link
+                                        to={getDashboardPath()}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all font-semibold"
+                                    >
+                                        <User className="w-5 h-5" />
+                                        {getDashboardLabel()}
+                                    </Link>
+                                ) : (
+                                    <div className="flex flex-col gap-3">
+                                        <Link
+                                            to="/login"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="w-full py-3 px-4 rounded-xl text-slate-600 font-bold border border-slate-200 hover:bg-slate-50 transition-colors text-center"
+                                        >
+                                            Giriş Yap
+                                        </Link>
+                                        <Link
+                                            to="/search"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="w-full py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 transition-colors text-center"
+                                        >
+                                            Randevu Al
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Drawer Footer */}
+                            <div className="p-4 border-t border-slate-100 bg-slate-50/30 text-center">
+                                <p className="text-xs text-slate-400 font-medium">© 2025 OdakManage AI</p>
+                            </div>
+                        </motion.div>
+                    </>
                 )}
             </AnimatePresence>
         </>

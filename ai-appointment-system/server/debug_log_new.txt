@@ -1720,3 +1720,9 @@
 [2025-12-16T19:59:13.093Z] GET /api/professionals
 [2025-12-16T19:59:13.098Z] GET /api/services
 [2025-12-16T19:59:13.100Z] GET /api/salons/mine
+[2025-12-16T20:05:55.608Z] GET /api/salons/mine
+[2025-12-16T20:05:55.632Z] GET /api/professionals
+[2025-12-16T20:05:55.639Z] GET /api/services
+[2025-12-16T20:06:57.223Z] GET /api/professionals
+[2025-12-16T20:06:57.227Z] GET /api/services
+[2025-12-16T20:06:57.230Z] GET /api/salons/mine
