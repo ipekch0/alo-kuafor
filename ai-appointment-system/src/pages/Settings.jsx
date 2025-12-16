@@ -10,12 +10,9 @@ import { cities } from '../data/cities';
 
 // Cloud API Connection Manager
 const WhatsAppConnectionManager = () => {
-    // No polling needed for manual entry, just saving keys
-    // We can fetch current status or just show the form
     const [loading, setLoading] = useState(false);
-
-    const API_URL = '/api'; // Relative path proxy
-
+    const API_URL = '/api'; 
+    
     return (
         <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -86,7 +83,6 @@ const WhatsAppConnectionManager = () => {
                                 const data = await res.json();
                                 if (data.success) {
                                     toast.success('✅ Bağlantı Başarıyla Kaydedildi!');
-                                    // Optional: Clear form or show success state
                                 } else {
                                     toast.error('Hata: ' + (data.error || 'Bilinmeyen hata'));
                                 }

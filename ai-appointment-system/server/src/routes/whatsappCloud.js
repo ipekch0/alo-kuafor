@@ -257,17 +257,30 @@ const verifyWebhookSignature = (req, res, next) => {
 
 // Webhook for Incoming Messages
 router.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || 'my_secure_verify_token_123';
+    // HARDCODED for absolute certainty during debugging
+    const VERIFY_TOKEN = 'my_secure_verify_token_123';
+
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
+    console.log('--- WEBHOOK VERIFICATION REQUEST ---');
+    console.log('Received Mode:', mode);
+    console.log('Received Token:', token);
+    console.log('Expected Token:', VERIFY_TOKEN);
+    console.log('Match?', token === VERIFY_TOKEN);
+    console.log('------------------------------------');
+
     if (mode && token) {
         if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+            console.log('Webhook Verification SUCCESS');
             res.status(200).send(challenge);
         } else {
+            console.log('Webhook Verification FAILED (403)');
             res.sendStatus(403);
         }
+    } else {
+        res.sendStatus(400);
     }
 });
 
