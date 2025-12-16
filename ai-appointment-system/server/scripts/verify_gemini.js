@@ -15,19 +15,12 @@ async function testConnection() {
     }
 
     try {
-        console.log("Sending test request to Google...");
-        const response = await axios.post(
-            `${GEMINI_API_URL}?key=${API_KEY}`,
-            {
-                contents: [{
-                    parts: [{ text: "Hello, answer with 'OK' if you hear me." }]
-                }]
-            },
-            {
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 10000
-            }
+        console.log("Listing available models...");
+        const response = await axios.get(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`,
+            { timeout: 10000 }
         );
+
 
         console.log("Response Status:", response.status);
         console.log("Response Data:", JSON.stringify(response.data, null, 2));

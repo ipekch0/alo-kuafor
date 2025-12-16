@@ -8,9 +8,14 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/
 
 async function generateAIResponse(message, context = {}) {
     // HARDCODED KEY AS FALLBACK FOR IMMEDIATE RENDER DEPLOYMENT FIX
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCoLgVnyGtysUlGqxQhmO9zemN6DtqY1Dg';
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    // --- DEBUG LOGGING ---
+    console.log(`[AI DEBUG] Generating response for: "${message}"`);
+    console.log(`[AI DEBUG] API Key Present: ${!!apiKey} (Length: ${apiKey ? apiKey.length : 0})`);
+
     if (!apiKey) {
-        console.warn('GEMINI_API_KEY is missing.');
+        console.error('[AI DEBUG] GEMINI_API_KEY is missing in process.env');
         return "Sistem şu an Yapay Zeka anahtarı eksik olduğu için tam kapasite çalışamıyor.";
     }
 
@@ -130,9 +135,20 @@ async function generateAIResponse(message, context = {}) {
 
         return text; // No tool called, return original text
 
+
+
+        // ... (rest of logic) ...
+
     } catch (apiError) {
-        console.error('Gemini API Failed:', apiError.response ? apiError.response.data : apiError.message);
-        return "⚠️ Üzgünüm, şu an bağlantımda bir sorun var.";
+        console.error('--- GEMINI API FAILURE ---');
+        console.error('Message:', apiError.message);
+        if (apiError.response) {
+            console.error('Status:', apiError.response.status);
+            console.error('Data:', JSON.stringify(apiError.response.data, null, 2));
+        } else {
+            console.error('Stack:', apiError.stack);
+        }
+        return `⚠️ Üzgünüm, şu an bağlantımda bir sorun var. (Hata: ${apiError.message})`;
     }
 }
 

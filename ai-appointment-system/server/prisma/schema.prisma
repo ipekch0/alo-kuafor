@@ -76,6 +76,7 @@ model Salon {
   professionals   Professional[]
   services        Service[]
   appointments    Appointment[]
+  customers       Customer[]
   
   workingHours    String?          // JSON object: { "monday": { "start": "09:00", "end": "19:00" }, ... }
   
@@ -164,6 +165,7 @@ model Customer {
   notes           String?
   
   appointments    Appointment[]
+  salons          Salon[]
   
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

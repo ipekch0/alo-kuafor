@@ -24,9 +24,9 @@ router.get('/', async (req, res) => {
         // Since Customer doesn't have salonId, we filter by appointments
         const customers = await prisma.customer.findMany({
             where: {
-                appointments: {
+                salons: {
                     some: {
-                        salonId: salon.id
+                        id: salon.id
                     }
                 }
             },
@@ -97,9 +97,19 @@ router.post('/', async (req, res) => {
         if (existingCustomer) {
             // Instead of error, return the existing customer
             // This allows the frontend to proceed as if "added" to the system
+            // If customer exists, ensure they are connected to this salon
+            await prisma.customer.update({
+                where: { id: existingCustomer.id },
+                data: {
+                    salons: {
+                        connect: { id: salon.id }
+                    }
+                }
+            });
+
             return res.status(200).json({
                 ...existingCustomer,
-                message: 'Müşteri sistemde zaten kayıtlı. İşlem başarılı.'
+                message: 'Müşteri sistemde zaten kayıtlıydı, listenize eklendi.'
             });
         }
 
@@ -111,7 +121,10 @@ router.post('/', async (req, res) => {
                 city: city || null,
                 address: address || null,
                 idNumber: idNumber || null,
-                notes: notes || null
+                notes: notes || null,
+                salons: {
+                    connect: { id: salon.id }
+                }
             }
         });
 
