@@ -8,11 +8,75 @@ import { useMySalon, useUpdateMySalon } from '../hooks/useData';
 import toast from 'react-hot-toast';
 import { cities } from '../data/cities';
 
-// Cloud API Connection Manager
+// Cloud API Connection Manager (Embedded Signup + Manual Fallback)
 const WhatsAppConnectionManager = () => {
     const [loading, setLoading] = useState(false);
-    const API_URL = '/api'; 
-    
+    const [showManual, setShowManual] = useState(false);
+    // TODO: Bu App ID'yi .env dosyasından veya veritabanından çekmek en doğrusu olur.
+    // Şimdilik kullanıcının girmesi için bir alan bırakıyorum veya varsayılanı kullanıyoruz.
+    const [fbAppId, setFbAppId] = useState('2606952183007121'); // Güncel App ID
+
+    useEffect(() => {
+        // Load Facebook SDK
+        window.fbAsyncInit = function () {
+            window.FB.init({
+                appId: fbAppId,
+                autoLogAppEvents: true,
+                xfbml: true,
+                version: 'v18.0'
+            });
+        };
+
+        (function (d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) { return; }
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    }, [fbAppId]);
+
+    const launchWhatsAppSignup = () => {
+        setLoading(true);
+        window.FB.login(function (response) {
+            if (response.authResponse) {
+                const code = response.authResponse.code;
+                console.log('Facebook Login Code:', code);
+                // Send code to backend
+                exchangeCode(code);
+            } else {
+                console.log('User cancelled login or did not fully authorize.');
+                setLoading(false);
+                toast.error('Giriş iptal edildi veya yetki verilmedi.');
+            }
+        }, {
+            scope: 'whatsapp_business_management, whatsapp_business_messaging'
+        });
+    };
+
+    const exchangeCode = async (code) => {
+        try {
+            const res = await fetch('/api/whatsapp/exchange-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('✅ WhatsApp Başarıyla Bağlandı!');
+            } else {
+                toast.error('Bağlantı Hatası: ' + (data.error || data.details?.error?.message));
+            }
+        } catch (error) {
+            toast.error('Sunucu Hatası: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -20,83 +84,102 @@ const WhatsAppConnectionManager = () => {
             </h2>
 
             <div className="space-y-6">
-                <div className="bg-blue-50 p-4 rounded-lg text-blue-800 text-sm border border-blue-100">
-                    <p className="font-semibold mb-1">Yeni Sistem (Stabil & Hızlı)</p>
-                    <p>Resmi WhatsApp Cloud API kullanıyorsunuz. Lütfen Meta Developer panelinden aldığınız bilgileri girin.</p>
-                </div>
+                {!showManual ? (
+                    <div className="text-center py-8">
+                        <div className="mb-6">
+                            <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span className="text-3xl">f</span>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900">Facebook ile Otomatik Bağlan</h3>
+                            <p className="text-gray-500 text-sm max-w-sm mx-auto mt-2">
+                                Tek tıkla WhatsApp Business hesabınızı seçin ve bağlayın. Kopyala-yapıştır derdi yok.
+                            </p>
+                        </div>
 
-                <div className="grid gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number ID</label>
-                        <input
-                            type="text"
-                            placeholder="Örn: 321654987..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            id="phoneIdInput"
-                        />
+                        <div className="mb-4 max-w-xs mx-auto">
+                            <label className="text-xs text-gray-400 block text-left mb-1">Facebook App ID (Varsa Değiştirin)</label>
+                            <input
+                                type="text"
+                                value={fbAppId}
+                                onChange={(e) => setFbAppId(e.target.value)}
+                                className="w-full text-center text-sm border-b border-gray-200 focus:border-blue-500 outline-none pb-1"
+                                placeholder="App ID Giriniz"
+                            />
+                        </div>
+
+                        <button
+                            onClick={launchWhatsAppSignup}
+                            disabled={loading}
+                            className="bg-[#1877F2] text-white px-8 py-3 rounded-full font-medium hover:bg-[#166fe5] transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2 mx-auto disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {loading ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    Bağlanıyor...
+                                </>
+                            ) : (
+                                'Facebook ile Bağlan'
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => setShowManual(true)}
+                            className="text-xs text-gray-400 mt-6 underline hover:text-gray-600"
+                        >
+                            Veya Manuel Kuruluma Dön
+                        </button>
                     </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-sm font-semibold text-gray-700">Manuel Giriş (Gelişmiş)</h3>
+                            <button onClick={() => setShowManual(false)} className="text-xs text-blue-600 hover:underline">Otomatik Moda Dön</button>
+                        </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Business Account ID</label>
-                        <input
-                            type="text"
-                            placeholder="Örn: 123456789..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            id="wabaIdInput"
-                        />
+                        {/* Manual Form Content Re-used */}
+                        <div className="grid gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number ID</label>
+                                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" id="phoneIdInput" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Business Account ID</label>
+                                <input type="text" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" id="wabaIdInput" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Permanent Access Token</label>
+                                <input type="password" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" id="tokenInput" />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={async () => {
+                                    const phoneId = document.getElementById('phoneIdInput').value;
+                                    const wabaId = document.getElementById('wabaIdInput').value;
+                                    const token = document.getElementById('tokenInput').value;
+                                    if (!phoneId || !wabaId || !token) return toast.error('Eksik bilgi.');
+
+                                    setLoading(true);
+                                    try {
+                                        const res = await fetch('/api/whatsapp/manual-connect', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                                            body: JSON.stringify({ phoneId, wabaId, token })
+                                        });
+                                        const data = await res.json();
+                                        if (data.success) toast.success('Kaydedildi!');
+                                        else toast.error('Hata: ' + data.error);
+                                    } catch (err) { toast.error(err.message); }
+                                    finally { setLoading(false); }
+                                }}
+                                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                            >
+                                Kaydet ve Bağlan
+                            </button>
+                        </div>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Permanent Access Token (Sistem Kullanıcısı)</label>
-                        <input
-                            type="password"
-                            placeholder="EAA..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            id="tokenInput"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex justify-end gap-2 mt-4">
-                    <button
-                        disabled={loading}
-                        onClick={async () => {
-                            const phoneId = document.getElementById('phoneIdInput').value;
-                            const wabaId = document.getElementById('wabaIdInput').value;
-                            const token = document.getElementById('tokenInput').value;
-
-                            if (!phoneId || !wabaId || !token) {
-                                toast.error('Lütfen tüm alanları doldurun.');
-                                return;
-                            }
-
-                            setLoading(true);
-                            try {
-                                const res = await fetch(`${API_URL}/whatsapp/manual-connect`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                                    },
-                                    body: JSON.stringify({ phoneId, wabaId, token })
-                                });
-                                const data = await res.json();
-                                if (data.success) {
-                                    toast.success('✅ Bağlantı Başarıyla Kaydedildi!');
-                                } else {
-                                    toast.error('Hata: ' + (data.error || 'Bilinmeyen hata'));
-                                }
-                            } catch (err) {
-                                toast.error('Bağlantı hatası: ' + err.message);
-                            } finally {
-                                setLoading(false);
-                            }
-                        }}
-                        className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-70"
-                    >
-                        {loading ? 'Kaydediliyor...' : 'Kaydet ve Bağlan'}
-                    </button>
-                </div>
+                )}
             </div>
         </div>
     );

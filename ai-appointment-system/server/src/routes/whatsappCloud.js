@@ -40,10 +40,14 @@ router.post('/exchange-token', authenticateToken, async (req, res) => {
         const userId = req.user.id;
 
         // 1. Exchange Short-Lived Token for Long-Lived Token
+        // HARDCODED CREDENTIALS FOR IMMEDIATE FIX
+        const APP_ID = '2606952183007121';
+        const APP_SECRET = 'e4185b47c222a99b0ed266f7029f34d8';
+
         const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token?` +
             `grant_type=fb_exchange_token&` +
-            `client_id=${process.env.FACEBOOK_APP_ID}&` +
-            `client_secret=${process.env.FACEBOOK_APP_SECRET}&` +
+            `client_id=${APP_ID}&` +
+            `client_secret=${APP_SECRET}&` +
             `fb_exchange_token=${code}`;
 
         console.log('Exchanging access token for User ID:', userId);
@@ -58,7 +62,7 @@ router.post('/exchange-token', authenticateToken, async (req, res) => {
 
         // 2. Identify the WABA (WhatsApp Business Account) ID
         // Use App Access Token for debugging to ensure we can inspect any user token
-        const appAccessToken = `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`;
+        const appAccessToken = `${APP_ID}|${APP_SECRET}`;
         const debugUrl = `https://graph.facebook.com/v18.0/debug_token?` +
             `input_token=${accessToken}&` +
             `access_token=${appAccessToken}`;

@@ -1263,3 +1263,163 @@
 [2025-12-15T21:25:48.481Z] GET /api/professionals
 [2025-12-15T21:25:48.485Z] GET /api/services
 [2025-12-15T21:25:48.487Z] GET /api/salons/mine
+[2025-12-16T12:19:04.320Z] GET /api/auth/me
+[2025-12-16T12:19:08.291Z] GET /api/auth/me
+[2025-12-16T12:19:11.894Z] GET /api/professionals
+[2025-12-16T12:19:11.897Z] GET /api/ai/status
+[2025-12-16T12:19:11.899Z] GET /api/services
+[2025-12-16T12:19:11.918Z] GET /api/appointments
+[2025-12-16T12:19:11.920Z] GET /api/customers
+[2025-12-16T12:19:11.923Z] GET /api/ai/status
+[2025-12-16T12:19:13.745Z] GET /api/salons/mine
+[2025-12-16T12:19:42.946Z] GET /api/professionals
+[2025-12-16T12:19:42.951Z] GET /api/services
+[2025-12-16T12:19:42.955Z] GET /api/salons/mine
+[2025-12-16T12:21:17.738Z] GET /api/salons/mine
+[2025-12-16T12:25:01.669Z] GET /api/professionals
+[2025-12-16T12:25:01.675Z] GET /api/services
+[2025-12-16T12:25:01.678Z] GET /api/salons/mine
+[2025-12-16T12:25:01.834Z] GET /api/auth/me
+[2025-12-16T12:25:03.725Z] GET /api/auth/me
+[2025-12-16T12:25:03.756Z] GET /api/professionals
+[2025-12-16T12:25:03.759Z] GET /api/services
+[2025-12-16T12:25:03.762Z] GET /api/ai/status
+[2025-12-16T12:25:03.766Z] GET /api/appointments
+[2025-12-16T12:25:03.768Z] GET /api/customers
+[2025-12-16T12:25:03.784Z] GET /api/ai/status
+[2025-12-16T12:25:05.385Z] GET /api/salons/mine
+[2025-12-16T12:26:03.173Z] GET /api/professionals
+[2025-12-16T12:26:03.175Z] GET /api/services
+[2025-12-16T12:26:03.178Z] GET /api/salons/mine
+[2025-12-16T12:26:30.328Z] GET /api/professionals
+[2025-12-16T12:26:30.331Z] GET /api/services
+[2025-12-16T12:26:30.333Z] GET /api/salons/mine
+[2025-12-16T12:26:38.696Z] GET /api/professionals
+[2025-12-16T12:26:38.704Z] GET /api/services
+[2025-12-16T12:26:38.707Z] GET /api/salons/mine
+[2025-12-16T12:26:58.468Z] GET /api/professionals
+[2025-12-16T12:26:58.471Z] GET /api/services
+[2025-12-16T12:26:58.474Z] GET /api/salons/mine
+[2025-12-16T12:27:13.110Z] GET /api/professionals
+[2025-12-16T12:27:13.112Z] GET /api/services
+[2025-12-16T12:27:13.114Z] GET /api/salons/mine
+[2025-12-16T12:27:41.726Z] GET /api/salons/mine
+[2025-12-16T12:29:41.346Z] GET /api/professionals
+[2025-12-16T12:29:41.357Z] GET /api/salons/mine
+[2025-12-16T12:29:41.361Z] GET /api/services
+[2025-12-16T12:29:44.567Z] GET /api/professionals
+[2025-12-16T12:29:44.570Z] GET /api/services
+[2025-12-16T12:29:44.572Z] GET /api/salons/mine
+[2025-12-16T12:30:09.701Z] GET /api/salons/mine
+[2025-12-16T12:30:09.708Z] GET /api/professionals
+[2025-12-16T12:30:09.712Z] GET /api/services
+[2025-12-16T12:30:15.157Z] GET /api/services
+[2025-12-16T12:31:03.709Z] GET /api/professionals
+[2025-12-16T12:31:03.723Z] GET /api/services
+[2025-12-16T12:31:03.729Z] GET /api/salons/mine
+[2025-12-16T12:31:05.360Z] GET /api/auth/me
+[2025-12-16T12:31:18.726Z] POST /api/auth/login
+[2025-12-16T12:31:22.536Z] POST /api/auth/login
+[2025-12-16T12:31:23.107Z] GET /api/professionals
+[2025-12-16T12:31:23.110Z] GET /api/services
+[2025-12-16T12:31:23.113Z] GET /api/ai/status
+[2025-12-16T12:31:23.120Z] GET /api/appointments
+[2025-12-16T12:31:23.122Z] GET /api/customers
+[2025-12-16T12:31:23.141Z] GET /api/ai/status
+[2025-12-16T12:31:24.603Z] GET /api/salons/mine
+[2025-12-16T12:32:53.112Z] GET /api/professionals
+[2025-12-16T12:32:53.115Z] GET /api/services
+[2025-12-16T12:32:53.117Z] GET /api/salons/mine
+[2025-12-16T12:34:47.435Z] GET /api/professionals
+[2025-12-16T12:34:47.442Z] GET /api/services
+[2025-12-16T12:34:47.447Z] GET /api/salons/mine
+[2025-12-16T12:35:48.088Z] GET /api/professionals
+[2025-12-16T12:35:48.091Z] GET /api/services
+[2025-12-16T12:35:48.093Z] GET /api/salons/mine
+[2025-12-16T12:35:50.499Z] GET /api/auth/me
+[2025-12-16T12:36:00.370Z] POST /api/auth/login
+[2025-12-16T12:36:00.945Z] GET /api/professionals
+[2025-12-16T12:36:00.947Z] GET /api/services
+[2025-12-16T12:36:00.950Z] GET /api/ai/status
+[2025-12-16T12:36:00.954Z] GET /api/appointments
+[2025-12-16T12:36:00.955Z] GET /api/customers
+[2025-12-16T12:36:00.975Z] GET /api/ai/status
+[2025-12-16T12:36:02.010Z] GET /api/salons/mine
+[2025-12-16T12:36:49.275Z] GET /api/professionals
+[2025-12-16T12:36:49.282Z] GET /api/services
+[2025-12-16T12:36:49.287Z] GET /api/salons/mine
+[2025-12-16T12:36:50.614Z] GET /api/professionals
+[2025-12-16T12:36:50.625Z] GET /api/salons/mine
+[2025-12-16T12:36:50.629Z] GET /api/services
+[2025-12-16T15:56:35.671Z] GET /api
+[2025-12-16T15:56:35.722Z] GET /assets/index-yVM1jc0Q.js
+[2025-12-16T15:56:35.728Z] GET /assets/index-Cqa-VWhu.css
+[2025-12-16T15:56:35.838Z] GET /vite.svg
+[2025-12-16T15:56:37.628Z] GET /api
+[2025-12-16T15:56:37.641Z] GET /assets/index-yVM1jc0Q.js
+[2025-12-16T15:56:37.645Z] GET /assets/index-Cqa-VWhu.css
+[2025-12-16T15:56:37.651Z] GET /vite.svg
+[2025-12-16T15:56:40.567Z] GET /
+[2025-12-16T15:56:40.587Z] GET /assets/index-Cqa-VWhu.css
+[2025-12-16T15:56:40.590Z] GET /assets/index-yVM1jc0Q.js
+[2025-12-16T15:56:40.596Z] GET /vite.svg
+[2025-12-16T15:59:58.974Z] GET /api/auth/me
+[2025-12-16T16:00:00.931Z] GET /api/auth/me
+[2025-12-16T16:00:01.381Z] GET /api/professionals
+[2025-12-16T16:00:01.385Z] GET /api/services
+[2025-12-16T16:00:01.388Z] GET /api/ai/status
+[2025-12-16T16:00:01.394Z] GET /api/appointments
+[2025-12-16T16:00:01.397Z] GET /api/customers
+[2025-12-16T16:00:01.416Z] GET /api/ai/status
+[2025-12-16T16:00:02.475Z] GET /api/salons/mine
+[2025-12-16T16:00:14.846Z] POST /api/whatsapp/exchange-token
+[2025-12-16T16:00:15.091Z] Received request with code/token: NULL
+[2025-12-16T16:00:15.316Z] {
+  "msg": "Exchange Token Error",
+  "error": "Request failed with status code 400",
+  "details": {
+    "error": {
+      "message": "Invalid OAuth access token - Cannot parse access token",
+      "type": "OAuthException",
+      "code": 190,
+      "fbtrace_id": "Avv81YQtUV2aPDrHk28IopE"
+    }
+  }
+}
+[2025-12-16T16:00:25.470Z] POST /api/whatsapp/exchange-token
+[2025-12-16T16:00:25.917Z] Received request with code/token: NULL
+[2025-12-16T16:00:26.109Z] {
+  "msg": "Exchange Token Error",
+  "error": "Request failed with status code 400",
+  "details": {
+    "error": {
+      "message": "Invalid OAuth access token - Cannot parse access token",
+      "type": "OAuthException",
+      "code": 190,
+      "fbtrace_id": "A4Pj97vNi804iY0wD2Zst5R"
+    }
+  }
+}
+[2025-12-16T16:00:59.800Z] GET /api/professionals
+[2025-12-16T16:00:59.803Z] GET /api/services
+[2025-12-16T16:00:59.807Z] GET /api/salons/mine
+[2025-12-16T16:01:09.124Z] GET /api/salons/mine
+[2025-12-16T16:01:09.128Z] GET /api/professionals
+[2025-12-16T16:01:09.132Z] GET /api/services
+[2025-12-16T16:02:28.409Z] GET /api/professionals
+[2025-12-16T16:02:28.419Z] GET /api/services
+[2025-12-16T16:02:28.422Z] GET /api/salons/mine
+[2025-12-16T16:02:57.290Z] POST /api/whatsapp/exchange-token
+[2025-12-16T16:02:57.740Z] Received request with code/token: NULL
+[2025-12-16T16:02:57.937Z] {
+  "msg": "Exchange Token Error",
+  "error": "Request failed with status code 400",
+  "details": {
+    "error": {
+      "message": "Invalid OAuth access token - Cannot parse access token",
+      "type": "OAuthException",
+      "code": 190,
+      "fbtrace_id": "AlbZHdyXkKN4vdzwKTTJznV"
+    }
+  }
+}
