@@ -7,7 +7,8 @@ const prisma = new PrismaClient();
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 async function generateAIResponse(message, context = {}) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    // HARDCODED KEY AS FALLBACK FOR IMMEDIATE RENDER DEPLOYMENT FIX
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCoLgVnyGtysUlGqxQhmO9zemN6DtqY1Dg';
     if (!apiKey) {
         console.warn('GEMINI_API_KEY is missing.');
         return "Sistem şu an Yapay Zeka anahtarı eksik olduğu için tam kapasite çalışamıyor.";
