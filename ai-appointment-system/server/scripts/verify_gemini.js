@@ -15,12 +15,14 @@ async function testConnection() {
     }
 
     try {
-        console.log("Listing available models...");
-        const response = await axios.get(
-            `https://generativelanguage.googleapis.com/v1beta/models?key=${API_KEY}`,
-            { timeout: 10000 }
+        console.log(`Testing Model: ${GEMINI_API_URL}`);
+        const response = await axios.post(
+            `${GEMINI_API_URL}?key=${API_KEY}`,
+            {
+                contents: [{ parts: [{ text: "Hello, answer with 'OK' only." }] }]
+            },
+            { headers: { 'Content-Type': 'application/json' } }
         );
-
 
         console.log("Response Status:", response.status);
         console.log("Response Data:", JSON.stringify(response.data, null, 2));
@@ -31,8 +33,6 @@ async function testConnection() {
         if (error.response) {
             console.error("Status:", error.response.status);
             console.error("Error Data:", JSON.stringify(error.response.data, null, 2));
-        } else if (error.request) {
-            console.error("No Response Received (Network Issue):", error.message);
         } else {
             console.error("Error Message:", error.message);
         }
