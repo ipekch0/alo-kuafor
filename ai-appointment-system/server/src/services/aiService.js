@@ -28,112 +28,125 @@ async function generateAIResponse(message, context = {}) {
     }
 
     // 2. Construct System Prompt with Tool Definitions
-    const systemPrompt = `
-    Sen '${salonName}' için çalışan profesyonel bir randevu asistanısın.
-    Görevin: Müşterilere bilgi vermek ve RANDEVU ALMAK.
+    // 2. Construct System Prompt with Tool Definitions
+    const systemPrompt = `SYSTEM: You are an API backend. You reply ONLY in JSON.
+DATE: ${new Date().toISOString().split('T')[0]}
+SERVICES:
+${servicesText}
 
-    SALON HİZMETLERİ:
-    ${servicesText}
+FORMATS:
+1. Chat: { "text": "Reply in Turkish" }
+2. Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm" }
+3. Create Booking: { "tool": "create_appointment", "serviceName": "Service", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
 
-    KURALLAR:
-    - Asla yalan söyleme.
-    - Randevu talep edilirse ÖNCE müsaitlik kontrolü yap.
-    - Müsaitse ve müşteri onaylarsa randevuyu oluştur.
-    - Tarih formatı: YYYY-MM-DD HH:mm (Örn: 2025-12-16 14:30)
-    - Bugünün Tarihi: ${new Date().toISOString().split('T')[0]} (${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })})
+EXAMPLES:
+USER: Merhaba
+AI: { "text": "Merhaba! Size nasıl yardımcı olabilirim?" }
 
-    ARAÇLAR (TOOLS):
-    Eğer bir işlem yapman gerekiyorsa, cevabını SADECE aşağıdaki JSON formatında ver (yorum ekleme):
+USER: Fiyatlar?
+AI: { "text": "Saç kesimi 150 TL." }
 
-    1. Müsaitlik Kontrolü:
-    { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm" }
+USER: Yarın 14:00 saç kesimi
+AI: { "tool": "check_availability", "date": "2025-12-18", "time": "14:00" }
 
-    2. Randevu Oluşturma (Sadece müşteri net onay verirse):
-    { "tool": "create_appointment", "serviceName": "Hizmet Adı Tam Eşleşme", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
-
-    Eğer işlem gerekmiyorsa, sadece normal Türkçe cevap ver.
-    Müşteri Mesajı: "${message}"
-    `;
+USER: ${message}
+AI:`;
 
     try {
         // --- STEP 1: INITIAL CALL ---
         let response = await callGemini(apiKey, systemPrompt);
-        let text = response.text;
+        let text = response.text.trim();
 
-        // --- STEP 2: TOOL EXECUTION LOOP ---
-        // Check if response is JSON (Tool Call)
-        if (text.trim().startsWith('{') && text.trim().includes('"tool"')) {
+        // Ensure we handle markdown code blocks if the model adds them
+        if (text.startsWith('```json')) text = text.replace('```json', '').replace('```', '');
+        if (text.startsWith('```')) text = text.replace('```', '').replace('```', '');
+        text = text.trim();
+
+        console.log(`[AI RAW] ${text}`);
+
+        // --- STEP 2: PARSE & EXECUTE ---
+        if (text.startsWith('{')) {
             try {
-                const toolCall = JSON.parse(text.match(/\{[\s\S]*\}/)[0]); // Extract JSON robustly
-                console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
+                const toolCall = JSON.parse(text);
 
-                let toolResult = "";
-
-                if (toolCall.tool === 'check_availability') {
-                    // MOCK Implementation for now - Real implementation needs simple date clash check
-                    // For MVP: Check if any appointment exists at that exact time for the salon
-                    // We assume 1 professional for simplicity in this auto-response mode
-                    const existing = await prisma.appointment.findFirst({
-                        where: {
-                            salonId: salonId,
-                            dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
-                            status: { not: 'cancelled' }
-                        }
-                    });
-                    toolResult = existing ? "DOLU" : "MÜSAİT";
+                // CASE 1: Simple Text Reply
+                if (toolCall.text) {
+                    return toolCall.text;
                 }
 
-                if (toolCall.tool === 'create_appointment') {
-                    // Find service
-                    const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
-                    if (!service) {
-                        toolResult = "HATA: Hizmet bulunamadı.";
-                    } else {
-                        // Create Database Record
-                        // Retrieve or create customer
-                        let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
-                        if (!customer) {
-                            customer = await prisma.customer.create({
-                                data: { name: "WhatsApp Müşterisi", phone: senderPhone }
-                            });
-                        }
+                // CASE 2: Tool Execution
+                if (toolCall.tool) {
+                    console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
+                    let toolResult = "";
 
-                        // Need a professional ID. Pick the first one or default one.
-                        // Assuming salon has at least one professional.
-                        const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
-                        if (!professional) {
-                            toolResult = "HATA: Salonda personel tanımlı değil.";
+                    if (toolCall.tool === 'check_availability') {
+                        // MOCK Implementation
+                        const existing = await prisma.appointment.findFirst({
+                            where: {
+                                salonId: salonId,
+                                dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
+                                status: { not: 'cancelled' }
+                            }
+                        });
+                        toolResult = existing ? "DOLU" : "MÜSAİT";
+                    }
+
+                    if (toolCall.tool === 'create_appointment') {
+                        const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
+                        if (!service) {
+                            toolResult = "HATA: Hizmet bulunamadı.";
                         } else {
-                            const aptDate = new Date(`${toolCall.date}T${toolCall.time}:00`);
-                            await prisma.appointment.create({
-                                data: {
-                                    salonId: salonId,
-                                    customerId: customer.id,
-                                    serviceId: service.id,
-                                    professionalId: professional.id,
-                                    dateTime: aptDate,
-                                    totalPrice: service.price,
-                                    status: 'confirmed',
-                                    notes: 'WhatsApp Yapay Zeka tarafından oluşturuldu.'
+                            // Professional Assignment
+                            const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
+                            if (!professional) {
+                                toolResult = "HATA: Salonda personel tanımlı değil.";
+                            } else {
+                                // Create Customer if not exists (Double Check)
+                                let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
+                                if (!customer) {
+                                    customer = await prisma.customer.create({
+                                        data: { name: "WhatsApp Müşterisi", phone: senderPhone }
+                                    });
                                 }
-                            });
-                            toolResult = `BAŞARILI: Randevu oluşturuldu. Tarih: ${toolCall.date} ${toolCall.time}, Hizmet: ${service.name}`;
+
+                                const aptDate = new Date(`${toolCall.date}T${toolCall.time}:00`);
+                                await prisma.appointment.create({
+                                    data: {
+                                        salonId: salonId,
+                                        customerId: customer.id,
+                                        serviceId: service.id,
+                                        professionalId: professional.id,
+                                        dateTime: aptDate,
+                                        totalPrice: service.price,
+                                        status: 'confirmed',
+                                        notes: 'WhatsApp Yapay Zeka tarafından oluşturuldu.'
+                                    }
+                                });
+                                toolResult = `BAŞARILI: Randevu oluşturuldu. Tarih: ${toolCall.date} ${toolCall.time}, Hizmet: ${service.name}`;
+                            }
                         }
                     }
-                }
 
-                // --- STEP 3: FINAL CALL WITH RESULT ---
-                const followUpPrompt = `${systemPrompt}\n\nSİSTEM ÇIKTISI (TOOL RESULT): ${toolResult}\n\nBu bilgiye göre müşteriye son cevabı ver:`;
-                const finalRes = await callGemini(apiKey, followUpPrompt);
-                return finalRes.text;
+                    // --- STEP 3: FINAL CALL WITH RESULT ---
+                    const followUpPrompt = `${systemPrompt}\nAI: ${text}\nSYSTEM_RESULT: ${toolResult}\n\nGenerate final response for user (JSON { "text": "..." }):`;
+                    const finalRes = await callGemini(apiKey, followUpPrompt);
+                    let finalText = finalRes.text.trim();
+
+                    if (finalText.startsWith('```json')) finalText = finalText.replace('```json', '').replace('```', '');
+                    if (finalText.startsWith('{')) {
+                        try { return JSON.parse(finalText).text; } catch (e) { return finalText; }
+                    }
+                    return finalText;
+                }
 
             } catch (jsonErr) {
                 console.error('Tool parsing error:', jsonErr);
-                return "İşleminizi yaparken bir hata oluştu, ancak size nasıl yardımcı olabilirim?";
+                return "Anlaşılamadı, tekrar eder misiniz?";
             }
         }
 
-        return text; // No tool called, return original text
+        // Fallback if not JSON
+        return text;
 
 
 

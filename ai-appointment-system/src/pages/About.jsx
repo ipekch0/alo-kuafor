@@ -18,7 +18,7 @@ const About = () => {
                             transition={{ duration: 0.8 }}
                         >
                             <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-bold tracking-wide uppercase mb-6">
-                                2010'dan Beri Lider
+                                Güzellik Sektörünün Dijital Geleceği
                             </span>
                             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 mb-6 font-serif tracking-tight leading-tight">
                                 Güzellik Sektörünün <br />
