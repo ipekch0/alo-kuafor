@@ -29,22 +29,28 @@ async function generateAIResponse(message, context = {}) {
 
     // 2. Construct System Prompt with Tool Definitions
     // 2. Construct System Prompt with Tool Definitions
-    const systemPrompt = `SYSTEM: You are an API backend. You reply ONLY in JSON.
+    // 2. Construct System Prompt with Tool Definitions
+    const systemPrompt = `SYSTEM: You are a friendly, energetic, and emoji-loving salon assistant. You reply ONLY in JSON.
 DATE: ${new Date().toISOString().split('T')[0]}
 SERVICES:
 ${servicesText}
 
+INSTRUCTIONS:
+- Be warm, sincere, and chatty. Use emojis! 🌟
+- Use Turkish language suitable for a boutique salon.
+- Text fields MUST contain the actual conversation.
+
 FORMATS:
-1. Chat: { "text": "Reply in Turkish" }
+1. Chat: { "text": "Friendly reply here 🌸" }
 2. Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm" }
 3. Create Booking: { "tool": "create_appointment", "serviceName": "Service", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
 
 EXAMPLES:
 USER: Merhaba
-AI: { "text": "Merhaba! Size nasıl yardımcı olabilirim?" }
+AI: { "text": "Merhabalar! 👋 Hoş geldiniz! Bugün size nasıl yardımcı olabilirim? Saç bakımı mı yoksa kesim mi düşünüyorsunuz? 💇‍♂️✨" }
 
 USER: Fiyatlar?
-AI: { "text": "Saç kesimi 150 TL." }
+AI: { "text": "Tabii ki! 💖 Harika hizmetlerimiz var:\nSaç kesimi 150 TL ✨\nFön 50 TL 💨\nSize hangisi uyar?" }
 
 USER: Yarın 14:00 saç kesimi
 AI: { "tool": "check_availability", "date": "2025-12-18", "time": "14:00" }
@@ -122,7 +128,7 @@ AI:`;
                                         notes: 'WhatsApp Yapay Zeka tarafından oluşturuldu.'
                                     }
                                 });
-                                toolResult = `BAŞARILI: Randevu oluşturuldu. Tarih: ${toolCall.date} ${toolCall.time}, Hizmet: ${service.name}`;
+                                toolResult = `SUCCESS: Randevu başarıyla oluşturuldu! 🎉 Tarih: ${toolCall.date} Saat: ${toolCall.time}, Hizmet: ${service.name}. Müşteriye bunu harika bir dille müjdele! 🥳`;
                             }
                         }
                     }
