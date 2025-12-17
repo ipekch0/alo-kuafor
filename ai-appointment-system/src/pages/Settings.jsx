@@ -23,7 +23,7 @@ const WhatsAppConnectionManager = () => {
                 appId: fbAppId,
                 autoLogAppEvents: true,
                 xfbml: true,
-                version: 'v18.0'
+                version: 'v20.0'
             });
         };
 
@@ -45,9 +45,9 @@ const WhatsAppConnectionManager = () => {
                 // Send token to backend
                 exchangeCode(accessToken);
             } else {
-                console.log('User cancelled login or did not fully authorize.');
+                console.log('User cancelled login or did not fully authorize.', response);
                 setLoading(false);
-                toast.error('Giriş iptal edildi veya yetki verilmedi.');
+                toast.error('Giriş Başarısız. Durum: ' + response.status);
             }
         }, {
             scope: 'whatsapp_business_management, whatsapp_business_messaging'
