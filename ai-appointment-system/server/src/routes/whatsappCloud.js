@@ -224,8 +224,11 @@ router.post('/manual-connect', authenticateToken, async (req, res) => {
 // Middleware: Verify Webhook Signature
 const verifyWebhookSignature = (req, res, next) => {
     try {
-        // Skip if secret is missing (dev mode warning)
-        if (!process.env.FACEBOOK_APP_SECRET) {
+        // Use Env Var or Fallback to Hardcoded Secret
+        const APP_SECRET = process.env.FACEBOOK_APP_SECRET || 'e4185b47c222a99b0ed266f7029f34d8';
+
+        // Skip if secret is missing (should not happen with fallback)
+        if (!APP_SECRET) {
             console.warn('⚠️ WARNING: FACEBOOK_APP_SECRET is not set. Skipping signature verification.');
             return next();
         }
@@ -243,7 +246,7 @@ const verifyWebhookSignature = (req, res, next) => {
         const payload = req.rawBody || JSON.stringify(req.body);
 
         const expectedHash = crypto
-            .createHmac('sha256', process.env.FACEBOOK_APP_SECRET)
+            .createHmac('sha256', APP_SECRET)
             .update(payload)
             .digest('hex');
 
