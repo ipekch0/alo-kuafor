@@ -68,7 +68,8 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'", "https://connect.facebook.net", "https://graph.facebook.com", "https://facebook.com"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
             imgSrc: ["'self'", "data:", "https:", "blob:"],
             connectSrc: ["'self'", "https://graph.facebook.com", "https://www.facebook.com"],
             frameSrc: ["'self'", "https://www.facebook.com", "https://web.facebook.com/"],
