@@ -32,8 +32,8 @@ const authenticateToken = require('../middleware/auth');
 // Exchange Code for Token (Official Meta Flow)
 router.post('/exchange-token', authenticateToken, async (req, res) => {
     try {
-        const { code } = req.body;
-        const msg = `Received request with code/token: ${code ? code.substring(0, 10) + '...' : 'NULL'}`;
+        const { token } = req.body;
+        const msg = `Received request with token: ${token ? token.substring(0, 10) + '...' : 'NULL'}`;
         console.log(msg);
         logToFile(msg);
 
@@ -48,7 +48,7 @@ router.post('/exchange-token', authenticateToken, async (req, res) => {
             `grant_type=fb_exchange_token&` +
             `client_id=${APP_ID}&` +
             `client_secret=${APP_SECRET}&` +
-            `fb_exchange_token=${code}`;
+            `fb_exchange_token=${token}`;
 
         console.log('Exchanging access token for User ID:', userId);
 

@@ -40,10 +40,10 @@ const WhatsAppConnectionManager = () => {
         setLoading(true);
         window.FB.login(function (response) {
             if (response.authResponse) {
-                const code = response.authResponse.code;
-                console.log('Facebook Login Code:', code);
-                // Send code to backend
-                exchangeCode(code);
+                const accessToken = response.authResponse.accessToken;
+                console.log('Facebook Login Token:', accessToken);
+                // Send token to backend
+                exchangeCode(accessToken);
             } else {
                 console.log('User cancelled login or did not fully authorize.');
                 setLoading(false);
@@ -62,7 +62,7 @@ const WhatsAppConnectionManager = () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({ code })
+                body: JSON.stringify({ token: code })
             });
             const data = await res.json();
             if (data.success) {
