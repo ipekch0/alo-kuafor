@@ -64,7 +64,19 @@ app.use(cors({
 }));
 
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" } // Allow resource sharing for images
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://connect.facebook.net", "https://graph.facebook.com", "https://facebook.com"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:", "blob:"],
+            connectSrc: ["'self'", "https://graph.facebook.com", "https://www.facebook.com"],
+            frameSrc: ["'self'", "https://www.facebook.com", "https://web.facebook.com/"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // Rate Limiting
