@@ -355,7 +355,8 @@ async function handleIncomingMessage(phoneId, from, text) {
             salonName: salon.name,
             services: salon.services,
             salonId: salon.id,
-            senderPhone: from
+            senderPhone: from,
+            workingHours: salon.workingHours // Pass workingHours to AI
         });
 
         // 2. Send Response via WhatsApp Cloud API
