@@ -169,11 +169,28 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-const server = app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
-    console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-});
+let server; // Declare server variable in a scope accessible by SIGINT
+
+// Initialize Database and Start Server
+const initAndStart = async () => {
+    try {
+        console.log('Initializing database...');
+        const { execSync } = require('child_process');
+        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+        console.log('Database schema pushed successfully.');
+
+        // Start server
+        server = app.listen(PORT, () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+            console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+        });
+    } catch (error) {
+        console.error('Failed to initialize database:', error);
+        process.exit(1);
+    }
+};
+
+initAndStart();
 
 // Keep alive heartbeat
 setInterval(() => {
