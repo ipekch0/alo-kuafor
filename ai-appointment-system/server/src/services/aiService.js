@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 // Initialize Gemini
 // Initialize Gemini
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent";
 
 async function generateAIResponse(message, context = {}) {
     // HARDCODED KEY AS FALLBACK FOR IMMEDIATE RENDER DEPLOYMENT FIX (New Key 17 Dec)
