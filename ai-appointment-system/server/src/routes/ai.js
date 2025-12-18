@@ -9,10 +9,27 @@ const { generateAIResponse } = require('../services/aiService');
 
 
 
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
 router.post('/chat', async (req, res) => {
     try {
         const { message } = req.body;
-        const reply = await generateAIResponse(message);
+
+        // Fetch "Context" - ideally we should know the salonId, but for now fetch the first one (Demo/Single Tenant)
+        const salon = await prisma.salon.findFirst({
+            include: { services: true, professionals: true }
+        });
+
+        const context = {
+            salonName: salon?.name || 'OdakManage Salon',
+            salonId: salon?.id,
+            services: salon?.services || [],
+            workingHours: salon?.workingHours,
+            senderPhone: 'guest' // No phone for web chat yet
+        };
+
+        const reply = await generateAIResponse(message, context);
         res.json({ reply });
     } catch (error) {
         console.error('Gemini Chat System Error:', error);
