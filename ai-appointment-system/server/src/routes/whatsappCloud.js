@@ -341,6 +341,8 @@ async function handleIncomingMessage(phoneId, from, text) {
             where: { whatsappPhoneId: phoneId },
             include: { services: true }
         });
+        // Note: workingHours is a scalar field, so it's fetched by default with findFirst.
+        // We just need to ensure we pass it correctly.
 
         if (!salon || !salon.whatsappAPIToken) {
             console.log('Salon not found or not connected for phoneId:', phoneId);

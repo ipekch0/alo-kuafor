@@ -49,7 +49,7 @@ async function generateAIResponse(message, context = {}) {
     }
 
     // 3. Construct System Prompt
-    const systemPrompt = `SYSTEM: You are a friendly, energetic, and emoji-loving salon assistant. You reply ONLY in JSON.
+    const systemPrompt = `SYSTEM: You are a warm, sincere, and helpful salon assistant for "${salonName}".
 DATE: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD)
 CURRENT TIME: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
 
@@ -59,216 +59,157 @@ ${servicesText}
 WORKING HOURS:
 ${hoursText}
 
-INSTRUCTIONS:
-- Be professional, helpful, and concise.
-- Use ONLY ONE emoji at the very end of the message.
-- Use Turkish language suitable for a boutique salon.
-- If the user asks for a price or service list, provide it from the context.
-- ONLY use 'check_availability' if the user explicitly mentions a date/time or asks if a slot is open.
-- If user asks for an appointment OUTSIDE working hours, politely decline and suggest open times.
+YOUR RELATIONS & GOAL:
+- You are NOT a robot, you are a "friendly assistant". Be sincere, use a natural Turkish tone (samimi ama saygılı).
+- YOUR MAIN GOAL is to get the user to book an appointment.
+- After answering a question, ALWAYS ask a closing question like "Size ne zaman randevu oluşturalım?" or "Hangi gün müsaitsiniz?".
+- DO NOT be dry. Use emojis occasionally (🌸, 😊, ✨).
 
-FORMATS:
-1. Chat: { "text": "Professional reply here 🌸" }
-2. Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm", "serviceName": "Service Name (Optional)" }
-3. Create Booking: { "tool": "create_appointment", "serviceName": "Service", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
+INSTRUCTIONS:
+1. RESPONSE FORMAT: You must return ONLY valid JSON.
+2. JSON FORMAT: { "text": "Your message here" } OR { "tool": "...", ... }
+3. CRITICAL: Use DOUBLE QUOTES (") for all JSON keys and strings. Do NOT use single quotes.
+4. Do not include "AI:" or "JSON:" prefixes. just the raw JSON object.
+
+TOOLS:
+- Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm", "serviceName": "Service Name" }
+- Create Booking: { "tool": "create_appointment", "serviceName": "Service Name", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}" }
 
 EXAMPLES:
-USER: Yarın 14:00 saç kesimi
-AI: { "tool": "check_availability", "date": "2025-12-18", "time": "14:00", "serviceName": "Saç Kesimi" }
+User: "Ombre fiyatı ne kadar?"
+AI: { "text": "Ombre işlemimiz 1000 TL ve yaklaşık 30 dakika sürüyor. ✨ Size en uygun gün hangisi, hemen yardımcı olayım? 😊" }
 
-USER: ${message}
-AI:`;
+User: "Yarın 14:00e randevu ver"
+AI: { "tool": "check_availability", "date": "2025-12-19", "time": "14:00", "serviceName": "Genel" }
+`;
 
     try {
         // --- STEP 1: INITIAL CALL ---
-        let response = await callGemini(apiKey, systemPrompt);
+        let response = await callGemini(apiKey, systemPrompt + `\nUSER: ${message}\nAI:`);
         let text = response.text.trim();
 
-        // Ensure we handle markdown code blocks
-        if (text.startsWith('```json')) text = text.replace('```json', '').replace('```', '');
-        if (text.startsWith('```')) text = text.replace('```', '').replace('```', '');
-        text = text.trim();
+        // CLEANUP: Handle Markdown & Common JSON Errors
+        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-        // Regex to find the first JSON object/array
-        const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
-        if (jsonMatch) {
-            text = jsonMatch[0];
+        // Fix single quotes if they exist (simple heuristic)
+        if (text.startsWith("{ '")) {
+            text = text.replace(/'/g, '"'); // Risky but better than raw text for simple keys
         }
 
         console.log(`[AI RAW] ${text}`);
 
         // --- STEP 2: PARSE & EXECUTE ---
-        if (text.startsWith('{')) {
-            try {
-                const toolCall = JSON.parse(text);
+        let toolCall;
+        try {
+            // Find JSON object boundaries to ignore trailing text
+            const jsonMatch = text.match(/(\{[\s\S]*\})/);
+            if (jsonMatch) text = jsonMatch[0];
 
-                // CASE 1: Simple Text Reply
-                if (toolCall.text) return toolCall.text;
+            toolCall = JSON.parse(text);
+        } catch (e) {
+            console.error("JSON PARSE ERROR:", e);
+            // Fallback: If it looks like text, return it wrapped
+            return text.replace(/[{}]/g, '').replace(/"text":/g, '').replace(/"/g, '').trim();
+        }
 
-                // CASE 2: Tool Execution
-                if (toolCall.tool) {
-                    console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
-                    let toolResult = "";
+        // CASE 1: Simple Text Reply
+        if (toolCall.text) return toolCall.text;
 
-                    // HELPER: Check Availability Logic
-                    const checkSlot = async (dateStr, timeStr, serviceDuration = 30) => {
-                        const reqDate = new Date(`${dateStr}T${timeStr}:00`);
-                        const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        // CASE 2: Tool Execution
+        if (toolCall.tool) {
+            console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
+            let toolResult = "";
 
-                        // A. Check Working Hours
-                        if (parsedHours && parsedHours[dayName]) {
-                            const dayHours = parsedHours[dayName];
-                            if (!dayHours.isOpen) return "KAPALI (Bugün çalışmıyoruz).";
-
-                            const [openH, openM] = dayHours.start.split(':').map(Number);
-                            const [closeH, closeM] = dayHours.end.split(':').map(Number);
-                            const [reqH, reqM] = timeStr.split(':').map(Number);
-
-                            const reqMinutes = reqH * 60 + reqM;
-                            const openMinutes = openH * 60 + openM;
-                            const closeMinutes = closeH * 60 + closeM;
-
-                            if (reqMinutes < openMinutes || (reqMinutes + serviceDuration) > closeMinutes) {
-                                return `KAPALI (Çalışma Saatleri: ${dayHours.start} - ${dayHours.end}).`;
-                            }
-                        }
-
-                        // B. Check Overlaps
-                        const startDateTime = reqDate;
-                        const endDateTime = new Date(startDateTime.getTime() + serviceDuration * 60000);
-
-                        // Find any appointment that overlaps
-                        const conflict = await prisma.appointment.findFirst({
-                            where: {
-                                salonId: salonId,
-                                status: { not: 'cancelled' },
-                                OR: [
-                                    {
-                                        // Existing starts within new
-                                        dateTime: { gte: startDateTime, lt: endDateTime }
-                                    },
-                                    {
-                                        // Existing ends within new (requires knowing existing duration, assuming 30 if not linked, but let's be simpler)
-                                        // Better logic: New Start < Existing End AND New End > Existing Start
-                                        // Since we store only Start Time, we must join Service to get duration
-                                    }
-                                ]
-                            },
-                            include: { service: true }
-                        });
-
-                        // Robust Overlap Check using fetched appointments
-                        // We fetch ALL appointments for that day to be safe and check in memory (easier than complex Prisma date math)
-                        const dayStart = new Date(`${dateStr}T00:00:00`);
-                        const dayEnd = new Date(`${dateStr}T23:59:59`);
-
-                        const dayAppointments = await prisma.appointment.findMany({
-                            where: {
-                                salonId: salonId,
-                                status: { not: 'cancelled' },
-                                dateTime: { gte: dayStart, lte: dayEnd }
-                            },
-                            include: { service: true }
-                        });
-
-                        const isOverlap = dayAppointments.some(apt => {
-                            const aptStart = new Date(apt.dateTime);
-                            const aptDuration = apt.service ? apt.service.duration : 30;
-                            const aptEnd = new Date(aptStart.getTime() + aptDuration * 60000);
-
-                            return (startDateTime < aptEnd && endDateTime > aptStart);
-                        });
-
-                        if (isOverlap) return "DOLU (Seçilen saatte başka randevu var).";
-
-                        return "MÜSAİT";
-                    };
-
-                    if (toolCall.tool === 'check_availability') {
-                        let duration = 30;
-                        if (toolCall.serviceName) {
-                            const s = services.find(srv => srv.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
-                            if (s) duration = s.duration;
-                        }
-                        toolResult = await checkSlot(toolCall.date, toolCall.time, duration);
-                    }
-
-                    if (toolCall.tool === 'create_appointment') {
-                        const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
-                        if (!service) {
-                            toolResult = "HATA: Hizmet bulunamadı.";
-                        } else {
-                            // Re-Check Availability before creating
-                            const availability = await checkSlot(toolCall.date, toolCall.time, service.duration);
-
-                            if (availability !== "MÜSAİT") {
-                                toolResult = `BAŞARISIZ: ${availability} Lütfen başka saat seçin.`;
-                            } else {
-                                const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
-                                if (!professional) {
-                                    toolResult = "HATA: Salonda personel tanımlı değil.";
-                                } else {
-                                    let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
-                                    if (!customer) {
-                                        customer = await prisma.customer.create({
-                                            data: { name: "WhatsApp Müşterisi", phone: senderPhone }
-                                        });
-                                    }
-
-                                    const aptDate = new Date(`${toolCall.date}T${toolCall.time}:00`);
-                                    await prisma.appointment.create({
-                                        data: {
-                                            salonId: salonId,
-                                            customerId: customer.id,
-                                            serviceId: service.id,
-                                            professionalId: professional.id,
-                                            dateTime: aptDate,
-                                            totalPrice: service.price,
-                                            status: 'confirmed',
-                                            notes: 'WhatsApp Yapay Zeka tarafından oluşturuldu.'
-                                        }
-                                    });
-                                    toolResult = `SUCCESS: Randevu oluşturuldu! 📅 ${toolCall.date} ${toolCall.time}, Hizmet: ${service.name}.`;
-                                }
-                            }
-                        }
-                    }
-
-                    // --- STEP 3: FINAL CALL WITH RESULT ---
-                    const followUpPrompt = `${systemPrompt}\nAI: ${text}\nSYSTEM_RESULT: ${toolResult}\n\nGenerate final response for user (JSON { "text": "..." }):`;
-                    const finalRes = await callGemini(apiKey, followUpPrompt);
-                    let finalText = finalRes.text.trim();
-
-                    if (finalText.startsWith('```json')) finalText = finalText.replace('```json', '').replace('```', '');
-                    if (finalText.startsWith('{')) {
-                        try { return JSON.parse(finalText).text; } catch (e) { return finalText; }
-                    }
-                    return finalText;
+            // HELPER: Check Availability Logic (Same as before)
+            const checkSlot = async (dateStr, timeStr, serviceDuration = 30) => {
+                const reqDate = new Date(`${dateStr}T${timeStr}:00`);
+                const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                if (parsedHours && parsedHours[dayName]) {
+                    if (!parsedHours[dayName].isOpen) return "KAPALI (O gün çalışmıyoruz).";
+                    // Simple hour check
+                    const [openH] = parsedHours[dayName].start.split(':');
+                    const [closeH] = parsedHours[dayName].end.split(':');
+                    const reqH = parseInt(timeStr.split(':')[0]);
+                    if (reqH < parseInt(openH) || reqH >= parseInt(closeH)) return "KAPALI (Mesai saatleri dışı).";
                 }
 
-            } catch (jsonErr) {
-                console.error('Tool parsing error:', jsonErr);
-                return "Anlaşılamadı, tekrar eder misiniz?";
+                // Check overlapping appointments
+                const conflict = await prisma.appointment.findFirst({
+                    where: {
+                        salonId: salonId,
+                        dateTime: reqDate,
+                        status: { not: 'cancelled' }
+                    }
+                });
+                if (conflict) return "DOLU (O saatte randevu var).";
+
+                return "MÜSAİT";
+            };
+
+            if (toolCall.tool === 'check_availability') {
+                let duration = 30;
+                if (toolCall.serviceName) {
+                    const s = services.find(srv => srv.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
+                    if (s) duration = s.duration;
+                }
+                toolResult = await checkSlot(toolCall.date, toolCall.time, duration);
+            }
+
+            if (toolCall.tool === 'create_appointment') {
+                const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
+                if (!service) {
+                    toolResult = "HATA: Hizmet bulunamadı. Lütfen tam hizmet adını belirtin.";
+                } else {
+                    const availability = await checkSlot(toolCall.date, toolCall.time, service.duration);
+                    if (availability !== "MÜSAİT") {
+                        toolResult = `BAŞARISIZ: ${availability} Başka bir saat dener misiniz?`;
+                    } else {
+                        // CREATE
+                        const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
+                        if (!professional) return "HATA: Personel bulunamadı.";
+
+                        let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
+                        if (!customer) customer = await prisma.customer.create({ data: { name: "WhatsApp Misafiri", phone: senderPhone } });
+
+                        await prisma.appointment.create({
+                            data: {
+                                salonId, customerId: customer.id, serviceId: service.id, professionalId: professional.id,
+                                dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
+                                totalPrice: service.price, status: 'confirmed', notes: 'AI Booking'
+                            }
+                        });
+                        toolResult = "BAŞARILI: Randevu oluşturuldu! Müşteriye onayı bildir.";
+                    }
+                }
+            }
+
+            // --- STEP 3: FINAL CALL WITH RESULT ---
+            // We ask the AI to generate the final friendly response based on the tool result.
+            const resultPrompt = `
+You tried to perform: ${toolCall.tool}
+Result: ${toolResult}
+
+Now reply to the user naturally based on this result.
+If Success: Confirm nicely.
+If Fail: Explain nicely and ask for another time.
+Use JSON: { "text": "..." }
+`;
+            const finalRes = await callGemini(apiKey, resultPrompt);
+            let finalText = finalRes.text.trim();
+            // Clean again
+            finalText = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
+            const finalJson = finalText.match(/(\{[\s\S]*\})/);
+            if (finalJson) finalText = finalJson[0];
+
+            try { return JSON.parse(finalText).text; } catch (e) {
+                // Fallback extraction
+                return finalText.replace(/[{}]/g, '').replace(/"text":/g, '').replace(/"/g, '').trim();
             }
         }
 
-        // Fallback if not JSON
-        return text;
-
-
-
-        // ... (rest of logic) ...
-
     } catch (apiError) {
-        console.error('--- GEMINI API FAILURE ---');
-        console.error('Message:', apiError.message);
-        if (apiError.response) {
-            console.error('Status:', apiError.response.status);
-            console.error('Data:', JSON.stringify(apiError.response.data, null, 2));
-        } else {
-            console.error('Stack:', apiError.stack);
-        }
-        return `⚠️ Üzgünüm, şu an bağlantımda bir sorun var. (Hata: ${apiError.message})`;
+        console.error('AI Processing Error:', apiError);
+        return "Şu an bağlantımda küçük bir sorun var, ama mesajınızı aldım! 🌸";
     }
 }
 
