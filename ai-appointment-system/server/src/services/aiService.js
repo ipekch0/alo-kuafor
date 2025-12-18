@@ -87,6 +87,12 @@ AI:`;
         if (text.startsWith('```')) text = text.replace('```', '').replace('```', '');
         text = text.trim();
 
+        // Regex to find the first JSON object/array
+        const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+        if (jsonMatch) {
+            text = jsonMatch[0];
+        }
+
         console.log(`[AI RAW] ${text}`);
 
         // --- STEP 2: PARSE & EXECUTE ---
