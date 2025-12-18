@@ -89,6 +89,15 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Telefon numarası zorunludur.' });
         }
 
+        // Get user's salon to connect customer
+        const salon = await prisma.salon.findFirst({
+            where: { ownerId: req.user.id }
+        });
+
+        if (!salon) {
+            return res.status(404).json({ error: 'Salon bulunamadı.' });
+        }
+
         // Check if phone already exists
         const existingCustomer = await prisma.customer.findUnique({
             where: { phone }
