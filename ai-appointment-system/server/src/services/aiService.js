@@ -9,7 +9,7 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/
 
 async function generateAIResponse(message, context = {}) {
     // HARDCODED KEY AS FALLBACK FOR IMMEDIATE RENDER DEPLOYMENT FIX (New Key 17 Dec)
-    const apiKey = "AIzaSyClNuFBQHmbWI_TTT5stSdZxflK0XpuAHo";
+    const apiKey = "AIzaSyAKuoa_PM9JddJTwULp3NRhm6wOgR_WctQ";
 
     // --- DEBUG LOGGING ---
     console.log(`[AI DEBUG] Generating response for: "${message}"`);
