@@ -67,6 +67,10 @@ const AIAppointmentSystem = () => {
   };
 
   const { user, logout } = useAuth();
+
+  // Normalize role to Uppercase to handle 'salon_owner' vs 'SALON_OWNER' mismatch
+  const currentRole = (user?.role || '').toUpperCase();
+
   const {
     selectedView,
     setSelectedView,
@@ -92,37 +96,16 @@ const AIAppointmentSystem = () => {
     { id: 'user-profile', icon: UserCircle, label: 'Profilim', roles: ['CUSTOMER', 'SALON_OWNER', 'SUPER_ADMIN', 'STAFF'] }
   ];
 
-  const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role));
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(currentRole));
 
-  const renderContent = () => {
-    switch (selectedView) {
-      case 'dashboard': return <Dashboard />;
-      case 'customer-appointments': return <CustomerAppointments />;
-      case 'business-profile': return <BusinessProfile />;
-      case 'appointments': return <AppointmentList />;
-      case 'create-appointment': return <CreateAppointment />;
-      case 'professionals': return <ProfessionalManagement />;
-      case 'customers': return <CustomerList />;
-      case 'inbox': return <Inbox />;
-      case 'finance': return <Finance />; // Added Finance case
-      case 'customer-detail': return <CustomerDetail />;
-      case 'services': return <ServiceManagement />;
-      case 'appointment-detail': return <AppointmentDetail />;
-      case 'user-profile': return <UserProfile />;
-      case 'settings': return <SettingsPage />;
-      case 'reports': return <AIReports />;
-      default: return <Dashboard />;
-    }
-  };
-
-  const currentTitle = menuItems.find(m => m.id === selectedView)?.label || (selectedView === 'user-profile' ? 'Profilim' : 'Panel');
+  // ... existing code ...
 
   // Set default view based on role
   React.useEffect(() => {
-    if (user?.role === 'CUSTOMER' && selectedView === 'dashboard') {
+    if (currentRole === 'CUSTOMER' && selectedView === 'dashboard') {
       setSelectedView('customer-appointments');
     }
-  }, [user, selectedView, setSelectedView]);
+  }, [currentRole, selectedView, setSelectedView]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
@@ -158,7 +141,7 @@ const AIAppointmentSystem = () => {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {user?.role !== 'customer' && (
+          {currentRole !== 'CUSTOMER' && (
             <div className="mb-8">
               <button
                 onClick={() => { setSelectedView('create-appointment'); setMobileMenuOpen(false); }}
