@@ -10,7 +10,7 @@ const router = express.Router();
 const prisma = new PrismaClient();
 
 // Fallback for JWT_SECRET to prevent crash
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_debugging_only';
 const JWT_EXPIRES_IN = '7d';
 
 // Nodemailer Transporter
@@ -319,9 +319,13 @@ router.post('/login', validateRequest(loginSchema), async (req, res) => {
     } catch (error) {
         console.error('Login error:', error);
         // Write to file for debugging
-        const fs = require('fs');
-        fs.appendFileSync('login_debug.log', `${new Date().toISOString()} - Login Error: ${error.message}\n${error.stack}\n---\n`);
-        res.status(500).json({ error: 'Server error' });
+        try {
+            const fs = require('fs');
+            fs.appendFileSync('login_debug.log', `${new Date().toISOString()} - Login Error: ${error.message}\n${error.stack}\n---\n`);
+        } catch (logError) {
+            console.error('Could not write to log file:', logError.message);
+        }
+        res.status(500).json({ error: 'Server error', details: error.message, stack: error.stack });
     }
 });
 
