@@ -98,7 +98,28 @@ const AIAppointmentSystem = () => {
 
   const filteredMenuItems = menuItems.filter(item => item.roles.includes(currentRole));
 
-  // ... existing code ...
+  const renderContent = () => {
+    switch (selectedView) {
+      case 'dashboard': return <Dashboard />;
+      case 'customer-appointments': return <CustomerAppointments />;
+      case 'business-profile': return <BusinessProfile />;
+      case 'appointments': return <AppointmentList />;
+      case 'create-appointment': return <CreateAppointment />;
+      case 'professionals': return <ProfessionalManagement />;
+      case 'customers': return <CustomerList />;
+      case 'inbox': return <Inbox />;
+      case 'finance': return <Finance />;
+      case 'customer-detail': return <CustomerDetail />;
+      case 'services': return <ServiceManagement />;
+      case 'appointment-detail': return <AppointmentDetail />;
+      case 'user-profile': return <UserProfile />;
+      case 'settings': return <SettingsPage />;
+      case 'reports': return <AIReports />;
+      default: return <Dashboard />;
+    }
+  };
+
+  const currentTitle = menuItems.find(m => m.id === selectedView)?.label || (selectedView === 'user-profile' ? 'Profilim' : 'Panel');
 
   // Set default view based on role
   React.useEffect(() => {
