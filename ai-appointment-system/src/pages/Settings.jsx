@@ -167,10 +167,19 @@ const WhatsAppConnectionManager = () => {
                                             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                                             body: JSON.stringify({ phoneId, wabaId, token })
                                         });
-                                        const data = await res.json();
+
+                                        let data;
+                                        try {
+                                            data = await res.json();
+                                        } catch (e) {
+                                            const text = await res.text();
+                                            console.error('API Error (Non-JSON):', text);
+                                            throw new Error(`Sunucu Hatası (${res.status}): Bağlantı kurulamadı.`);
+                                        }
+
                                         if (data.success) toast.success('Kaydedildi!');
                                         else toast.error('Hata: ' + data.error);
-                                    } catch (err) { toast.error(err.message); }
+                                    } catch (err) { console.error(err); toast.error(err.message); }
                                     finally { setLoading(false); }
                                 }}
                                 className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
