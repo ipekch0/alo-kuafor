@@ -318,6 +318,9 @@ router.post('/login', validateRequest(loginSchema), async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
+        // Write to file for debugging
+        const fs = require('fs');
+        fs.appendFileSync('login_debug.log', `${new Date().toISOString()} - Login Error: ${error.message}\n${error.stack}\n---\n`);
         res.status(500).json({ error: 'Server error' });
     }
 });
