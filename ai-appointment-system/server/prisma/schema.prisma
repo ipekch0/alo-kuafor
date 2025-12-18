@@ -23,6 +23,7 @@ model User {
   permissions     String?          // JSON string: ["VIEW_FINANCE", "MANAGE_APPOINTMENTS"]
   phone           String?
   avatar          String?
+  location        String?
 
   isVerified      Boolean          @default(false)
   isActive        Boolean          @default(true) // For banning

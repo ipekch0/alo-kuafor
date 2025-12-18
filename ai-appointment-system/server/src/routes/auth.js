@@ -340,11 +340,11 @@ router.put('/me', async (req, res) => {
 
         const token = authHeader.substring(7);
         const decoded = jwt.verify(token, JWT_SECRET);
-        const { name, phone, avatar } = req.body;
+        const { name, phone, avatar, location } = req.body;
 
         const user = await prisma.user.update({
             where: { id: decoded.userId },
-            data: { name, phone, avatar },
+            data: { name, phone, avatar, location },
             select: {
                 id: true,
                 name: true,
@@ -352,6 +352,8 @@ router.put('/me', async (req, res) => {
                 role: true,
                 phone: true,
                 avatar: true,
+                location: true,
+                createdAt: true,
                 createdAt: true,
                 updatedAt: true
             }
