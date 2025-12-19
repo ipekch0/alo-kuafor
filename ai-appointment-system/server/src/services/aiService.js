@@ -306,14 +306,20 @@ ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-
             }
 
             // --- STEP 3: FINAL CALL WITH RESULT ---
+            // RE-INJECT SYSTEM PROMPT TO MAINTAIN PERSONA
             const resultPrompt = `
-İşlem: ${toolCall.tool}
-Sonuç: ${toolResult}
+${systemPrompt}
 
-Bu sonuca göre müşteriye doğal ve Türkçe cevap ver.
-ÖNEMLİ:
-1. Sonuçta 'HATA', 'BAŞARISIZ' veya 'KAPALI' varsa, durumu nazikçe açıkla.
-2. Başarılıysa ("Randevunuz başarıyla oluşturuldu! Teşekkür ederiz.") şeklinde onayla.
+DURUM GÜNCELLEMESİ:
+Önceki Adım: '${toolCall.tool}' aracı çalıştırıldı.
+Aracın Sonucu: ${toolResult}
+
+GÖREV:
+Bu sonuca göre müşteriye yanıt ver.
+1. Sonuç 'BAŞARISIZ' veya 'KAPALI' ise: Üzgünüm de ve nedenini açıkla.
+2. Sonuç 'BAŞARILI' ise: Randevu detaylarını onayla.
+3. Sonuçta "Tarih/Saat eksik" diyorsa: Müşteriden eksik bilgileri nazikçe iste.
+
 JSON Formatı Kullan: { "text": "..." }
 `;
             const finalRes = await callGemini(apiKey, resultPrompt);
