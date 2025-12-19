@@ -126,13 +126,25 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
 
             // HELPER: Check Availability Logic
             const checkSlot = async (dateStr, timeStr, serviceDuration = 30) => {
-                const reqDate = new Date(`${dateStr}T${timeStr}:00`);
+                if (!dateStr || !timeStr) {
+                    console.log(`[AI DEBUG] checkSlot called with missing args: date=${dateStr}, time=${timeStr}`);
+                    return "Tarih veya saat bilgisi eksik. Lütfen kullanıcıdan tarih ve saat isteyin.";
+                }
+
+                let reqDate;
+                try {
+                    reqDate = new Date(`${dateStr}T${timeStr}:00`);
+                    if (isNaN(reqDate.getTime())) throw new Error("Invalid Date");
+                } catch (e) {
+                    return `Tarih/Saat formatı hatalı (${dateStr} ${timeStr}). Doğru formatta isteyin.`;
+                }
+
                 // Fix Day Name for proper Turkish mapping check (database keys might be english 'monday' or turkish 'pazartesi')
                 // Assuming DB stores english keys from previous schema view (monday, tuesday...)
                 const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
                 // Debug
-                console.log(`Checking Slot: ${dateStr} ${timeStr} (${dayName})`);
+                console.log(`[AI DEBUG] Checking Slot: ${dateStr} ${timeStr} (${dayName})`);
 
                 // Hours Check
                 if (parsedHours) {
