@@ -40,7 +40,8 @@ async function generateAIResponse(message, context = {}) {
                         monday: 'Pazartesi', tuesday: 'Salı', wednesday: 'Çarşamba',
                         thursday: 'Perşembe', friday: 'Cuma', saturday: 'Cumartesi', sunday: 'Pazar'
                     }[day];
-                    return `${trDay}: ${hours.isOpen ? `${hours.start} - ${hours.end}` : 'KAPALI'}`;
+                    const isOpen = hours.active !== undefined ? hours.active : hours.isOpen;
+                    return `${trDay}: ${isOpen ? `${hours.start} - ${hours.end}` : 'KAPALI'}`;
                 })
                 .join('\n');
         } catch (e) {
@@ -136,19 +137,32 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
                 // Hours Check
                 if (parsedHours) {
                     // Normalize keys to support both "Monday" and "monday"
+                    // AND support Turkish keys "Pazartesi" etc.
                     const normalizedHours = {};
                     Object.keys(parsedHours).forEach(k => {
                         normalizedHours[k.toLowerCase()] = parsedHours[k];
                     });
 
-                    let dayHours = normalizedHours[dayName];
+                    // English to Turkish Map
+                    const trMap = {
+                        'monday': 'pazartesi', 'tuesday': 'salı', 'wednesday': 'çarşamba',
+                        'thursday': 'perşembe', 'friday': 'cuma', 'saturday': 'cumartesi', 'sunday': 'pazar'
+                    };
+
+                    const trDayName = trMap[dayName] || '';
+
+                    // Try exact match, english match, or turkish match
+                    let dayHours = normalizedHours[dayName] || normalizedHours[trDayName];
+
+                    // Log for debugging (will show in Render logs)
+                    console.log(`[AI DEBUG] Date: ${dateStr}, Day: ${dayName} / ${trDayName}. Available Keys: ${Object.keys(normalizedHours).join(', ')}`);
 
                     if (!dayHours) {
-                        // Fallback: If still not found, try TR key mapping if needed, or just return closed.
-                        // But usually dayName is 'monday', 'tuesday'... 
-                        return `KAPALI (Bilinmeyen gün: ${dayName})`;
+                        // If completely missing, it implies we don't have data for this day.
+                        return `KAPALI (Çalışma saati bulunamadı - Gün: ${dayName})`;
                     }
-                    if (!dayHours.isOpen) return `KAPALI (${dateStr} tarihinde kapalıyız).`;
+                    const isDayOpen = dayHours.active !== undefined ? dayHours.active : dayHours.isOpen;
+                    if (!isDayOpen) return `KAPALI (${dateStr} tarihinde kapalıyız).`;
 
                     const [openH, openM] = dayHours.start.split(':').map(Number);
                     const [closeH, closeM] = dayHours.end.split(':').map(Number);
