@@ -4,7 +4,14 @@ const prisma = new PrismaClient();
 async function resetDatabase() {
     console.log('🗑️  Veritabanı temizleniyor...');
     try {
-        
+
+        // Delete dependent tables first
+        await prisma.message.deleteMany({});
+        await prisma.conversation.deleteMany({});
+        await prisma.review.deleteMany({});
+        await prisma.expense.deleteMany({});
+        await prisma.notification.deleteMany({});
+
         await prisma.appointment.deleteMany({});
         await prisma.professional.deleteMany({});
         await prisma.service.deleteMany({});

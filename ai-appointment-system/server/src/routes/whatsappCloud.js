@@ -335,6 +335,10 @@ router.post('/webhook', verifyWebhookSignature, async (req, res) => {
 });
 
 // Helper to handle AI interaction
+// Simple in-memory history (resets on server restart)
+// Key: PhoneNumber, Value: [{ role: 'user'|'model', text: '...' }]
+const conversationHistory = new Map();
+
 async function handleIncomingMessage(phoneId, from, text) {
     try {
         const salon = await prisma.salon.findFirst({
@@ -351,15 +355,29 @@ async function handleIncomingMessage(phoneId, from, text) {
 
         console.log(`Received WhatsApp message from ${from} for salon ${salon.name}: ${text}`);
 
+        // --- HISTORY MANAGEMENT ---
+        if (!conversationHistory.has(from)) {
+            conversationHistory.set(from, []);
+        }
+        const history = conversationHistory.get(from);
+
+        // Add User Message
+        history.push({ role: 'user', content: text });
+        if (history.length > 10) history.shift(); // Keep last 10
+
         // 1. Generate AI Response
-        // aiService now expects { salonName, services, salonId, senderPhone }
         const aiReply = await generateAIResponse(text, {
             salonName: salon.name,
             services: salon.services,
             salonId: salon.id,
             senderPhone: from,
-            workingHours: salon.workingHours // Pass workingHours to AI
+            workingHours: salon.workingHours,
+            history: history // Pass history to AI
         });
+
+        // Add AI Message
+        history.push({ role: 'model', content: aiReply });
+        if (history.length > 10) history.shift();
 
         // 2. Send Response via WhatsApp Cloud API
         await sendWhatsAppMessage(salon.whatsappAPIToken, salon.whatsappPhoneId, from, aiReply);

@@ -49,6 +49,10 @@ async function generateAIResponse(message, context = {}) {
     }
 
     // 3. Construct System Prompt
+    const historyText = context.history
+        ? context.history.map(msg => `${msg.role === 'user' ? 'USER' : 'AI'}: ${msg.content}`).join('\n')
+        : '';
+
     const systemPrompt = `SYSTEM: You are a warm, sincere, and helpful salon assistant for "${salonName}".
 DATE: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD)
 CURRENT TIME: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
@@ -60,34 +64,37 @@ WORKING HOURS:
 ${hoursText}
 
 YOUR RELATIONS & GOAL:
-- You are NOT a robot, you are a "friendly assistant". Be sincere, use a natural Turkish tone (samimi ama saygılı).
-- YOUR MAIN GOAL is to get the user to book an appointment.
-- **CRITICAL ROLE:** You are the RECEPTIONIST. You MUST get the customer's NAME and SURNAME before creating a booking.
-- After answering a question, ALWAYS ask a closing question like "Size ne zaman randevu oluşturalım?" or "Hangi gün müsaitsiniz?".
-- DO NOT be dry. Use emojis occasionally (🌸, 😊, ✨).
+- You are a generic assistant. Be sincere, use a natural Turkish tone.
+- **CRITICAL ROLE:** You are the RECEPTIONIST. 
+- **MANDATORY DATA:** Before creating an appointment, you MUST obtain:
+  1. Name & Surname
+  2. Phone Number (Ask if they want to use the current one or a different one)
+  3. E-mail Address
+- If any info is missing, ASK for it. "Randevu oluşturmak için telefon numaranızı ve mail adresinizi de öğrenebilir miyim?"
+- Use emojis occasionally (🌸, 😊, ✨).
 
 INSTRUCTIONS:
 1. RESPONSE FORMAT: You must return ONLY valid JSON.
 2. JSON FORMAT: { "text": "..." } OR { "tool": "...", "..." }
 3. CRITICAL: Use DOUBLE QUOTES (") for all keys/strings.
-4. **BOOKING PROCESS:**
-   - Step 1: User asks for a time. -> Check Availability ("check_availability").
-   - Step 2: If Available -> ASK FOR NAME: "Harika, bu saat müsait! Rezervasyon için isminizi ve soyisminizi alabilir miyim? 😊"
-   - Step 3: User gives Name -> Create Appointment ("create_appointment") with the name.
+4. Use provided PREVIOUS MESSAGES to remember user details (Context).
 
 TOOLS:
 - Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm", "serviceName": "Service Name" }
-- Create Booking: { "tool": "create_appointment", "serviceName": "Service Name", "date": "YYYY-MM-DD", "time": "HH:mm", "phone": "${senderPhone}", "customerName": "Name Surname" }
+- Create Booking: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time": "...", "phone": "...", "customerName": "...", "customerEmail": "...", "customerPhone": "..." }
+
+PREVIOUS MESSAGES (CONTEXT):
+${historyText}
 
 EXAMPLES:
 User: "Yarın 14:00 boş mu?"
-AI: { "tool": "check_availability", "date": "2025-12-19", "time": "14:00", "serviceName": "Genel" }
+AI: { "tool": "check_availability", "date": "...", "time": "...", "serviceName": "Genel" }
 
-User: "Evet uygun" (AFTER Availability confirmed)
-AI: { "text": "Süper! 🎉 Rezervasyonunuzu tamamlamak için isminizi ve soyisminizi öğrenebilir miyim?" }
+User: "Evet uygun"
+AI: { "text": "Harika! Rezervasyon için isminizi, telefon numaranızı ve mail adresinizi yazabilir misiniz? 🌸" }
 
-User: "Ayşe Yılmaz"
-AI: { "tool": "create_appointment", "serviceName": "Saç Kesimi", "date": "2025-12-19", "time": "14:00", "phone": "${senderPhone}", "customerName": "Ayşe Yılmaz" }
+User: "Ayşe Yılmaz, 05551234567, ayse@test.com"
+AI: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time": "...", "customerName": "Ayşe Yılmaz", "customerPhone": "05551234567", "customerEmail": "ayse@test.com" }
 `;
 
     try {
@@ -180,20 +187,27 @@ AI: { "tool": "create_appointment", "serviceName": "Saç Kesimi", "date": "2025-
                         if (!professional) return "HATA: Personel bulunamadı.";
 
                         let customerName = toolCall.customerName || "WhatsApp Misafiri";
+                        let customerEmail = toolCall.customerEmail || null;
+                        let targetPhone = toolCall.customerPhone || senderPhone; // Use provided phone or sender
 
                         // Upsert Customer
                         // We search by phone. If found, we update name (if provided). If not, create.
-                        let customer = await prisma.customer.findUnique({ where: { phone: senderPhone } });
+                        let customer = await prisma.customer.findUnique({ where: { phone: targetPhone } });
                         if (customer) {
-                            if (toolCall.customerName) { // Only update name if customerName is provided in the tool call
-                                customer = await prisma.customer.update({
-                                    where: { id: customer.id },
-                                    data: { name: toolCall.customerName }
-                                });
-                            }
+                            await prisma.customer.update({
+                                where: { id: customer.id },
+                                data: {
+                                    name: customerName,
+                                    email: customerEmail || customer.email // Don't overwrite with null
+                                }
+                            });
                         } else {
                             customer = await prisma.customer.create({
-                                data: { name: customerName, phone: senderPhone }
+                                data: {
+                                    name: customerName,
+                                    phone: targetPhone,
+                                    email: customerEmail
+                                }
                             });
                         }
 
@@ -207,10 +221,10 @@ AI: { "tool": "create_appointment", "serviceName": "Saç Kesimi", "date": "2025-
                                 dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
                                 totalPrice: service.price,
                                 status: 'confirmed',
-                                notes: `AI Booking - Name: ${customerName}`
+                                notes: `AI Booking. Name: ${customerName}, Email: ${customerEmail}, Phone: ${targetPhone}`
                             }
                         });
-                        toolResult = `BAŞARILI: Randevu oluşturuldu! (ID: ${newAppt.id}) 📅 ${toolCall.date} ${toolCall.time}, Kişi: ${customerName}.`;
+                        toolResult = `BAŞARILI: Randevu oluşturuldu! (ID: ${newAppt.id}) 📅 ${toolCall.date} ${toolCall.time}.`;
                     }
                 }
             }
@@ -221,7 +235,7 @@ You tried to perform: ${toolCall.tool}
 Result: ${toolResult}
 
 Now reply to the user naturally based on this result.
-If Success: Confirm nicely ("Randevunuz oluşturuldu [İsim] Hanım/Bey...").
+If Success: Confirm nicely ("Randevunuz oluşturuldu!").
 If Fail: Explain nicely.
 Use JSON: { "text": "..." }
 `;
