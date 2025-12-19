@@ -40,8 +40,9 @@ async function generateAIResponse(message, context = {}) {
                         monday: 'Pazartesi', tuesday: 'Salı', wednesday: 'Çarşamba',
                         thursday: 'Perşembe', friday: 'Cuma', saturday: 'Cumartesi', sunday: 'Pazar'
                     }[day] || day;
-                    // FIX: Check 'active' first, fallback to 'isOpen'
-                    const isOpen = hours.active !== undefined ? hours.active : hours.isOpen;
+                    // FIX: Check 'active' first, fallback to 'isOpen', default to true if both missing implies old format but existing? No, better be safe.
+                    // If 'active' is undefined, and 'isOpen' is undefined, assume it's ACTIVE if the day key exists.
+                    const isOpen = (hours.active !== undefined) ? hours.active : ((hours.isOpen !== undefined) ? hours.isOpen : true);
                     return `- ${trDay}: ${isOpen ? `${hours.start} - ${hours.end}` : 'KAPALI'}`;
                 })
                 .join('\n');
@@ -52,50 +53,53 @@ async function generateAIResponse(message, context = {}) {
 
     // 3. Construct System Prompt
     const historyText = context.history
-        ? context.history.map(msg => `${msg.role === 'user' ? 'USER' : 'AI'}: ${msg.content}`).join('\n')
+        ? context.history.map(msg => `${msg.role === 'user' ? 'MÜŞTERİ' : 'ASİSTAN'}: ${msg.content}`).join('\n')
         : '';
+    console.log("[AI DEBUG] History Text passed to System Prompt:\n", historyText);
 
-    const systemPrompt = `SYSTEM: You are a smart salon receptionist for "${salonName}".
-DATE: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD)
-DAY: ${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}
-TIME: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+    const systemPrompt = `SYSTEM: Sen "${salonName}" kuaförü için profesyonel ve nazik bir randevu asistanısın.
+TARİH: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD)
+GÜN: ${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}
+SAAT: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
 
-SERVICES:
+HİZMETLER:
 ${servicesText}
 
-WORKING HOURS:
+ÇALIŞMA SAATLERİ:
 ${hoursText}
 
-GOAL: Book appointments.
-RULES:
-1. **EXTRACT INFO:** User might give Name, Phone, Email in separate messages. CHECK HISTORY ("PREVIOUS MESSAGES") carefully.
-   - If User says "My name is Ali", store it mentally.
-   - If User later says "0555...", combine it with Name.
-   - **IF YOU HAVE Name, Phone, Email and confirmed Time -> CALL 'create_appointment' IMMEDIATELY.**
-2. **MISSING INFO:** If you have Time but missing Name/Email/Phone -> Ask specifically for missing parts.
-3. **DATES:**
-   - "Yarın" = Tomorrow (${new Date(Date.now() + 86400000).toISOString().split('T')[0]})
-   - "Pazartesi" = Calculate date based on TODAY (${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}).
-4. **AVAILABILITY:** Always check 'check_availability' before booking.
-5. **GENERAL QUESTIONS:** If user asks "When are you available?", "Working hours?", or "Open now?", **DO NOT CALLA TOOL**. Just answer by summarizing the WORKING HOURS listed above (e.g., "Haftanın her günü 09:00 - 19:00 arası açığız").
+GÖREV: Müşterilerle sohbet ederek randevu oluşturmak.
 
-TOOLS:
-- check_availability(date: "YYYY-MM-DD", time: "HH:mm", serviceName: "...")
-- create_appointment(serviceName, date, time, customerName, customerPhone, customerEmail)
+KURALLAR:
+1. **İLETİŞİM DİLİ:** Her zaman Türkçe, kibar ve profesyonel konuş. Samimi ama saygılı ol.
+2. **BİLGİ TOPLAMA (ÇOK ÖNEMLİ):** Randevu oluşturmadan önce müşteriden MUTLAKA şu bilgileri almalısın:
+   - **Ad ve Soyad**
+   - **Telefon Numarası** (Zaten mesajda geliyorsa teyit etmene gerek yok: ${senderPhone})
+   - **E-posta Adresi**
+   *Eğer bu bilgilerden biri eksikse, nazikçe iste.*
+3. **MÜSAİTLİK KONTROLÜ:**
+   - Müşteri bir tarih/saat istediğinde **ÖNCE** 'check_availability' aracını kullan.
+   - Asla kafandan "Müsaitiz" deme. Aracı kullanıp sonucuna göre cevap ver.
+4. **RANDEVU OLUŞTURMA:**
+   - Müşteri tarih/saati onayladıysa VE Ad/Soyad/E-posta bilgileri tamsa 'create_appointment' aracını çağır.
+   - **ÖNEMLİ:** 'create_appointment' yaparken **GEÇMİŞ (PREVIOUS) mesajlardaki 'check_availability' kısmında konuştuğunuz Tarih ve Saati** kullan.
+   - **ASLA** o anki saati (Current Time) kullanma. Müşteri "Tamam" derse, anlaşılan saati onayla.
+   - Bilgiler eksikse randevu oluşturma, önce bilgileri iste.
 
-PREVIOUS MESSAGES:
+GEÇMİŞ MESAJLAR:
 ${historyText}
 
-EXAMPLES:
-User: "Yarın 14:00 uygun mu?"
-AI: { "tool": "check_availability", "date": "2025-12-20", "time": "14:00", ... }
+ÖRNEK AKIŞ (SADECE FORMAT İÇİNDİR, BURADAKİ "OMBRE" veya "14:00" GİBİ VERİLERİ ASLA KOPYALAMA! MÜŞTERİNİN YAZDIĞI GERÇEK VERİYİ KULLAN):
+Müşteri: "Yarın 14:00 ombre için boş musunuz?"
+ASİSTAN: { "tool": "check_availability", "date": "2025-12-20", "time": "14:00", "serviceName": "Ombre" }
 
-User: "Evet" (History has Name: Ali, Phone: 0555...)
-AI: { "text": "Mail adresinizi de yazar mısınız?" }
+(Sonuç MÜSAİT ise)
+ASİSTAN: { "text": "Evet, yarın 14:00 için yerimiz var. Randevunuzu oluşturmak için adınızı, soyadınızı ve e-posta adresinizi rica edebilir miyim?" }
 
-User: "ali@test.com"
-AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone": "0555...", "customerEmail": "ali@test.com" }
+Müşteri: "Ayşe Yılmaz, ayse@test.com"
+ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-12-20", "time": "14:00", "customerName": "Ayşe Yılmaz", "customerEmail": "ayse@test.com", "customerPhone": "${senderPhone}" }
 `;
+
 
     try {
         // --- STEP 1: INITIAL CALL ---
@@ -149,12 +153,22 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
                 console.log(`[AI DEBUG] Checking Slot: ${dateStr} ${timeStr} (${dayName})`);
 
                 // Hours Check
-                if (parsedHours) {
+                let hoursToCheck = parsedHours;
+                if (!hoursToCheck) {
+                    // Default to 09:00 - 19:00 every day if no hours defined
+                    const defaultHours = { start: "09:00", end: "19:00", isOpen: true, active: true };
+                    hoursToCheck = {
+                        monday: defaultHours, tuesday: defaultHours, wednesday: defaultHours,
+                        thursday: defaultHours, friday: defaultHours, saturday: defaultHours, sunday: defaultHours
+                    };
+                }
+
+                if (hoursToCheck) {
                     // Normalize keys to support both "Monday" and "monday"
                     // AND support Turkish keys "Pazartesi" etc.
                     const normalizedHours = {};
-                    Object.keys(parsedHours).forEach(k => {
-                        normalizedHours[k.toLowerCase()] = parsedHours[k];
+                    Object.keys(hoursToCheck).forEach(k => {
+                        normalizedHours[k.toLowerCase()] = hoursToCheck[k];
                     });
 
                     // English to Turkish Map
@@ -256,13 +270,14 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
 
             // --- STEP 3: FINAL CALL WITH RESULT ---
             const resultPrompt = `
-You tried to perform: ${toolCall.tool}
-Result: ${toolResult}
+İşlem: ${toolCall.tool}
+Sonuç: ${toolResult}
 
-Now reply to the user naturally based on this result.
-If Success: Confirm nicely ("Randevunuz oluşturuldu!").
-If Fail: Explain nicely (e.g. "Maalesef kapalıyız" or "Dolu").
-Use JSON: { "text": "..." }
+Bu sonuca göre müşteriye doğal ve Türkçe cevap ver.
+ÖNEMLİ:
+1. Sonuçta 'HATA', 'BAŞARISIZ' veya 'KAPALI' varsa, durumu nazikçe açıkla.
+2. Başarılıysa ("Randevunuz başarıyla oluşturuldu! Teşekkür ederiz.") şeklinde onayla.
+JSON Formatı Kullan: { "text": "..." }
 `;
             const finalRes = await callGemini(apiKey, resultPrompt);
             let finalText = finalRes.text.trim();
