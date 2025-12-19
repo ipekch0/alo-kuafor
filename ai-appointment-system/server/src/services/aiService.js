@@ -39,9 +39,10 @@ async function generateAIResponse(message, context = {}) {
                     const trDay = {
                         monday: 'Pazartesi', tuesday: 'Salı', wednesday: 'Çarşamba',
                         thursday: 'Perşembe', friday: 'Cuma', saturday: 'Cumartesi', sunday: 'Pazar'
-                    }[day];
+                    }[day] || day;
+                    // FIX: Check 'active' first, fallback to 'isOpen'
                     const isOpen = hours.active !== undefined ? hours.active : hours.isOpen;
-                    return `${trDay}: ${isOpen ? `${hours.start} - ${hours.end}` : 'KAPALI'}`;
+                    return `- ${trDay}: ${isOpen ? `${hours.start} - ${hours.end}` : 'KAPALI'}`;
                 })
                 .join('\n');
         } catch (e) {
@@ -76,6 +77,7 @@ RULES:
    - "Yarın" = Tomorrow (${new Date(Date.now() + 86400000).toISOString().split('T')[0]})
    - "Pazartesi" = Calculate date based on TODAY (${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}).
 4. **AVAILABILITY:** Always check 'check_availability' before booking.
+5. **GENERAL QUESTIONS:** If user asks "When are you available?", "Working hours?", or "Open now?", **DO NOT CALLA TOOL**. Just answer by summarizing the WORKING HOURS listed above (e.g., "Haftanın her günü 09:00 - 19:00 arası açığız").
 
 TOOLS:
 - check_availability(date: "YYYY-MM-DD", time: "HH:mm", serviceName: "...")
