@@ -133,13 +133,21 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
                 // Debug
                 console.log(`Checking Slot: ${dateStr} ${timeStr} (${dayName})`);
 
+                // Hours Check
                 if (parsedHours) {
-                    // Check if parsedHours uses English keys (monday) or Turkish?
-                    // The earlier code mapped them to Turkish for display, but the object itself likely has English keys if standard.
-                    // Let's try direct access
-                    let dayHours = parsedHours[dayName];
+                    // Normalize keys to support both "Monday" and "monday"
+                    const normalizedHours = {};
+                    Object.keys(parsedHours).forEach(k => {
+                        normalizedHours[k.toLowerCase()] = parsedHours[k];
+                    });
 
-                    if (!dayHours) return `KAPALI (Bilinmeyen gün: ${dayName})`;
+                    let dayHours = normalizedHours[dayName];
+
+                    if (!dayHours) {
+                        // Fallback: If still not found, try TR key mapping if needed, or just return closed.
+                        // But usually dayName is 'monday', 'tuesday'... 
+                        return `KAPALI (Bilinmeyen gün: ${dayName})`;
+                    }
                     if (!dayHours.isOpen) return `KAPALI (${dateStr} tarihinde kapalıyız).`;
 
                     const [openH, openM] = dayHours.start.split(':').map(Number);
