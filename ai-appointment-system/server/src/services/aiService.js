@@ -158,11 +158,12 @@ AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone":
                     console.log(`[AI DEBUG] Date: ${dateStr}, Day: ${dayName} / ${trDayName}. Available Keys: ${Object.keys(normalizedHours).join(', ')}`);
 
                     if (!dayHours) {
-                        // If completely missing, it implies we don't have data for this day.
-                        return `KAPALI (Çalışma saati bulunamadı - Gün: ${dayName})`;
+                        return `KAPALI (DEBUG: Day=${dayName}/${trDayName} NOT FOUND in keys: ${Object.keys(normalizedHours).join(',')})`;
                     }
                     const isDayOpen = dayHours.active !== undefined ? dayHours.active : dayHours.isOpen;
-                    if (!isDayOpen) return `KAPALI (${dateStr} tarihinde kapalıyız).`;
+                    if (!isDayOpen) {
+                        return `KAPALI (DEBUG: Day=${dayName}, Active=${dayHours.active}, IsOpen=${dayHours.isOpen}, Raw=${JSON.stringify(dayHours)})`;
+                    }
 
                     const [openH, openM] = dayHours.start.split(':').map(Number);
                     const [closeH, closeM] = dayHours.end.split(':').map(Number);
