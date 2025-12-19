@@ -53,9 +53,10 @@ async function generateAIResponse(message, context = {}) {
         ? context.history.map(msg => `${msg.role === 'user' ? 'USER' : 'AI'}: ${msg.content}`).join('\n')
         : '';
 
-    const systemPrompt = `SYSTEM: You are a warm, sincere, and helpful salon assistant for "${salonName}".
+    const systemPrompt = `SYSTEM: You are a smart salon receptionist for "${salonName}".
 DATE: ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD)
-CURRENT TIME: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+DAY: ${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}
+TIME: ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
 
 SERVICES:
 ${servicesText}
@@ -63,38 +64,34 @@ ${servicesText}
 WORKING HOURS:
 ${hoursText}
 
-YOUR RELATIONS & GOAL:
-- You are a generic assistant. Be sincere, use a natural Turkish tone.
-- **CRITICAL ROLE:** You are the RECEPTIONIST. 
-- **MANDATORY DATA:** Before creating an appointment, you MUST obtain:
-  1. Name & Surname
-  2. Phone Number (Ask if they want to use the current one or a different one)
-  3. E-mail Address
-- If any info is missing, ASK for it. "Randevu oluşturmak için telefon numaranızı ve mail adresinizi de öğrenebilir miyim?"
-- Use emojis occasionally (🌸, 😊, ✨).
-
-INSTRUCTIONS:
-1. RESPONSE FORMAT: You must return ONLY valid JSON.
-2. JSON FORMAT: { "text": "..." } OR { "tool": "...", "..." }
-3. CRITICAL: Use DOUBLE QUOTES (") for all keys/strings.
-4. Use provided PREVIOUS MESSAGES to remember user details (Context).
+GOAL: Book appointments.
+RULES:
+1. **EXTRACT INFO:** User might give Name, Phone, Email in separate messages. CHECK HISTORY ("PREVIOUS MESSAGES") carefully.
+   - If User says "My name is Ali", store it mentally.
+   - If User later says "0555...", combine it with Name.
+   - **IF YOU HAVE Name, Phone, Email and confirmed Time -> CALL 'create_appointment' IMMEDIATELY.**
+2. **MISSING INFO:** If you have Time but missing Name/Email/Phone -> Ask specifically for missing parts.
+3. **DATES:**
+   - "Yarın" = Tomorrow (${new Date(Date.now() + 86400000).toISOString().split('T')[0]})
+   - "Pazartesi" = Calculate date based on TODAY (${new Date().toLocaleDateString('tr-TR', { weekday: 'long' })}).
+4. **AVAILABILITY:** Always check 'check_availability' before booking.
 
 TOOLS:
-- Check Availability: { "tool": "check_availability", "date": "YYYY-MM-DD", "time": "HH:mm", "serviceName": "Service Name" }
-- Create Booking: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time": "...", "phone": "...", "customerName": "...", "customerEmail": "...", "customerPhone": "..." }
+- check_availability(date: "YYYY-MM-DD", time: "HH:mm", serviceName: "...")
+- create_appointment(serviceName, date, time, customerName, customerPhone, customerEmail)
 
-PREVIOUS MESSAGES (CONTEXT):
+PREVIOUS MESSAGES:
 ${historyText}
 
 EXAMPLES:
-User: "Yarın 14:00 boş mu?"
-AI: { "tool": "check_availability", "date": "...", "time": "...", "serviceName": "Genel" }
+User: "Yarın 14:00 uygun mu?"
+AI: { "tool": "check_availability", "date": "2025-12-20", "time": "14:00", ... }
 
-User: "Evet uygun"
-AI: { "text": "Harika! Rezervasyon için isminizi, telefon numaranızı ve mail adresinizi yazabilir misiniz? 🌸" }
+User: "Evet" (History has Name: Ali, Phone: 0555...)
+AI: { "text": "Mail adresinizi de yazar mısınız?" }
 
-User: "Ayşe Yılmaz, 05551234567, ayse@test.com"
-AI: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time": "...", "customerName": "Ayşe Yılmaz", "customerPhone": "05551234567", "customerEmail": "ayse@test.com" }
+User: "ali@test.com"
+AI: { "tool": "create_appointment", ..., "customerName": "Ali", "customerPhone": "0555...", "customerEmail": "ali@test.com" }
 `;
 
     try {
@@ -102,64 +99,65 @@ AI: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time":
         let response = await callGemini(apiKey, systemPrompt + `\nUSER: ${message}\nAI:`);
         let text = response.text.trim();
 
-        // CLEANUP: Handle Markdown & Common JSON Errors
+        // CLEANUP
         text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        // Fix single quotes if they exist
-        if (text.startsWith("{ '")) {
-            text = text.replace(/'/g, '"');
-        }
+        if (text.startsWith("{ '")) text = text.replace(/'/g, '"');
 
         console.log(`[AI RAW] ${text}`);
 
         // --- STEP 2: PARSE & EXECUTE ---
         let toolCall;
         try {
-            // Find JSON object boundaries
             const jsonMatch = text.match(/(\{[\s\S]*\})/);
             if (jsonMatch) text = jsonMatch[0];
-
             toolCall = JSON.parse(text);
         } catch (e) {
-            console.error("JSON PARSE ERROR:", e);
-            // Fallback strategy: try regex extraction if parse fails
             const textMatch = text.match(/"text":\s*"([^"]*)"/);
             if (textMatch) return textMatch[1];
-
             return text.replace(/[{}]/g, '').replace(/"text":/g, '').replace(/"/g, '').trim();
         }
 
-        // CASE 1: Simple Text Reply
         if (toolCall.text) return toolCall.text;
 
-        // CASE 2: Tool Execution
         if (toolCall.tool) {
             console.log(`AI Tool Call: ${toolCall.tool}`, toolCall);
             let toolResult = "";
 
-            // HELPER: Check Availability Logic (Same as before)
+            // HELPER: Check Availability Logic
             const checkSlot = async (dateStr, timeStr, serviceDuration = 30) => {
                 const reqDate = new Date(`${dateStr}T${timeStr}:00`);
+                // Fix Day Name for proper Turkish mapping check (database keys might be english 'monday' or turkish 'pazartesi')
+                // Assuming DB stores english keys from previous schema view (monday, tuesday...)
                 const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
-                // Hours Check
-                if (parsedHours && parsedHours[dayName]) {
-                    if (!parsedHours[dayName].isOpen) return `KAPALI (O gün (${dayName}) çalışmıyoruz).`;
-                    const [openH] = parsedHours[dayName].start.split(':');
-                    const [closeH] = parsedHours[dayName].end.split(':');
-                    const reqH = parseInt(timeStr.split(':')[0]);
-                    if (reqH < parseInt(openH) || reqH >= parseInt(closeH)) return `KAPALI (Mesai saatleri: ${parsedHours[dayName].start} - ${parsedHours[dayName].end}).`;
+                // Debug
+                console.log(`Checking Slot: ${dateStr} ${timeStr} (${dayName})`);
+
+                if (parsedHours) {
+                    // Check if parsedHours uses English keys (monday) or Turkish?
+                    // The earlier code mapped them to Turkish for display, but the object itself likely has English keys if standard.
+                    // Let's try direct access
+                    let dayHours = parsedHours[dayName];
+
+                    if (!dayHours) return `KAPALI (Bilinmeyen gün: ${dayName})`;
+                    if (!dayHours.isOpen) return `KAPALI (${dateStr} tarihinde kapalıyız).`;
+
+                    const [openH, openM] = dayHours.start.split(':').map(Number);
+                    const [closeH, closeM] = dayHours.end.split(':').map(Number);
+                    const [reqH, reqM] = timeStr.split(':').map(Number);
+
+                    const reqMin = reqH * 60 + reqM;
+                    const openMin = openH * 60 + openM;
+                    const closeMin = closeH * 60 + closeM;
+
+                    if (reqMin < openMin || reqMin >= closeMin)
+                        return `KAPALI (Mesai: ${dayHours.start} - ${dayHours.end})`;
                 }
 
-                // Conflict Check
                 const conflict = await prisma.appointment.findFirst({
-                    where: {
-                        salonId: salonId,
-                        dateTime: reqDate,
-                        status: { not: 'cancelled' }
-                    }
+                    where: { salonId: salonId, dateTime: reqDate, status: { not: 'cancelled' } }
                 });
-                if (conflict) return "DOLU (O saatte randevu var).";
+                if (conflict) return "DOLU";
 
                 return "MÜSAİT";
             };
@@ -176,55 +174,45 @@ AI: { "tool": "create_appointment", "serviceName": "...", "date": "...", "time":
             if (toolCall.tool === 'create_appointment') {
                 const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
                 if (!service) {
-                    toolResult = "HATA: Hizmet bulunamadı. Lütfen tam hizmet adını belirtin.";
+                    toolResult = "HATA: Hizmet bulunamadı.";
                 } else {
                     const availability = await checkSlot(toolCall.date, toolCall.time, service.duration);
                     if (availability !== "MÜSAİT") {
-                        toolResult = `BAŞARISIZ: ${availability} Başka bir saat dener misiniz?`;
+                        toolResult = `BAŞARISIZ: ${availability}`;
                     } else {
-                        // CREATE OR UPDATE CUSTOMER
                         const professional = await prisma.professional.findFirst({ where: { salonId: salonId } });
-                        if (!professional) return "HATA: Personel bulunamadı.";
-
-                        let customerName = toolCall.customerName || "WhatsApp Misafiri";
-                        let customerEmail = toolCall.customerEmail || null;
-                        let targetPhone = toolCall.customerPhone || senderPhone; // Use provided phone or sender
-
-                        // Upsert Customer
-                        // We search by phone. If found, we update name (if provided). If not, create.
-                        let customer = await prisma.customer.findUnique({ where: { phone: targetPhone } });
-                        if (customer) {
-                            await prisma.customer.update({
-                                where: { id: customer.id },
-                                data: {
-                                    name: customerName,
-                                    email: customerEmail || customer.email // Don't overwrite with null
-                                }
-                            });
+                        if (!professional) {
+                            toolResult = "HATA: Personel yok.";
                         } else {
-                            customer = await prisma.customer.create({
+                            let customerName = toolCall.customerName || "Misafir";
+                            let customerEmail = toolCall.customerEmail;
+                            let targetPhone = toolCall.customerPhone || senderPhone;
+
+                            console.log(`[AI DEBUG] Creating/Updating Customer: Name=${customerName}, Phone=${targetPhone}, Email=${customerEmail}`);
+
+                            // Upsert Customer
+                            let customer = await prisma.customer.findUnique({ where: { phone: targetPhone } });
+                            if (customer) {
+                                await prisma.customer.update({
+                                    where: { id: customer.id },
+                                    data: { name: customerName, email: customerEmail || customer.email }
+                                });
+                            } else {
+                                customer = await prisma.customer.create({
+                                    data: { name: customerName, phone: targetPhone, email: customerEmail }
+                                });
+                            }
+
+                            const newAppt = await prisma.appointment.create({
                                 data: {
-                                    name: customerName,
-                                    phone: targetPhone,
-                                    email: customerEmail
+                                    salonId, customerId: customer.id, serviceId: service.id, professionalId: professional.id,
+                                    dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
+                                    totalPrice: service.price, status: 'confirmed',
+                                    notes: `AI. Name: ${customerName} Phone: ${targetPhone}`
                                 }
                             });
+                            toolResult = `BAŞARILI: Randevu NO: ${newAppt.id}. Tarih: ${toolCall.date} ${toolCall.time}`;
                         }
-
-                        // Create Appointment
-                        const newAppt = await prisma.appointment.create({
-                            data: {
-                                salonId,
-                                customerId: customer.id,
-                                serviceId: service.id,
-                                professionalId: professional.id,
-                                dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
-                                totalPrice: service.price,
-                                status: 'confirmed',
-                                notes: `AI Booking. Name: ${customerName}, Email: ${customerEmail}, Phone: ${targetPhone}`
-                            }
-                        });
-                        toolResult = `BAŞARILI: Randevu oluşturuldu! (ID: ${newAppt.id}) 📅 ${toolCall.date} ${toolCall.time}.`;
                     }
                 }
             }
@@ -236,16 +224,14 @@ Result: ${toolResult}
 
 Now reply to the user naturally based on this result.
 If Success: Confirm nicely ("Randevunuz oluşturuldu!").
-If Fail: Explain nicely.
+If Fail: Explain nicely (e.g. "Maalesef kapalıyız" or "Dolu").
 Use JSON: { "text": "..." }
 `;
             const finalRes = await callGemini(apiKey, resultPrompt);
             let finalText = finalRes.text.trim();
-            // Clean again
             finalText = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
             const finalJson = finalText.match(/(\{[\s\S]*\})/);
             if (finalJson) finalText = finalJson[0];
-
             try { return JSON.parse(finalText).text; } catch (e) {
                 return finalText.replace(/[{}]/g, '').replace(/"text":/g, '').replace(/"/g, '').trim();
             }
