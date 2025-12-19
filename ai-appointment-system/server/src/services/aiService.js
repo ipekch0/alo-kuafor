@@ -220,14 +220,48 @@ ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-
                     if (s) duration = s.duration;
                 }
                 toolResult = await checkSlot(toolCall.date, toolCall.time, duration);
+
+                // --- MEMORY: CACHE SUCCESSFUL CHECK ---
+                if (toolResult === "MÜSAİT") {
+                    global.aiSessionMemory = global.aiSessionMemory || new Map();
+                    global.aiSessionMemory.set(senderPhone, {
+                        date: toolCall.date,
+                        time: toolCall.time,
+                        serviceName: toolCall.serviceName,
+                        timestamp: Date.now()
+                    });
+                    console.log(`[AI MEMORY] Saved slot for ${senderPhone}:`, global.aiSessionMemory.get(senderPhone));
+                }
             }
 
             if (toolCall.tool === 'create_appointment') {
-                const service = services.find(s => s.name.toLowerCase().includes(toolCall.serviceName.toLowerCase()));
+                let targetDate = toolCall.date;
+                let targetTime = toolCall.time;
+                let serviceName = toolCall.serviceName || "";
+
+                const service = services.find(s => s.name.toLowerCase().includes(serviceName.toLowerCase()));
                 if (!service) {
                     toolResult = "HATA: Hizmet bulunamadı.";
                 } else {
-                    const availability = await checkSlot(toolCall.date, toolCall.time, service.duration);
+                    let availability = await checkSlot(targetDate, targetTime, service.duration);
+
+                    // --- MEMORY: RECOVER FROM HALLUCINATION ---
+                    if (availability !== "MÜSAİT") {
+                        console.log(`[AI MEMORY] Direct creation failed (${availability}). Checking memory...`);
+                        global.aiSessionMemory = global.aiSessionMemory || new Map();
+                        const cached = global.aiSessionMemory.get(senderPhone);
+
+                        if (cached && (Date.now() - cached.timestamp < 3600000)) {
+                            console.log(`[AI MEMORY] Found cached slot:`, cached);
+                            // Override
+                            targetDate = cached.date;
+                            targetTime = cached.time;
+                            // Re-check with cached values
+                            availability = await checkSlot(targetDate, targetTime, service.duration);
+                            console.log(`[AI MEMORY] Re-check result: ${availability}`);
+                        }
+                    }
+
                     if (availability !== "MÜSAİT") {
                         toolResult = `BAŞARISIZ: ${availability}`;
                     } else {
@@ -257,12 +291,15 @@ ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-
                             const newAppt = await prisma.appointment.create({
                                 data: {
                                     salonId, customerId: customer.id, serviceId: service.id, professionalId: professional.id,
-                                    dateTime: new Date(`${toolCall.date}T${toolCall.time}:00`),
+                                    dateTime: new Date(`${targetDate}T${targetTime}:00`),
                                     totalPrice: service.price, status: 'confirmed',
                                     notes: `AI. Name: ${customerName} Phone: ${targetPhone}`
                                 }
                             });
-                            toolResult = `BAŞARILI: Randevu NO: ${newAppt.id}. Tarih: ${toolCall.date} ${toolCall.time}`;
+                            // Remove from memory
+                            if (global.aiSessionMemory) global.aiSessionMemory.delete(senderPhone);
+
+                            toolResult = `BAŞARILI: Randevu NO: ${newAppt.id}. Tarih: ${targetDate} ${targetTime}`;
                         }
                     }
                 }
