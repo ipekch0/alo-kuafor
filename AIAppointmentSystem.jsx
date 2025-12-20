@@ -88,7 +88,7 @@ const AIAppointmentSystem = () => {
     { id: 'appointments', icon: CalendarIcon, label: 'Randevular', roles: ['SALON_OWNER', 'SUPER_ADMIN', 'STAFF'] },
     { id: 'professionals', icon: Users, label: 'Personel', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
     { id: 'customers', icon: UserCircle, label: 'Müşteriler', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
-    { id: 'finance', icon: Wallet, label: 'Muhasebe', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
+    // { id: 'finance', icon: Wallet, label: 'Muhasebe', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
     { id: 'inbox', icon: MessageCircle, label: 'Mesajlar', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
     { id: 'services', icon: Briefcase, label: 'Hizmetler', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
     { id: 'settings', icon: Settings, label: 'Ayarlar', roles: ['SALON_OWNER', 'SUPER_ADMIN'] },
