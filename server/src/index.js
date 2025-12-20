@@ -185,8 +185,15 @@ const initAndStart = async () => {
             console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
         });
     } catch (error) {
-        console.error('Failed to initialize database:', error);
-        process.exit(1);
+        console.error('Failed to initialize database:', error.message);
+        console.warn('⚠️  WARNING: Database schema push failed. Proceeding without database synchronization.');
+        console.warn('⚠️  Some API endpoints may fail if the database is not reachable.');
+
+        // Start server anyway to serve frontend
+        server = app.listen(PORT, () => {
+            console.log(`🚀 Server is running on http://localhost:${PORT} (Database Disconnected)`);
+            console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+        });
     }
 };
 

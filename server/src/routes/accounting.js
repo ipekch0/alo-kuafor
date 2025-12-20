@@ -8,27 +8,35 @@ const authenticateToken = require('../middleware/auth');
 router.use(authenticateToken);
 
 // Helper to get allowed salon IDs for a user
+// Helper to get allowed salon IDs for a user
 const getAllowedSalonIds = async (user) => {
-    if (user.role === 'admin' || user.role === 'super_admin') {
+    const role = (user.role || '').toUpperCase();
+    console.log(`[DEBUG] Checking permissions for user ${user.id} with role ${role}`);
+
+    if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+        console.log('[DEBUG] User is ADMIN/SUPER_ADMIN - Access Granted');
         return null; // All salons allowed
     }
 
-    if (user.role === 'salon_owner' || user.role === 'SALON_OWNER') {
+    if (role === 'SALON_OWNER' || role === 'OWNER') {
         const salons = await prisma.salon.findMany({
             where: { ownerId: user.id },
             select: { id: true }
         });
+        console.log(`[DEBUG] User is OWNER. Owned Salons: ${salons.map(s => s.id).join(', ')}`);
         return salons.map(s => s.id);
     }
 
-    if (user.role === 'staff' || user.role === 'STAFF') {
+    if (role === 'STAFF') {
         const professional = await prisma.professional.findUnique({
             where: { userId: user.id },
             select: { salonId: true }
         });
+        console.log(`[DEBUG] User is STAFF. Allowed Salon: ${professional ? professional.salonId : 'None'}`);
         return professional ? [professional.salonId] : [];
     }
 
+    console.log('[DEBUG] User role not recognized for finance access, returning empty list.');
     return [];
 };
 

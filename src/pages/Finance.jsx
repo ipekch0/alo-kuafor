@@ -294,7 +294,7 @@ const Finance = () => {
                         className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100"
                     >
                         <h3 className="text-lg font-bold text-slate-900 mb-6">Gider Dağılımı</h3>
-                        <div style={{ width: '100%', height: 300 }}>
+                        <div style={{ width: '100%', height: 300, minHeight: 300 }}>
                             <ResponsiveContainer>
                                 <PieChart>
                                     <Pie
@@ -332,7 +332,7 @@ const Finance = () => {
                             <h3 className="text-lg font-bold text-slate-900">Aylık Performans</h3>
                             <span className="text-xs text-slate-400 font-medium px-2 py-1 bg-slate-50 rounded-lg">Son 6 Ay</span>
                         </div>
-                        <div style={{ width: '100%', height: 300 }}>
+                        <div style={{ width: '100%', height: 300, minHeight: 300 }}>
                             <ResponsiveContainer>
                                 <AreaChart data={stats.monthlyStats || []}>
                                     <defs>
