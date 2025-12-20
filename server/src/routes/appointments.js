@@ -191,9 +191,15 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
     try {
         const { status } = req.body;
+
+        const updateData = { status };
+        if (status === 'completed') {
+            updateData.isPaid = true;
+        }
+
         const appointment = await prisma.appointment.update({
             where: { id: parseInt(req.params.id) },
-            data: { status },
+            data: updateData,
             include: { customer: true, user: true } // Include user/customer for notification
         });
 

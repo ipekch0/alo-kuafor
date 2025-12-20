@@ -55,7 +55,9 @@ router.get('/stats', async (req, res) => {
 
         // Date filtering helpers
         const start = startDate ? new Date(startDate) : new Date(0); // Beginning of time if not set
-        const end = endDate ? new Date(endDate) : new Date();
+
+        // FIX: If no endDate is provided, default to far future to include ALL completed appointments (even if scheduled for tomorrow)
+        const end = endDate ? new Date(endDate) : new Date('2100-01-01');
         end.setHours(23, 59, 59, 999);
 
         let totalRevenue = 0;
