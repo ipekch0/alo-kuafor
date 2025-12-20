@@ -113,28 +113,108 @@ class WhatsappManager {
         client.on('message', async (message) => {
             try {
                 // Ignore status updates and extremely short messages
-                if (message.body.length < 2 || message.isStatus) return;
+                if (message.body.length < 1 || message.isStatus) return;
 
                 console.log(`Message received for salon ${salonId} from ${message.from}: ${message.body}`);
 
-                // Get Salon Context for AI
+                // 1. Get Salon Context
                 const salon = await prisma.salon.findUnique({
                     where: { id: salonId },
-                    include: {
-                        services: true,
-                        appointments: {
-                            take: 5,
-                            where: { status: 'completed' } // Just to give AI some context on style if needed
-                        }
-                    }
+                    include: { services: true }
                 });
 
                 if (!salon) return;
 
-                // Call AI Service with Salon Context
-                const aiResponse = await aiService.chat(message.body, message.from, salon);
+                // 2. Find or Create User (for Chat History)
+                const senderPhone = message.from.replace('@c.us', '');
+                let user = await prisma.user.findFirst({
+                    where: { phone: senderPhone }
+                });
 
-                // Reply to user
+                if (!user) {
+                    // Create a placeholder user for WhatsApp guest
+                    const placeholderEmail = `${senderPhone}@whatsapp.guest`;
+                    // Check if email exists (edge case)
+                    const emailExists = await prisma.user.findUnique({ where: { email: placeholderEmail } });
+
+                    if (emailExists) {
+                        user = emailExists;
+                    } else {
+                        user = await prisma.user.create({
+                            data: {
+                                name: "WhatsApp Misafir",
+                                phone: senderPhone,
+                                email: placeholderEmail,
+                                password: "wa_guest_auto_pwd", // Dummy password
+                                role: "CUSTOMER",
+                                isVerified: true
+                            }
+                        });
+                    }
+                }
+
+                // 3. Find or Create Conversation
+                let conversation = await prisma.conversation.findUnique({
+                    where: {
+                        salonId_userId: {
+                            salonId: salon.id,
+                            userId: user.id
+                        }
+                    }
+                });
+
+                if (!conversation) {
+                    conversation = await prisma.conversation.create({
+                        data: {
+                            salonId: salon.id,
+                            userId: user.id
+                        }
+                    });
+                }
+
+                // 4. Save USER Message
+                await prisma.message.create({
+                    data: {
+                        conversationId: conversation.id,
+                        senderType: 'USER',
+                        content: message.body,
+                        isRead: false
+                    }
+                });
+
+                // 5. Fetch History (Last 10 messages)
+                const historyRaw = await prisma.message.findMany({
+                    where: { conversationId: conversation.id },
+                    take: 10,
+                    orderBy: { createdAt: 'desc' }
+                });
+
+                // Reverse to chronological order and format for AI
+                const history = historyRaw.reverse().map(msg => ({
+                    role: msg.senderType === 'USER' ? 'user' : 'assistant',
+                    content: msg.content
+                }));
+
+                // 6. Call AI Service with History
+                // Pass history in context
+                const aiContext = {
+                    ...salon,
+                    history: history
+                };
+
+                const aiResponse = await aiService.chat(message.body, message.from, aiContext);
+
+                // 7. Save AI Response
+                await prisma.message.create({
+                    data: {
+                        conversationId: conversation.id,
+                        senderType: 'SALON',
+                        content: aiResponse.message,
+                        isRead: true
+                    }
+                });
+
+                // 8. Reply to user
                 await client.sendMessage(message.from, aiResponse.message);
 
             } catch (error) {

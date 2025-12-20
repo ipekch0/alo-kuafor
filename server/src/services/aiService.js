@@ -92,6 +92,10 @@ KURALLAR:
    - **ÖNEMLİ:** 'create_appointment' yaparken **GEÇMİŞ (PREVIOUS) mesajlardaki 'check_availability' kısmında konuştuğunuz Tarih ve Saati** kullan.
    - **ASLA** o anki saati (Current Time) kullanma. Müşteri "Tamam" derse, anlaşılan saati onayla.
 
+5. **TEKRAR ETMEME:**
+   - Eğer geçmiş mesajlarda zaten selamlaştıysan (Merhaba, Hoşgeldiniz vb.), tekrar "Merhaba" deme.
+   - Doğrudan müşterinin sorusuna veya isteğine odaklan.
+
 GEÇMİŞ MESAJLAR:
 ${historyText}
 
@@ -109,7 +113,44 @@ ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-
 
     try {
         // --- STEP 1: INITIAL CALL ---
-        let response = await callGemini(apiKey, systemPrompt + `\nUSER: ${message}\nAI:`);
+        // Construct Contents Array for Multi-turn Chat
+        const contents = [];
+
+        // 1. System Instruction (as first User message for compatibility)
+        contents.push({
+            role: 'user',
+            parts: [{ text: systemPrompt }]
+        });
+
+        // 2. Chat History
+        if (context.history && context.history.length > 0) {
+            // Add a dummy model response to the system prompt to start the conversation flow naturally
+            contents.push({
+                role: 'model',
+                parts: [{ text: "Anlaşıldı. İpek Kuaför asistanı olarak hazırım. Müşteriyi bekliyorum." }]
+            });
+
+            context.history.forEach(msg => {
+                contents.push({
+                    role: msg.role === 'user' ? 'user' : 'model',
+                    parts: [{ text: msg.content }]
+                });
+            });
+        }
+
+        // 3. Current Message
+        // Check for duplication
+        const lastHistoryMsg = context.history && context.history.length > 0 ? context.history[context.history.length - 1] : null;
+        const isDuplicate = lastHistoryMsg && lastHistoryMsg.role === 'user' && lastHistoryMsg.content.trim() === message.trim();
+
+        if (!isDuplicate) {
+            contents.push({
+                role: 'user',
+                parts: [{ text: message }]
+            });
+        }
+
+        let response = await callGemini(apiKey, contents);
         let text = response.text.trim();
 
         // CLEANUP
@@ -312,23 +353,17 @@ ASİSTAN: { "tool": "create_appointment", "serviceName": "Ombre", "date": "2025-
             }
 
             // --- STEP 3: FINAL CALL WITH RESULT ---
-            // RE-INJECT SYSTEM PROMPT TO MAINTAIN PERSONA
-            const resultPrompt = `
-${systemPrompt}
+            // Append result to contents
+            contents.push({
+                role: 'model',
+                parts: [{ text: JSON.stringify(toolCall) }] // Simulate AI outputting the tool call
+            });
+            contents.push({
+                role: 'user',
+                parts: [{ text: `TOOL_RESULT: ${toolResult}\n\nGÖREV: Bu sonuca göre müşteriye yanıt ver. JSON formatı kullan: { "text": "..." }` }]
+            });
 
-DURUM GÜNCELLEMESİ:
-Önceki Adım: '${toolCall.tool}' aracı çalıştırıldı.
-Aracın Sonucu: ${toolResult}
-
-GÖREV:
-Bu sonuca göre müşteriye yanıt ver.
-1. Sonuç 'BAŞARISIZ' veya 'KAPALI' ise: Üzgünüm de ve nedenini açıkla.
-2. Sonuç 'BAŞARILI' ise: Randevu detaylarını onayla.
-3. Sonuçta "Tarih/Saat eksik" diyorsa: Müşteriden eksik bilgileri nazikçe iste.
-
-JSON Formatı Kullan: { "text": "..." }
-`;
-            const finalRes = await callGemini(apiKey, resultPrompt);
+            const finalRes = await callGemini(apiKey, contents);
             let finalText = finalRes.text.trim();
             finalText = finalText.replace(/```json/g, '').replace(/```/g, '').trim();
             const finalJson = finalText.match(/(\{[\s\S]*\})/);
@@ -344,10 +379,10 @@ JSON Formatı Kullan: { "text": "..." }
     }
 }
 
-async function callGemini(apiKey, prompt) {
+async function callGemini(apiKey, contents) {
     const response = await axios.post(
         `${GEMINI_API_URL}?key=${apiKey}`,
-        { contents: [{ parts: [{ text: prompt }] }] },
+        { contents: contents },
         { headers: { 'Content-Type': 'application/json' } }
     );
     if (response.data?.candidates?.[0]?.content?.parts?.[0]) {
@@ -364,7 +399,7 @@ const chat = async (message, sessionId, context = {}) => {
     const senderPhone = sessionId; // Using sessionId as phone for now, assuming format '90555...'
 
     return {
-        message: await generateAIResponse(message, { salonName, services, salonId, senderPhone })
+        message: await generateAIResponse(message, { ...context, salonName, services, salonId, senderPhone })
     };
 };
 
