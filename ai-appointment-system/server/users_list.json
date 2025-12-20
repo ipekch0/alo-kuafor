@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "email": "yipek8055@gmail.com",
+    "name": "Yasin ipek",
+    "role": "salon_owner",
+    "isVerified": true
+  },
+  {
+    "id": 2,
+    "email": "mervesaglikk06@gmail.com",
+    "name": "Merve Sağlık",
+    "role": "customer",
+    "isVerified": true
+  },
+  {
+    "id": 3,
+    "email": "ipeksedanur@gmail.com",
+    "name": "Seda Nur İpek",
+    "role": "customer",
+    "isVerified": false
+  },
+  {
+    "id": 4,
+    "email": "ipekysn69@gmail.com",
+    "name": "Yasin İpek",
+    "role": "customer",
+    "isVerified": true
+  },
+  {
+    "id": 5,
+    "email": "iipekesma@gmail.com",
+    "name": "Esma İpek",
+    "role": "customer",
+    "isVerified": false
+  },
+  {
+    "id": 6,
+    "email": "ardau367@gmail.com",
+    "name": "ARDA UTKU TÜKENMEZ ",
+    "role": "salon_owner",
+    "isVerified": true
+  }
+]

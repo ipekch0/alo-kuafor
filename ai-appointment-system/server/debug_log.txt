@@ -1,0 +1,1217 @@
+[2025-12-09T18:36:08.283Z] Received request with code/token: EAAZAZAMaAliCIBQOTDF...
+[2025-12-09T18:36:08.863Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081319,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305320,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:36:08.873Z] {
+  "msg": "WABA ID not found in granular scopes.",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:36:08.874Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you selected a Business Account during login."
+}
+[2025-12-09T18:40:24.574Z] Received request with code/token: EAAZAZAMaAliCIBQKrRX...
+[2025-12-09T18:40:25.195Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081576,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305576,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:40:25.197Z] {
+  "msg": "WABA ID not found in granular scopes.",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:40:25.199Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you selected a Business Account during login."
+}
+[2025-12-09T18:40:51.548Z] Received request with code/token: EAAZAZAMaAliCIBQJBMD...
+[2025-12-09T18:40:52.072Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081603,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305603,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:40:52.075Z] {
+  "msg": "WABA ID not found in granular scopes.",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:40:52.078Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you selected a Business Account during login."
+}
+[2025-12-09T18:42:31.198Z] Received request with code/token: EAAZAZAMaAliCIBQFx5x...
+[2025-12-09T18:42:31.733Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081702,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305703,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:42:31.737Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:42:32.027Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Missing Permission",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AVFUHxp8LLsw9Dj6bLkmbwP"
+    }
+  }
+}
+[2025-12-09T18:42:32.035Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:43:53.443Z] Received request with code/token: EAAZAZAMaAliCIBQP42z...
+[2025-12-09T18:43:53.973Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081784,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305785,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:43:53.977Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:43:54.215Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Missing Permission",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AXu7qhzD1aLKUNi27GNC5Fl"
+    }
+  }
+}
+[2025-12-09T18:43:54.222Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:44:14.565Z] Received request with code/token: EAAZAZAMaAliCIBQPJHb...
+[2025-12-09T18:44:15.098Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081806,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305806,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:44:15.102Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:44:15.343Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Missing Permission",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "Ax720YgRDHerybFtl9CLQYl"
+    }
+  }
+}
+[2025-12-09T18:44:15.354Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:45:44.912Z] Received request with code/token: EAAZAZAMaAliCIBQLJB5...
+[2025-12-09T18:45:45.505Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081896,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765305897,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:45:45.508Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:45:45.756Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "A0U--57zbe5Ns1oL14afYYJ"
+    }
+  }
+}
+[2025-12-09T18:45:45.763Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:48:45.123Z] Received request with code/token: EAAZAZAMaAliCIBQLJB5...
+[2025-12-09T18:48:45.600Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773081896,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306077,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:48:45.603Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:48:45.827Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AXP4U1WZkHJofq1qvt8MGbb"
+    }
+  }
+}
+[2025-12-09T18:48:45.836Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:50:12.127Z] Received request with code/token: EAAZAZAMaAliCIBQD1S8...
+[2025-12-09T18:50:12.756Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082163,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306164,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:50:12.759Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:50:12.984Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "Aestix8Ws8kaBQIT1IZveBA"
+    }
+  }
+}
+[2025-12-09T18:50:12.995Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:51:14.777Z] Received request with code/token: EAAZAZAMaAliCIBQNJ8z...
+[2025-12-09T18:51:15.352Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082226,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306226,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:51:15.353Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:51:15.592Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AcZaHiRIdVgemLoOXNXNOR7"
+    }
+  }
+}
+[2025-12-09T18:51:15.598Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:51:23.735Z] Received request with code/token: EAAZAZAMaAliCIBQA5BC...
+[2025-12-09T18:51:24.333Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082235,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306235,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:51:24.336Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:51:24.582Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AwtUrBvqGXVc-trYY7QTkfO"
+    }
+  }
+}
+[2025-12-09T18:51:24.588Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:55:15.987Z] Received request with code/token: EAAZAZAMaAliCIBQAXxZ...
+[2025-12-09T18:55:16.510Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082467,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306468,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:55:16.513Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:55:16.755Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "A9SZ8OQP00QF7WP8VmhhZXI"
+    }
+  }
+}
+[2025-12-09T18:55:16.768Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:57:03.629Z] Received request with code/token: EAAZAZAMaAliCIBQIgL2...
+[2025-12-09T18:57:04.186Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082575,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306575,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:57:04.187Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:57:04.421Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "A63e71h5jOTz4LbBavvYwKA"
+    }
+  }
+}
+[2025-12-09T18:57:04.427Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:57:45.832Z] Received request with code/token: EAAZAZAMaAliCIBQLslg...
+[2025-12-09T18:57:46.499Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082617,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306618,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:57:46.500Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:57:46.766Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AUEu2rP9VB-AL3Q5J_DD-7M"
+    }
+  }
+}
+[2025-12-09T18:57:46.774Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:57:58.734Z] Received request with code/token: EAAZAZAMaAliCIBQGgZC...
+[2025-12-09T18:57:59.315Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082630,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306630,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:57:59.316Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:57:59.540Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AaI76ERykCFjrtxm0SLuyfQ"
+    }
+  }
+}
+[2025-12-09T18:57:59.548Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T18:58:11.758Z] Received request with code/token: EAAZAZAMaAliCIBQIWOd...
+[2025-12-09T18:58:12.366Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082643,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306643,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T18:58:12.368Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T18:58:12.585Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AmtUcZuymLOgvM2J9WyLxj2"
+    }
+  }
+}
+[2025-12-09T18:58:12.597Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:01:10.940Z] Received request with code/token: EAAZAZAMaAliCIBQPnYr...
+[2025-12-09T19:01:11.520Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082822,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306823,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T19:01:11.522Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T19:01:11.755Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "AJnD5i7zBWbdXHd1fQNnd-G"
+    }
+  }
+}
+[2025-12-09T19:01:11.763Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:02:05.971Z] Received request with code/token: EAAZAZAMaAliCIBQHRE8...
+[2025-12-09T19:02:06.517Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082877,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306878,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T19:02:06.519Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T19:02:06.755Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "(#100) Tried accessing nonexisting field (client_whatsapp_business_accounts) on node type (User)",
+      "type": "OAuthException",
+      "code": 100,
+      "fbtrace_id": "ACPFinzVgcmRq4kLFz8xIOW"
+    }
+  }
+}
+[2025-12-09T19:02:06.764Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:03:12.537Z] Received request with code/token: EAAZAZAMaAliCIBQBEeF...
+[2025-12-09T19:03:13.115Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773082944,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765306944,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T19:03:13.116Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T19:03:13.416Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "Application does not have permission for this action",
+      "type": "OAuthException",
+      "code": 10,
+      "error_data": {
+        "blame_field_specs": [
+          [
+            ""
+          ]
+        ]
+      },
+      "error_subcode": 1752203,
+      "is_transient": false,
+      "error_user_title": "Geçersiz İzin Hatası",
+      "error_user_msg": "Bu işlemi tamamlamak için gerekli izinlere sahip değilsin",
+      "fbtrace_id": "AlTKhDAgOue4S9ScM7HH7zU"
+    }
+  }
+}
+[2025-12-09T19:03:13.435Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:05:16.437Z] Received request with code/token: EAAZAZAMaAliCIBQFh8k...
+[2025-12-09T19:05:16.975Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "AloKuaför AI",
+      "data_access_expires_at": 1773083067,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765307068,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T19:05:16.977Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T19:05:17.302Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "Application does not have permission for this action",
+      "type": "OAuthException",
+      "code": 10,
+      "error_data": {
+        "blame_field_specs": [
+          [
+            ""
+          ]
+        ]
+      },
+      "error_subcode": 1752203,
+      "is_transient": false,
+      "error_user_title": "Geçersiz İzin Hatası",
+      "error_user_msg": "Bu işlemi tamamlamak için gerekli izinlere sahip değilsin",
+      "fbtrace_id": "ARnYSLK8RlF69RskxJh6fDh"
+    }
+  }
+}
+[2025-12-09T19:05:17.309Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:06:12.012Z] Received request with code/token: EAAZAZAMaAliCIBQOiBh...
+[2025-12-09T19:06:12.651Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "ODAKMANAGE",
+      "data_access_expires_at": 1773083123,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765307124,
+      "scopes": [
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "whatsapp_business_management"
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-09T19:06:12.652Z] {
+  "msg": "WABA ID not found in granular scopes. Attempting fallback...",
+  "scopes": [
+    {
+      "scope": "whatsapp_business_management"
+    },
+    {
+      "scope": "whatsapp_business_messaging"
+    }
+  ]
+}
+[2025-12-09T19:06:12.912Z] {
+  "msg": "Fallback WABA fetch failed",
+  "error": "Request failed with status code 400",
+  "response": {
+    "error": {
+      "message": "Application does not have permission for this action",
+      "type": "OAuthException",
+      "code": 10,
+      "error_data": {
+        "blame_field_specs": [
+          [
+            ""
+          ]
+        ]
+      },
+      "error_subcode": 1752203,
+      "is_transient": false,
+      "error_user_title": "Geçersiz İzin Hatası",
+      "error_user_msg": "Bu işlemi tamamlamak için gerekli izinlere sahip değilsin",
+      "fbtrace_id": "A3RIRktIRpGqdpzrozBCkfI"
+    }
+  }
+}
+[2025-12-09T19:06:12.918Z] {
+  "msg": "Exchange Token Error",
+  "error": "WhatsApp Business Account ID could not be identified. Please ensure you have a WhatsApp Business Account created under your Facebook Business Manager."
+}
+[2025-12-09T19:07:14.988Z] Received request with code/token: EAAZAZAMaAliCIBQF9kD...
+[2025-12-09T19:07:15.752Z] {
+  "msg": "Debug Token Response",
+  "data": {
+    "data": {
+      "app_id": "1786919535347746",
+      "type": "USER",
+      "application": "ODAKMANAGE",
+      "data_access_expires_at": 1773083186,
+      "expires_at": 1770440787,
+      "is_valid": true,
+      "issued_at": 1765307187,
+      "scopes": [
+        "business_management",
+        "whatsapp_business_management",
+        "whatsapp_business_messaging",
+        "public_profile"
+      ],
+      "granular_scopes": [
+        {
+          "scope": "business_management",
+          "target_ids": [
+            "2786726338340504"
+          ]
+        },
+        {
+          "scope": "whatsapp_business_management",
+          "target_ids": [
+            "1179874353536283"
+          ]
+        },
+        {
+          "scope": "whatsapp_business_messaging"
+        }
+      ],
+      "user_id": "122108579655129602"
+    }
+  }
+}
+[2025-12-10T12:31:43.738Z] {
+  "msg": "Manual Connect Error",
+  "error": "\nInvalid `prisma.salon.update()` invocation in\nC:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\src\\routes\\whatsappCloud.js:168:28\n\n  165 const salon = await prisma.salon.findFirst({ where: { ownerId: userId } });\n  166 if (!salon) return res.status(404).json({ error: 'Salon bulunamadı.' });\n  167 \n→ 168 await prisma.salon.update(\nUnique constraint failed on the fields: (`whatsappPhoneId`)",
+  "stack": "PrismaClientKnownRequestError: \nInvalid `prisma.salon.update()` invocation in\nC:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\src\\routes\\whatsappCloud.js:168:28\n\n  165 const salon = await prisma.salon.findFirst({ where: { ownerId: userId } });\n  166 if (!salon) return res.status(404).json({ error: 'Salon bulunamadı.' });\n  167 \n→ 168 await prisma.salon.update(\nUnique constraint failed on the fields: (`whatsappPhoneId`)\n    at $n.handleRequestError (C:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:7315)\n    at $n.handleAndLogRequestError (C:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:6623)\n    at $n.request (C:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\node_modules\\@prisma\\client\\runtime\\library.js:121:6307)\n    at async l (C:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\node_modules\\@prisma\\client\\runtime\\library.js:130:9633)\n    at async C:\\Users\\yasin\\OneDrive\\Masaüstü\\ai-appointment-system\\ai-appointment-system\\server\\src\\routes\\whatsappCloud.js:168:9"
+}
