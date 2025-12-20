@@ -220,7 +220,7 @@ router.post('/expenses', authenticateToken, async (req, res) => {
 
 
         // Verify ownership (if salonId was provided manually or autofilled)
-        if (req.user.role !== 'admin') {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             const salon = await prisma.salon.findFirst({
                 where: { id: parseInt(salonId), ownerId: req.user.id }
             });
@@ -252,9 +252,10 @@ router.delete('/expenses/:id', authenticateToken, async (req, res) => {
 
         if (!expense) return res.status(404).json({ error: 'Not found' });
 
-        if (req.user.role !== 'admin' && expense.salon.ownerId !== req.user.id) {
+        if (req.user.role !== 'admin' && req.user.role !== 'super_admin' && expense.salon.ownerId !== req.user.id) {
             return res.status(403).json({ error: 'No permission' });
         }
+
 
         await prisma.expense.delete({ where: { id: expenseId } });
         res.json({ success: true });
