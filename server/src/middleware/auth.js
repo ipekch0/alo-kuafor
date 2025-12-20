@@ -73,9 +73,12 @@ authMiddleware.requirePermission = (permission) => {
         if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
 
         // Super Admins and Owners usually have full access, but let's be explicit
-        if (['SUPER_ADMIN', 'SALON_OWNER'].includes(req.user.role)) {
+        // FIX: Check for both uppercase and lowercase roles to be safe
+        const role = req.user.role ? req.user.role.toLowerCase() : '';
+        if (['super_admin', 'admin', 'salon_owner'].includes(role)) {
             return next();
         }
+
 
         const userPermissions = req.user.permissions || [];
         if (!userPermissions.includes(permission)) {
