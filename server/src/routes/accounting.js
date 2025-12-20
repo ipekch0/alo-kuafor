@@ -62,7 +62,16 @@ router.get('/stats', async (req, res) => {
 
             if (!isNaN(parsedSalonId)) {
                 if (!allowedSalonIds.includes(parsedSalonId)) {
-                    return res.status(403).json({ error: 'Access denied for this salon' });
+                    return res.status(403).json({
+                        error: 'Access denied for this salon',
+                        debug: {
+                            userRole: req.user.role,
+                            userId: req.user.id,
+                            allowedSalonIds,
+                            requestedSalonId: parsedSalonId,
+                            message: 'User is not linked to this salon via Professional table'
+                        }
+                    });
                 }
                 salonFilter.id = parsedSalonId;
             } else {
@@ -193,7 +202,15 @@ router.get('/expenses', authenticateToken, async (req, res) => {
         if (salonId) {
             const parsedId = parseInt(salonId);
             if (allowedSalonIds !== null && !allowedSalonIds.includes(parsedId)) {
-                return res.status(403).json({ error: 'Access denied' });
+                return res.status(403).json({
+                    error: 'Access denied',
+                    debug: {
+                        userRole: req.user.role,
+                        userId: req.user.id,
+                        allowedSalonIds,
+                        requestedSalonId: parsedId
+                    }
+                });
             }
             whereClause.salonId = parsedId;
         }
