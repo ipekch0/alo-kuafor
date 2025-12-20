@@ -6,29 +6,30 @@ const authenticateToken = require('../middleware/auth');
 
 // Apply auth to all routes
 router.use(authenticateToken);
-// router.use(authenticateToken.requirePermission('VIEW_FINANCE')); // REMOVED to fix 403 error for Super Admin
 
-// Helper to check if user owns the salon or is admin
-const checkAccess = async (req, res, next) => {
-    try {
-        const userId = req.user.id;
-        const userRole = req.user.role;
-        const salonId = parseInt(req.query.salonId || req.body.salonId);
-
-        if (userRole === 'admin') return next();
-
-        if (salonId) {
-            const salon = await prisma.salon.findFirst({
-                where: { id: salonId, ownerId: userId }
-            });
-            if (salon) return next();
-        }
-
-        // If no salonId provided, we might rely on the main function to filter by ownerId
-        return next();
-    } catch (e) {
-        res.status(403).json({ error: 'Access denied' });
+// Helper to get allowed salon IDs for a user
+const getAllowedSalonIds = async (user) => {
+    if (user.role === 'admin' || user.role === 'super_admin') {
+        return null; // All salons allowed
     }
+
+    if (user.role === 'salon_owner' || user.role === 'SALON_OWNER') {
+        const salons = await prisma.salon.findMany({
+            where: { ownerId: user.id },
+            select: { id: true }
+        });
+        return salons.map(s => s.id);
+    }
+
+    if (user.role === 'staff' || user.role === 'STAFF') {
+        const professional = await prisma.professional.findUnique({
+            where: { userId: user.id },
+            select: { salonId: true }
+        });
+        return professional ? [professional.salonId] : [];
+    }
+
+    return [];
 };
 
 // GET /stats - Financial Overview
@@ -37,17 +38,36 @@ router.get('/stats', async (req, res) => {
         const userId = req.user.id;
         const { salonId, startDate, endDate } = req.query;
 
+        // Determine allowed salons
+        const allowedSalonIds = await getAllowedSalonIds(req.user);
+
         // Build base filter
         let salonFilter = {};
         const parsedSalonId = parseInt(salonId);
 
-        // FIX: Allow both 'admin' and 'super_admin' to view all/specific salons
-        if (req.user.role === 'admin' || req.user.role === 'super_admin') {
+        if (allowedSalonIds === null) {
+            // Admin: can see all, or filter by specific
             if (!isNaN(parsedSalonId)) salonFilter.id = parsedSalonId;
         } else {
-            // Salon owner: find their salons
-            salonFilter.ownerId = userId;
-            if (!isNaN(parsedSalonId)) salonFilter.id = parsedSalonId;
+            // Owner or Staff: restricted to their salons
+            if (allowedSalonIds.length === 0) {
+                return res.json({
+                    revenue: 0,
+                    expenses: 0,
+                    profit: 0,
+                    breakdown: {},
+                    monthlyStats: []
+                });
+            }
+
+            if (!isNaN(parsedSalonId)) {
+                if (!allowedSalonIds.includes(parsedSalonId)) {
+                    return res.status(403).json({ error: 'Access denied for this salon' });
+                }
+                salonFilter.id = parsedSalonId;
+            } else {
+                salonFilter.id = { in: allowedSalonIds };
+            }
         }
 
         const salons = await prisma.salon.findMany({
@@ -72,7 +92,6 @@ router.get('/stats', async (req, res) => {
 
         // Initialize Monthly Data for Last 6 Months
         const monthlyStats = [];
-        // Note: Make sure these month names match what you want displayed. 'ağustos' was lowercase in my read, fixing to 'Ağustos'
         const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
         for (let i = 5; i >= 0; i--) {
@@ -91,8 +110,6 @@ router.get('/stats', async (req, res) => {
         // Loop through to aggregate
         for (const salon of salons) {
             // Revenue (Completed appointments)
-            // Revenue (Completed appointments)
-            // Fetch all completed appointments to ensure correct total revenue calculation (even older than 6 months)
             const appointments = await prisma.appointment.findMany({
                 where: {
                     salonId: salon.id,
@@ -117,10 +134,6 @@ router.get('/stats', async (req, res) => {
             });
 
             console.log(`[DEBUG] Salon ${salon.id} - Processed ${appointments.length} appointments. Total Revenue: ${totalRevenue}`);
-
-
-            console.log(`[DEBUG] Salon ${salon.id} - Found ${appointments.length} completed appointments. Current Total Revenue: ${totalRevenue}`);
-
 
             // Expenses
             const expenses = await prisma.expense.findMany({
@@ -166,20 +179,23 @@ router.get('/stats', async (req, res) => {
 // GET /expenses - List
 router.get('/expenses', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.id;
         const { salonId } = req.query;
+        const allowedSalonIds = await getAllowedSalonIds(req.user);
 
         let whereClause = {};
 
-        if (req.user.role !== 'admin') {
-            // Must belong to owned salon
-            const ownedSalons = await prisma.salon.findMany({ where: { ownerId: userId }, select: { id: true } });
-            const ownedIds = ownedSalons.map(s => s.id);
-            whereClause.salonId = { in: ownedIds };
+        if (allowedSalonIds !== null) {
+            // Restricted access
+            if (allowedSalonIds.length === 0) return res.json([]);
+            whereClause.salonId = { in: allowedSalonIds };
         }
 
         if (salonId) {
-            whereClause.salonId = parseInt(salonId);
+            const parsedId = parseInt(salonId);
+            if (allowedSalonIds !== null && !allowedSalonIds.includes(parsedId)) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            whereClause.salonId = parsedId;
         }
 
         const expenses = await prisma.expense.findMany({
@@ -199,38 +215,31 @@ router.get('/expenses', authenticateToken, async (req, res) => {
 router.post('/expenses', authenticateToken, async (req, res) => {
     try {
         let { salonId, category, amount, description, date } = req.body;
+        const allowedSalonIds = await getAllowedSalonIds(req.user);
 
-        // Auto-detect salonId if not provided (for single-salon owners or Admins testing)
+        // Auto-detect salonId if not provided
         if (!salonId) {
-            // 1. Try to find salon owned by user
-            let salon = await prisma.salon.findFirst({
-                where: { ownerId: req.user.id }
-            });
-
-            // 2. If not found AND user is Admin, just pick the first salon (Fallback for testing)
-            if (!salon && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
-                salon = await prisma.salon.findFirst();
-            }
-
-            if (salon) {
-                salonId = salon.id;
+            if (allowedSalonIds === null) {
+                // Admin: just pick first salon if not specified (testing convenience)
+                const salon = await prisma.salon.findFirst();
+                if (salon) salonId = salon.id;
+            } else if (allowedSalonIds.length > 0) {
+                // Default to first allowed salon
+                salonId = allowedSalonIds[0];
             } else {
-                return res.status(400).json({ error: 'Salon bulunamadı. Lütfen önce bir salon oluşturun.' });
+                return res.status(400).json({ error: 'Salon bulunamadı. Yetkiniz yok veya salon tanımlı değil.' });
             }
         }
 
-
-        // Verify ownership (if salonId was provided manually or autofilled)
-        if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-            const salon = await prisma.salon.findFirst({
-                where: { id: parseInt(salonId), ownerId: req.user.id }
-            });
-            if (!salon) return res.status(403).json({ error: 'Not authorized for this salon' });
+        // Verify permission
+        const parsedSalonId = parseInt(salonId);
+        if (allowedSalonIds !== null && !allowedSalonIds.includes(parsedSalonId)) {
+            return res.status(403).json({ error: 'Bu salon için işlem yapma yetkiniz yok' });
         }
 
         const expense = await prisma.expense.create({
             data: {
-                salonId: parseInt(salonId),
+                salonId: parsedSalonId,
                 category,
                 amount: parseFloat(amount),
                 description,
@@ -241,6 +250,7 @@ router.post('/expenses', authenticateToken, async (req, res) => {
         res.json(expense);
 
     } catch (error) {
+        console.error('Create Expense Error:', error);
         res.status(500).json({ error: 'Create error' });
     }
 });
@@ -253,10 +263,11 @@ router.delete('/expenses/:id', authenticateToken, async (req, res) => {
 
         if (!expense) return res.status(404).json({ error: 'Not found' });
 
-        if (req.user.role !== 'admin' && req.user.role !== 'super_admin' && expense.salon.ownerId !== req.user.id) {
+        const allowedSalonIds = await getAllowedSalonIds(req.user);
+
+        if (allowedSalonIds !== null && !allowedSalonIds.includes(expense.salonId)) {
             return res.status(403).json({ error: 'No permission' });
         }
-
 
         await prisma.expense.delete({ where: { id: expenseId } });
         res.json({ success: true });
@@ -269,21 +280,17 @@ router.delete('/expenses/:id', authenticateToken, async (req, res) => {
 // DEBUG ROUTE
 router.get('/debug-revenue', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.id;
-        const userRole = req.user.role;
+        const allowedSalonIds = await getAllowedSalonIds(req.user);
 
-        // Same logic as stats
         let salonFilter = {};
-        if (userRole === 'admin' || userRole === 'super_admin') {
-            // Admin sees all salons
-        } else {
-            salonFilter.ownerId = userId;
+        if (allowedSalonIds !== null) {
+            if (allowedSalonIds.length === 0) return res.json({ message: 'No allowed salons' });
+            salonFilter.id = { in: allowedSalonIds };
         }
 
         const salons = await prisma.salon.findMany({
             where: salonFilter
         });
-
 
         const debugData = [];
 
@@ -316,7 +323,8 @@ router.get('/debug-revenue', authenticateToken, async (req, res) => {
         }
 
         res.json({
-            userInfo: { id: userId, role: userRole, email: req.user.email },
+            userInfo: { id: req.user.id, role: req.user.role, email: req.user.email },
+            allowedSalonIds,
             salonsFound: salons.length,
             data: debugData
         });
