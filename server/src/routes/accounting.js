@@ -40,7 +40,8 @@ router.get('/stats', async (req, res) => {
         let salonFilter = {};
         const parsedSalonId = parseInt(salonId);
 
-        if (req.user.role === 'admin') {
+        // FIX: Allow both 'admin' and 'super_admin' to view all/specific salons
+        if (req.user.role === 'admin' || req.user.role === 'super_admin') {
             if (!isNaN(parsedSalonId)) salonFilter.id = parsedSalonId;
         } else {
             // Salon owner: find their salons
@@ -52,6 +53,7 @@ router.get('/stats', async (req, res) => {
             where: salonFilter,
             include: { expenses: true, appointments: true }
         });
+
 
         // Date filtering helpers
         const start = startDate ? new Date(startDate) : new Date(0); // Beginning of time if not set
@@ -197,17 +199,25 @@ router.post('/expenses', authenticateToken, async (req, res) => {
     try {
         let { salonId, category, amount, description, date } = req.body;
 
-        // Auto-detect salonId if not provided (for single-salon owners)
-        if (!salonId && req.user.role !== 'admin') {
-            const salon = await prisma.salon.findFirst({
+        // Auto-detect salonId if not provided (for single-salon owners or Admins testing)
+        if (!salonId) {
+            // 1. Try to find salon owned by user
+            let salon = await prisma.salon.findFirst({
                 where: { ownerId: req.user.id }
             });
+
+            // 2. If not found AND user is Admin, just pick the first salon (Fallback for testing)
+            if (!salon && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
+                salon = await prisma.salon.findFirst();
+            }
+
             if (salon) {
                 salonId = salon.id;
             } else {
-                return res.status(400).json({ error: 'Salon bulunamadı' });
+                return res.status(400).json({ error: 'Salon bulunamadı. Lütfen önce bir salon oluşturun.' });
             }
         }
+
 
         // Verify ownership (if salonId was provided manually or autofilled)
         if (req.user.role !== 'admin') {
@@ -258,9 +268,20 @@ router.delete('/expenses/:id', authenticateToken, async (req, res) => {
 router.get('/debug-revenue', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
+        const userRole = req.user.role;
+
+        // Same logic as stats
+        let salonFilter = {};
+        if (userRole === 'admin' || userRole === 'super_admin') {
+            // Admin sees all salons
+        } else {
+            salonFilter.ownerId = userId;
+        }
+
         const salons = await prisma.salon.findMany({
-            where: { ownerId: userId }
+            where: salonFilter
         });
+
 
         const debugData = [];
 
@@ -292,7 +313,12 @@ router.get('/debug-revenue', authenticateToken, async (req, res) => {
             });
         }
 
-        res.json(debugData);
+        res.json({
+            userInfo: { id: userId, role: userRole, email: req.user.email },
+            salonsFound: salons.length,
+            data: debugData
+        });
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

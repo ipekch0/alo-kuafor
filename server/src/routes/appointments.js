@@ -203,6 +203,9 @@ router.put('/:id/status', async (req, res) => {
             include: { customer: true, user: true } // Include user/customer for notification
         });
 
+        console.log(`[DEBUG] Appointment ${req.params.id} status updated to ${status}. isPaid: ${appointment.isPaid}`);
+
+
         // Create Notification if user exists
         if (appointment.userId) {
             let title = 'Randevu Durumu Güncellendi';
