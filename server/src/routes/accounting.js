@@ -60,6 +60,9 @@ router.get('/stats', async (req, res) => {
         const end = endDate ? new Date(endDate) : new Date('2100-01-01');
         end.setHours(23, 59, 59, 999);
 
+        console.log(`[DEBUG] Stats Request - Start: ${start.toISOString()}, End: ${end.toISOString()}`);
+
+
         let totalRevenue = 0;
         let totalExpenses = 0;
         let expensesByCategory = {};
@@ -109,6 +112,12 @@ router.get('/stats', async (req, res) => {
                     monthBucket.revenue += Number(app.totalPrice || 0);
                 }
             });
+
+            console.log(`[DEBUG] Salon ${salon.id} - Processed ${appointments.length} appointments. Total Revenue: ${totalRevenue}`);
+
+
+            console.log(`[DEBUG] Salon ${salon.id} - Found ${appointments.length} completed appointments. Current Total Revenue: ${totalRevenue}`);
+
 
             // Expenses
             const expenses = await prisma.expense.findMany({
@@ -245,4 +254,49 @@ router.delete('/expenses/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// DEBUG ROUTE
+router.get('/debug-revenue', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const salons = await prisma.salon.findMany({
+            where: { ownerId: userId }
+        });
+
+        const debugData = [];
+
+        for (const salon of salons) {
+            const appointments = await prisma.appointment.findMany({
+                where: {
+                    salonId: salon.id,
+                    status: 'completed'
+                },
+                take: 10,
+                orderBy: { dateTime: 'desc' },
+                select: { id: true, status: true, totalPrice: true, dateTime: true, isPaid: true }
+            });
+
+            let calculatedRevenue = 0;
+            const allCompleted = await prisma.appointment.findMany({
+                where: { salonId: salon.id, status: 'completed' },
+                select: { totalPrice: true }
+            });
+
+            allCompleted.forEach(a => calculatedRevenue += Number(a.totalPrice || 0));
+
+            debugData.push({
+                salonId: salon.id,
+                salonName: salon.name,
+                last10CompletedAppointments: appointments,
+                totalCalculatedRevenue: calculatedRevenue,
+                appointmentCount: allCompleted.length
+            });
+        }
+
+        res.json(debugData);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;
+
