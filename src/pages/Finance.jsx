@@ -174,9 +174,10 @@ const Finance = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Finans Yönetimi (v2)</h1>
+                        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Finans Yönetimi (v3)</h1>
                         <p className="text-slate-500 mt-1">İşletmenizin nakit akışını gerçek zamanlı takip edin.</p>
                     </div>
+
 
                     <div className="flex items-center gap-2 no-print">
                         <button
