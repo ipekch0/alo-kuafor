@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server\" \"npm run dev:client\"",
     "dev:client": "vite",
     "server": "cd server && npm run dev",
-    "build": "cd server && npm install && npx prisma generate",
+    "build": "vite build && cd server && npm install && npx prisma generate",
     "start": "cd server && npm start",
     "preview": "vite preview"
   },
