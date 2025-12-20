@@ -10,6 +10,9 @@ echo "📍 Current Directory: $(pwd)"
 echo "📂 Listing Root Files:"
 ls -la
 
+echo "📦 Node Version: $(node -v)"
+echo "📦 NPM Version: $(npm -v)"
+
 if [ -d "server" ]; then
   echo "📦 Installing Dependencies (Root)..."
   npm install --legacy-peer-deps
