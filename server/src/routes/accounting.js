@@ -131,6 +131,11 @@ router.get('/stats', async (req, res) => {
                 where: {
                     salonId: salon.id,
                     status: 'completed'
+                },
+                include: {
+                    service: {
+                        select: { price: true }
+                    }
                 }
             });
 
@@ -138,15 +143,21 @@ router.get('/stats', async (req, res) => {
                 const appDate = new Date(app.dateTime);
                 const key = `${appDate.getFullYear()}-${appDate.getMonth()}`;
 
+                // Calculate amount with fallback to service price
+                let amount = Number(app.totalPrice);
+                if (!amount || amount === 0) {
+                    amount = Number(app.service?.price || 0);
+                }
+
                 // Add to total
                 if (appDate >= start && appDate <= end) {
-                    totalRevenue += Number(app.totalPrice || 0);
+                    totalRevenue += amount;
                 }
 
                 // Add to monthly bucket
                 const monthBucket = monthlyStats.find(m => m.key === key);
                 if (monthBucket) {
-                    monthBucket.revenue += Number(app.totalPrice || 0);
+                    monthBucket.revenue += amount;
                 }
             });
 
@@ -333,10 +344,16 @@ router.get('/debug-revenue', authenticateToken, async (req, res) => {
             let calculatedRevenue = 0;
             const allCompleted = await prisma.appointment.findMany({
                 where: { salonId: salon.id, status: 'completed' },
-                select: { totalPrice: true }
+                include: { service: { select: { price: true } } }
             });
 
-            allCompleted.forEach(a => calculatedRevenue += Number(a.totalPrice || 0));
+            allCompleted.forEach(a => {
+                let amount = Number(a.totalPrice);
+                if (!amount || amount === 0) {
+                    amount = Number(a.service?.price || 0);
+                }
+                calculatedRevenue += amount;
+            });
 
             debugData.push({
                 salonId: salon.id,
