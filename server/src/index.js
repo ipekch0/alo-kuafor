@@ -174,26 +174,13 @@ let server; // Declare server variable in a scope accessible by SIGINT
 // Initialize Database and Start Server
 const initAndStart = async () => {
     try {
-        console.log('Initializing database...');
-        const { execSync } = require('child_process');
-        execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
-        console.log('Database schema pushed successfully.');
-
-        // Start server
+        // Start server immediately
         server = app.listen(PORT, () => {
             console.log(`🚀 Server is running on http://localhost:${PORT}`);
             console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
         });
     } catch (error) {
-        console.error('Failed to initialize database:', error.message);
-        console.warn('⚠️  WARNING: Database schema push failed. Proceeding without database synchronization.');
-        console.warn('⚠️  Some API endpoints may fail if the database is not reachable.');
-
-        // Start server anyway to serve frontend
-        server = app.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT} (Database Disconnected)`);
-            console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-        });
+        console.error('Failed to start server:', error.message);
     }
 };
 
