@@ -12,63 +12,13 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = require('./lib/prisma');
 const app = express();
-console.log('------------------------------------------------');
-console.log('🚀 DEPLOYMENT CHECK v2: NEW CODE IS RUNNING');
-console.log('------------------------------------------------');
-app.set('trust proxy', 1); // Required for Render/Heroku (fixes rate limit crash)
-const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET;
-
-
-// Manual ENV Injection removed to allow .env usage
-
-process.on('exit', (code) => {
-    console.log(`Process exiting with code: ${code}`);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.log('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-// Middleware
-const fs = require('fs');
-app.use((req, res, next) => {
-    try {
-        const logPath = path.join(__dirname, '../debug_log_new.txt');
-        const timestamp = new Date().toISOString();
-        const msg = `[${timestamp}] ${req.method} ${req.originalUrl}\n`;
-        fs.appendFileSync(logPath, msg);
-    } catch (e) {
-        console.error('Logging failed');
-    }
-    next();
-});
-
-// CORS Configuration - MUST BE FIRST
-// CORS Configuration - MUST BE FIRST
-const allowedOrigins = [
-    process.env.CLIENT_URL,
-    process.env.RENDER_EXTERNAL_URL, // Render automatically sets this
-    'https://odak-manage.onrender.com', // Fallback explicit
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:3002'
-].filter(Boolean);
+// Enable preflight for all routes
+app.options('*', cors());
 app.use(cors({
-    origin: function (origin, callback) {
-        // allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-
-        // Allow all Vercel deployments (previews and production)
-        if (origin.endsWith('.vercel.app')) {
-            return callback(null, true);
-        }
-        if (allowedOrigins.indexOf(origin) === -1) {
-            var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-    }
+    origin: true, // Reflect request origin to allow all
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 app.use(helmet({
@@ -153,6 +103,32 @@ app.use('/api/admin', require('./routes/admin'));
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'AI Appointment API is running' });
+});
+
+// DB Debug Endpoint (Temporary)
+app.get('/api/debug-db', async (req, res) => {
+    try {
+        await prisma.$connect();
+        const userCount = await prisma.user.count();
+        res.json({
+            status: 'success',
+            message: 'Connected to Database!',
+            userCount,
+            env: {
+                hasDbUrl: !!process.env.DATABASE_URL,
+                nodeEnv: process.env.NODE_ENV
+            }
+        });
+    } catch (error) {
+        console.error('DB Connection Error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Database Connection Failed',
+            error: error.message,
+            code: error.code,
+            meta: error.meta
+        });
+    }
 });
 
 // Serve static files from the React app
