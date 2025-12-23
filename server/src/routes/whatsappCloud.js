@@ -14,7 +14,8 @@ const logToFile = (data) => {
         const logPath = path.join(__dirname, '../../debug_log_new.txt');
         const timestamp = new Date().toISOString();
         const message = `[${timestamp}] ${typeof data === 'string' ? data : JSON.stringify(data, null, 2)}\n`;
-        fs.appendFileSync(logPath, message);
+        // Logs to Vercel console instead of file
+        console.log(`[WhatsApp Webhook] ${message}`);
     } catch (e) {
         console.error('Logging failed:', e);
     }
