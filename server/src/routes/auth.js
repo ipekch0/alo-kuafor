@@ -7,7 +7,6 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/email');
 
 const router = express.Router();
-const router = express.Router();
 const prisma = require('../lib/prisma');
 
 // Fallback for JWT_SECRET to prevent crash
@@ -319,13 +318,6 @@ router.post('/login', validateRequest(loginSchema), async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        // Write to file for debugging
-        try {
-            const fs = require('fs');
-            fs.appendFileSync('login_debug.log', `${new Date().toISOString()} - Login Error: ${error.message}\n${error.stack}\n---\n`);
-        } catch (logError) {
-            console.error('Could not write to log file:', logError.message);
-        }
         res.status(500).json({ error: 'Server error', details: error.message, stack: error.stack });
     }
 });
