@@ -175,13 +175,16 @@ app.use((err, req, res, next) => {
 let server; // Declare server variable in a scope accessible by SIGINT
 
 // Initialize Database and Start Server
+// Initialize Database and Start Server
 const initAndStart = async () => {
     try {
         // Start server immediately
-        server = app.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT}`);
-            console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
-        });
+        if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+            server = app.listen(PORT, () => {
+                console.log(`🚀 Server is running on http://localhost:${PORT}`);
+                console.log(`📊 API endpoints available at http://localhost:${PORT}/api`);
+            });
+        }
     } catch (error) {
         console.error('Failed to start server:', error.message);
     }
@@ -189,10 +192,15 @@ const initAndStart = async () => {
 
 initAndStart();
 
+// Export for Vercel
+module.exports = app;
+
 // Keep alive heartbeat
+/*
 setInterval(() => {
     // console.log('Heartbeat...'); // Uncomment for debug
 }, 10000);
+*/
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
