@@ -151,14 +151,30 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, '../../dist')));
+// Serve static files from the React app (ONLY if exists, otherwise API mode)
+const clientBuildPath = path.join(__dirname, '../../dist');
 
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
-// Using regex /.*/ to avoid path-to-regexp v6+ string syntax errors
-app.get(/.*/, (req, res) => {
-    res.sendFile(path.join(__dirname, '../../dist/index.html'));
-});
+// If running on Vercel, simply serve a status message for the root
+if (process.env.VERCEL) {
+    app.get('/', (req, res) => {
+        res.status(200).send('AI Appointment System API is running on Vercel 🚀');
+    });
+} else {
+    // Local development or monolithic hosting
+    app.use(express.static(clientBuildPath));
+    app.get(/.*/, (req, res) => {
+        // Check if it's an API request that fell through
+        if (req.path.startsWith('/api')) {
+            return res.status(404).json({ error: 'API endpoint not found' });
+        }
+        // Try sending index.html, if missing (backend-only mode), send status
+        if (require('fs').existsSync(path.join(clientBuildPath, 'index.html'))) {
+            res.sendFile(path.join(clientBuildPath, 'index.html'));
+        } else {
+            res.send('API Server Running (Frontend not served from here)');
+        }
+    });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
