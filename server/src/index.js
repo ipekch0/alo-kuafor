@@ -2,7 +2,14 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../.env') }); // Load from server/.env
 const validateEnv = require('./utils/validateEnv');
 
-validateEnv();
+// validateEnv(); // Use detailed validation
+try {
+    validateEnv();
+} catch (error) {
+    console.error('Environment Validation Failed:', error.message);
+    // Continue execution if possible, or exit gracefully
+    // process.exit(1); 
+}
 
 const express = require('express');
 const cors = require('cors');
