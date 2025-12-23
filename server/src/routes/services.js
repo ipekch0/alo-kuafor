@@ -1,10 +1,10 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+
 const authMiddleware = require('../middleware/auth');
 const { checkSubscriptionLimit } = require('../utils/subscription');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // Apply auth middleware
 router.use(authMiddleware);

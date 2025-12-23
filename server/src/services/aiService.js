@@ -1,8 +1,7 @@
 
 // Force Re-deploy: 2025-12-19 23:08
 const axios = require('axios');
-const { PrismaClient } = require('@prisma/client');
-let prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 function setPrisma(p) {
     prisma = p;

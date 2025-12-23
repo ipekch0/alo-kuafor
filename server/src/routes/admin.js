@@ -1,9 +1,9 @@
- 
- const express = require('express');
+
+const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken'); // Added for Impersonation
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+
+const prisma = require('../lib/prisma');
 const authenticateToken = require('../middleware/auth');
 
 // Middleware to check if user is Super Admin

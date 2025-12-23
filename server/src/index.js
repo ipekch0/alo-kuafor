@@ -22,10 +22,16 @@ const app = express();
 // Enable preflight for all routes
 app.options('*', cors());
 app.use(cors({
-    origin: true, // Reflect request origin to allow all
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://alo-kuafor-13yucspf3-ipekch0s-projects.vercel.app',
+        'https://alo-kuafor-9dfw.vercel.app',
+        /\.vercel\.app$/
+    ],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 app.use(helmet({

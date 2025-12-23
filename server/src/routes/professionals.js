@@ -1,40 +1,15 @@
 const express = require('express');
-const { PrismaClient } = require('@prisma/client');
+
 const authMiddleware = require('../middleware/auth');
 const { checkSubscriptionLimit } = require('../utils/subscription');
-const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const upload = require('../config/cloudinary');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 // Multer Config
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadDir = path.join(__dirname, '../../uploads');
-        // Vercel is read-only, we rely on Cloudinary or standard temp paths if needed.
-        // if (!fs.existsSync(uploadDir)) { ... } removed
-    }
-        cb(null, uploadDir);
-},
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'pro-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: (req, file, cb) => {
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Not an image! Please upload an image.'), false);
-        }
-    }
-});
+// Multer Config removed - imported from config/cloudinary
 
 // Apply auth middleware
 router.use(authMiddleware);
@@ -117,14 +92,10 @@ router.post('/', upload.single('photo'), async (req, res) => {
         }
 
         // Handle Photo
-        let photoUrl = req.body.photoUrl || ''; // Fallback for URL string if used
+        let photoUrl = req.body.photoUrl || '';
         if (req.file) {
-            // Construct accessible URL. Assuming server runs on port 5000 and client on 3000, 
-            // usually we store relative path or full URL.
-            // Storing full URL for simplicity with current setup, or relative path '/uploads/...'
-            const protocol = req.protocol;
-            const host = req.get('host');
-            photoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+            // Cloudinary returns the verified URL in req.file.path
+            photoUrl = req.file.path;
         }
 
         const salon = await prisma.salon.findFirst({
@@ -196,9 +167,7 @@ router.put('/:id', upload.single('photo'), async (req, res) => {
 
         // Handle Photo
         if (req.file) {
-            const protocol = req.protocol;
-            const host = req.get('host');
-            dataToUpdate.photo = `${protocol}://${host}/uploads/${req.file.filename}`;
+            dataToUpdate.photo = req.file.path;
         } else if (req.body.photo) {
             // Keep existing photo URL if passed back (or updated string URL)
             dataToUpdate.photo = req.body.photo;

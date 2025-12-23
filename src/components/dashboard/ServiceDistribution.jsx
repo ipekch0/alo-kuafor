@@ -30,6 +30,7 @@ const ServiceDistribution = ({ data }) => {
                             paddingAngle={5}
                             dataKey="value"
                         >
+                            
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
