@@ -10,7 +10,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient();
+const prisma = require('./lib/prisma');
 const app = express();
 console.log('------------------------------------------------');
 console.log('🚀 DEPLOYMENT CHECK v2: NEW CODE IS RUNNING');

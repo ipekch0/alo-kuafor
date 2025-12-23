@@ -7,7 +7,8 @@ const crypto = require('crypto');
 const sendEmail = require('../utils/email');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const router = express.Router();
+const prisma = require('../lib/prisma');
 
 // Fallback for JWT_SECRET to prevent crash
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_debugging_only';
