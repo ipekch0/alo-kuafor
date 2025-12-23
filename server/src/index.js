@@ -12,6 +12,9 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 const app = express();
+console.log('------------------------------------------------');
+console.log('🚀 DEPLOYMENT CHECK v2: NEW CODE IS RUNNING');
+console.log('------------------------------------------------');
 app.set('trust proxy', 1); // Required for Render/Heroku (fixes rate limit crash)
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
