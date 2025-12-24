@@ -111,6 +111,32 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'AI Appointment API is running' });
 });
 
+// DB Debug Endpoint (Re-added)
+app.get('/api/debug-db', async (req, res) => {
+    try {
+        await prisma.$connect();
+        const userCount = await prisma.user.count();
+        res.json({
+            status: 'success',
+            message: 'Connected to Database!',
+            userCount,
+            env: {
+                hasDbUrl: !!process.env.DATABASE_URL,
+                nodeEnv: process.env.NODE_ENV
+            }
+        });
+    } catch (error) {
+        console.error('DB Connection Error:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Database Connection Failed',
+            error: error.message,
+            code: error.code,
+            meta: error.meta
+        });
+    }
+});
+
 // DB Debug Endpoint (Temporary)
 app.get('/api/debug-db', async (req, res) => {
     try {
