@@ -19,8 +19,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = require('./lib/prisma');
 const app = express();
 // Enable preflight for all routes (Express 5 compatible wildcard)
-// Enable preflight for all routes (Express 5 compatible wildcard - ensuring fix)
-app.options('(.*)', cors());
+// Enable preflight handled by main cors middleware
 app.use(cors({
     origin: true, // Allow any origin (Reflect request origin)
     credentials: true,
