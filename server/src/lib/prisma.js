@@ -5,10 +5,19 @@ const { PrismaClient } = require('@prisma/client');
 let prisma;
 
 if (process.env.NODE_ENV === 'production') {
-    prisma = new PrismaClient();
+    try {
+        prisma = new PrismaClient();
+    } catch (e) {
+        console.error('CRITICAL: Prisma Client Failed to Initialize', e);
+        // Fallback or let it be undefined - usage will check
+    }
 } else {
     if (!global.prisma) {
-        global.prisma = new PrismaClient();
+        try {
+            global.prisma = new PrismaClient();
+        } catch (e) {
+            console.error('CRITICAL: Global Prisma Client Failed', e);
+        }
     }
     prisma = global.prisma;
 }

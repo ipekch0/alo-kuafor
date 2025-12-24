@@ -7,8 +7,7 @@ try {
     validateEnv();
 } catch (error) {
     console.error('Environment Validation Failed:', error.message);
-    // Continue execution if possible, or exit gracefully
-    // process.exit(1); 
+    // STRICTLY DO NOT EXIT. Let the app boot so we can see 500 errors formatted correctly.
 }
 
 const express = require('express');
@@ -22,13 +21,7 @@ const app = express();
 // Enable preflight for all routes
 app.options('*', cors());
 app.use(cors({
-    origin: [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://alo-kuafor-13yucspf3-ipekch0s-projects.vercel.app',
-        'https://alo-kuafor-9dfw.vercel.app',
-        /\.vercel\.app$/
-    ],
+    origin: true, // Allow any origin (Reflect request origin)
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
