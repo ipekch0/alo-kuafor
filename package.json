@@ -7,7 +7,7 @@
     "dev": "concurrently \"npm run server\" \"npm run dev:client\"",
     "dev:client": "vite",
     "server": "cd server && npm run dev",
-    "build": "vite build && npx prisma generate --schema=server/prisma/schema.prisma && npx prisma db push --schema=server/prisma/schema.prisma --accept-data-loss",
+    "build": "vite build && npx prisma generate --schema=server/prisma/schema.prisma",
     "postinstall": "npx prisma generate --schema=server/prisma/schema.prisma",
     "start": "cd server && npm start",
     "preview": "vite preview"
