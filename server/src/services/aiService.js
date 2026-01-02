@@ -12,8 +12,7 @@ function setPrisma(p) {
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent";
 
 async function generateAIResponse(message, context = {}) {
-    // HARDCODED KEY AS FALLBACK FOR IMMEDIATE RENDER DEPLOYMENT FIX (New Key 17 Dec)
-    const apiKey = "AIzaSyAKuoa_PM9JddJTwULp3NRhm6wOgR_WctQ";
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     // --- DEBUG LOGGING ---
     console.log(`[AI DEBUG] Generating response for: "${message}"`);

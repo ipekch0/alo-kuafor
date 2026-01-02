@@ -203,19 +203,7 @@ const Finance = () => {
                             <Plus size={20} />
                             Gider Ekle
                         </button>
-                        <button
-                            onClick={async () => {
-                                try {
-                                    const token = localStorage.getItem('token');
-                                    const res = await fetch('/api/accounting/debug-revenue', { headers: { Authorization: `Bearer ${token}` } });
-                                    const data = await res.json();
-                                    alert(JSON.stringify(data, null, 2));
-                                } catch (e) { alert('Debug Error: ' + e.message); }
-                            }}
-                            className="px-3 py-3 bg-gray-800 text-white rounded-xl ml-2 text-xs font-mono"
-                        >
-                            DEBUG
-                        </button>
+
 
                     </div>
                 </div>
