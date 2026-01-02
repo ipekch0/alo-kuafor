@@ -9,10 +9,11 @@ function setPrisma(p) {
 
 // Initialize Gemini
 // Initialize Gemini
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemma-3-4b-it:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 async function generateAIResponse(message, context = {}) {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    // Verified Key Fallback (User Provided)
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "AIzaSyDSlPjk_qyUHQ5oI_XHLqixRSbgiPRZqxc";
 
     // --- DEBUG LOGGING ---
     console.log(`[AI DEBUG] Generating response for: "${message}"`);
