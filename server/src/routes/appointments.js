@@ -150,7 +150,7 @@ router.get('/:id', async (req, res) => {
 // POST create appointment
 router.post('/', async (req, res) => {
     try {
-        const { customerId, professionalId, serviceId, date, time, notes } = req.body;
+        let { customerId, customerName, customerPhone, professionalId, serviceId, date, time, notes } = req.body;
 
         const salon = await prisma.salon.findFirst({
             where: { ownerId: req.user.id }
@@ -159,6 +159,22 @@ router.post('/', async (req, res) => {
         if (!salon) {
             return res.status(400).json({ error: 'Salon not found.' });
         }
+
+        // --- DYNAMIC CUSTOMER HANDLING ---
+        if (!customerId) {
+            if (!customerName || !customerPhone) {
+                return res.status(400).json({ error: 'Müşteri seçilmeli veya Ad/Telefon girilmelidir.' });
+            }
+            // Find or Create
+            let customer = await prisma.customer.findFirst({ where: { phone: customerPhone } });
+            if (!customer) {
+                customer = await prisma.customer.create({
+                    data: { name: customerName, phone: customerPhone }
+                });
+            }
+            customerId = customer.id;
+        }
+        // ---------------------------------
 
         const service = await prisma.service.findUnique({ where: { id: parseInt(serviceId) } });
         const dateTime = new Date(`${date}T${time}:00`);

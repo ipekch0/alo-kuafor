@@ -24,12 +24,16 @@ const CreateAppointment = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
         customerId: '',
+        customerName: '',
+        customerPhone: '',
         professionalId: '',
         serviceId: '',
         date: new Date().toISOString().split('T')[0],
         time: '09:00',
         notes: ''
     });
+
+    const [isManualCustomer, setIsManualCustomer] = useState(false);
 
     const steps = [
         { id: 1, title: 'Müşteri Seçimi', icon: UserCircle },
@@ -50,7 +54,7 @@ const CreateAppointment = () => {
         try {
             const result = await createAppointment.mutateAsync({
                 ...formData,
-                customerId: parseInt(formData.customerId),
+                customerId: formData.customerId ? parseInt(formData.customerId) : null,
                 professionalId: parseInt(formData.professionalId),
                 serviceId: parseInt(formData.serviceId),
                 status: 'scheduled'
@@ -68,7 +72,9 @@ const CreateAppointment = () => {
 
     const canProceed = () => {
         switch (currentStep) {
-            case 1: return formData.customerId !== '';
+            case 1:
+                if (isManualCustomer) return formData.customerName !== '' && formData.customerPhone !== '';
+                return formData.customerId !== '';
             case 2: return formData.serviceId !== '';
             case 3: return formData.professionalId !== '';
             case 4: return formData.date !== '' && formData.time !== '';
@@ -139,31 +145,73 @@ const CreateAppointment = () => {
                         {/* Step 1: Customer Selection */}
                         {currentStep === 1 && (
                             <div className="space-y-4">
-                                <h3 className="text-2xl font-bold text-slate-800 mb-6">Müşteri Seçin</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {customers.map((customer) => (
-                                        <div
-                                            key={customer.id}
-                                            onClick={() => setFormData({ ...formData, customerId: customer.id })}
-                                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.customerId === customer.id
-                                                ? 'border-indigo-600 bg-indigo-50'
-                                                : 'border-slate-100 hover:border-indigo-200 bg-white'
-                                                }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-3 bg-indigo-100 rounded-lg">
-                                                    <UserCircle className="w-6 h-6 text-indigo-900" />
-                                                </div>
-                                                <div>
-                                                    <h4 className="text-lg font-bold text-slate-800">{customer.name}</h4>
-                                                    <p className="text-sm text-slate-500">
-                                                        {customer.phone}
-                                                    </p>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-2xl font-bold text-slate-800">Müşteri Seçin</h3>
+                                    <button
+                                        onClick={() => {
+                                            setIsManualCustomer(!isManualCustomer);
+                                            setFormData({ ...formData, customerId: '', customerName: '', customerPhone: '' });
+                                        }}
+                                        className="text-sm font-medium text-indigo-600 hover:text-indigo-800 underline"
+                                    >
+                                        {isManualCustomer ? 'Listeden Seç' : '+ Manuel Giriş / Yeni Müşteri'}
+                                    </button>
+                                </div>
+
+                                {isManualCustomer ? (
+                                    <div className="bg-white p-6 rounded-xl border-2 border-slate-100 space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1">Müşteri Adı Soyadı</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium w-full"
+                                                placeholder="Örn: Ahmet Yılmaz"
+                                                value={formData.customerName}
+                                                onChange={e => setFormData({ ...formData, customerName: e.target.value })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1">Telefon Numarası</label>
+                                            <input
+                                                type="text"
+                                                className="input-premium w-full"
+                                                placeholder="05..."
+                                                value={formData.customerPhone}
+                                                onChange={e => setFormData({ ...formData, customerPhone: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2">
+                                        {customers.map((customer) => (
+                                            <div
+                                                key={customer.id}
+                                                onClick={() => setFormData({ ...formData, customerId: customer.id })}
+                                                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${formData.customerId === customer.id
+                                                    ? 'border-indigo-600 bg-indigo-50'
+                                                    : 'border-slate-100 hover:border-indigo-200 bg-white'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-3 bg-indigo-100 rounded-lg">
+                                                        <UserCircle className="w-6 h-6 text-indigo-900" />
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-slate-800">{customer.name}</h4>
+                                                        <p className="text-sm text-slate-500">
+                                                            {customer.phone}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                        {customers.length === 0 && (
+                                            <p className="col-span-2 text-center text-gray-400 py-8">
+                                                Kayıtlı müşteri yok. Manuel giriş yapabilirsiniz.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
 
