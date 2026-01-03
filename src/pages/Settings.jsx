@@ -419,26 +419,29 @@ const Settings = () => {
                                         className="space-y-6"
                                     >
                                         <div className="pb-6 border-b border-slate-100">
-                                            <h2 className="text-lg font-bold text-slate-900">WhatsApp & Yapay Zeka (QR)</h2>
-                                            <p className="text-sm text-slate-500">Otomatik bildirimler için WhatsApp Web bağlantısı.</p>
+                                            <h2 className="text-lg font-bold text-slate-900">WhatsApp & Yapay Zeka</h2>
+                                            <p className="text-sm text-slate-500">Yapay zeka asistanı yapılandırması.</p>
                                         </div>
 
-                                        <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6">
-                                            <div className="flex flex-col md:flex-row gap-6">
-                                                <div className="flex-1">
-                                                    <h3 className="text-lg font-bold text-emerald-900 mb-2">Kolay Bağlantı</h3>
-                                                    <p className="text-emerald-700/80 text-sm leading-relaxed mb-4">
-                                                        Müşterilerinize randevu hatırlatmaları, onay mesajları ve kampanyaları
-                                                        otomatik göndermek için QR kodu okutarak bağlanın.
-                                                    </p>
-                                                    <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-100/50 w-fit px-3 py-1.5 rounded-full">
-                                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                                                        Canlı Bağlantı Sistemi
-                                                    </div>
+                                        <div className="bg-gradient-to-br from-purple-900/5 to-blue-900/5 border border-purple-500/10 rounded-2xl p-8 text-center relative overflow-hidden group">
+                                            <div className="absolute inset-0 bg-white/40 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                            <div className="relative z-10">
+                                                <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-green-500/20 transform group-hover:scale-110 transition-transform duration-300">
+                                                    <MessageSquare className="w-10 h-10 text-white" />
                                                 </div>
-                                                <div className="md:w-auto w-full">
-                                                    {/* Using the component defined above */}
-                                                    <WhatsAppConnectionManager />
+                                                <h3 className="text-2xl font-bold text-slate-800 mb-3">WhatsApp Asistanı</h3>
+                                                <p className="text-slate-500 max-w-md mx-auto mb-8 leading-relaxed">
+                                                    Yapay zeka destekli randevu asistanımız şu anda geliştirme aşamasındadır.
+                                                    Size en iyi deneyimi sunmak için çalışıyoruz.
+                                                    <br /><br />
+                                                    <span className="font-semibold text-indigo-600">Çok Yakında Hizmetinizde! 🚀</span>
+                                                </p>
+                                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full border border-indigo-100 text-sm text-indigo-700 font-medium">
+                                                    <span className="relative flex h-2.5 w-2.5">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500"></span>
+                                                    </span>
+                                                    Geliştirme Aşamasında
                                                 </div>
                                             </div>
                                         </div>
