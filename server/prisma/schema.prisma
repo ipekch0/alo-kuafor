@@ -1,0 +1,262 @@
+// AloKuaför - Premium Hair Salon Marketplace
+// Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// AUTHENTICATION & USERS
+// ============================================
+
+model User {
+  id              Int              @id @default(autoincrement())
+  email           String           @unique
+  password        String
+  name            String
+  role            String           @default("CUSTOMER") // SUPER_ADMIN, SALON_OWNER, STAFF, CUSTOMER
+  permissions     String?          // JSON string: ["VIEW_FINANCE", "MANAGE_APPOINTMENTS"]
+  phone           String?
+  avatar          String?
+  location        String?
+
+  isVerified      Boolean          @default(false)
+  isActive        Boolean          @default(true) // For banning
+  verificationCode String?
+  phoneVerified   Boolean          @default(false)
+  
+  // Relations
+  ownedSalons     Salon[]          @relation("SalonOwner")
+  professionalProfile Professional?
+  appointments    Appointment[]    @relation("UserAppointments")
+  reviews         Review[]
+  conversations   Conversation[]
+  notifications   Notification[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Password Reset
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+}
+
+// ============================================
+// SALON & PROFESSIONALS
+// ============================================
+
+model Salon {
+  id              Int              @id @default(autoincrement())
+  name            String
+  slug            String           @unique // for url friendly names
+  description     String?
+  address         String
+  city            String
+  district        String?
+  phone           String
+  email           String?
+  image           String?          // Main cover image
+  images          String?          // JSON array of additional images
+  rating          Float            @default(0)
+  reviewCount     Int              @default(0)
+  isContracted    Boolean          @default(false) // "Anlaşmalı" status
+  
+  // WhatsApp Cloud API Credentials (SaaS)
+  whatsappPhoneId String?          @unique
+  whatsappAPIToken String?
+  whatsappBusinessId String?
+  
+  ownerId         Int
+  owner           User             @relation("SalonOwner", fields: [ownerId], references: [id])
+  
+  professionals   Professional[]
+  services        Service[]
+  appointments    Appointment[]
+  customers       Customer[]
+  
+  workingHours    String?          // JSON object: { "monday": { "start": "09:00", "end": "19:00" }, ... }
+  
+  // Official Business Details
+  taxNumber       String?
+  taxOffice       String?
+  isVerified      Boolean          @default(false)
+  subscriptionPlan String          @default("SILVER") // SILVER, GOLD, ULTRA
+  ownerName       String?          // Official business owner name
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  
+  reviews         Review[]
+  conversations   Conversation[]
+  expenses        Expense[]
+}
+
+model Review {
+  id              Int              @id @default(autoincrement())
+  salonId         Int
+  salon           Salon            @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  
+  userId          Int?             // Optional link to registered user
+  user            User?            @relation(fields: [userId], references: [id])
+  
+  userName        String           // Display name (Guest or User)
+  rating          Int              // 1-5
+  comment         String?
+  
+  createdAt       DateTime         @default(now())
+}
+
+model Professional {
+  id              Int              @id @default(autoincrement())
+  userId          Int?             @unique // Optional link to a User account
+  user            User?            @relation(fields: [userId], references: [id])
+  
+  salonId         Int
+  salon           Salon            @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  
+  name            String
+  title           String           // "Senior Stylist", "Colorist", etc.
+  bio             String?
+  photo           String?
+  specialties     String?          // JSON array: ["Haircut", "Highlights"]
+  workingHours    String?          // JSON object
+  appointments    Appointment[]
+  active          Boolean          @default(true)
+}
+// ============================================
+
+model Service {
+  id              Int              @id @default(autoincrement())
+  salonId         Int
+  salon           Salon            @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  
+  name            String           // "Saç Kesimi", "Gelin Başı"
+  category        String           // "hair", "makeup", "skincare", "nails"
+  description     String?
+  duration        Int              // Minutes
+  price           Decimal          // Price in TL (Min Price)
+  maxPrice        Decimal?         // Max Price (Optional)
+  currency        String           @default("TRY")
+  
+  active          Boolean          @default(true)
+  appointments    Appointment[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+// ============================================
+// APPOINTMENTS & CUSTOMERS
+// ============================================
+
+model Customer {
+  id              Int              @id @default(autoincrement())
+  name            String
+  phone           String           @unique
+  email           String?
+  city            String?
+  address         String?
+  idNumber        String?
+  notes           String?
+  
+  appointments    Appointment[]
+  salons          Salon[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Appointment {
+  id              Int              @id @default(autoincrement())
+  
+  // The user who booked (if registered)
+  userId          Int?
+  user            User?            @relation("UserAppointments", fields: [userId], references: [id])
+  
+  // The customer details (if guest or for record keeping)
+  customerId      Int?
+  customer        Customer?        @relation(fields: [customerId], references: [id])
+  
+  salonId         Int
+  salon           Salon            @relation(fields: [salonId], references: [id])
+  
+  professionalId  Int
+  professional    Professional     @relation(fields: [professionalId], references: [id])
+  
+  serviceId       Int
+  service         Service          @relation(fields: [serviceId], references: [id])
+  
+  dateTime        DateTime
+  status          String           @default("pending") // pending, confirmed, completed, cancelled, no_show
+  
+  notes           String?
+  totalPrice      Decimal
+  
+  // Payment Info
+  isPaid          Boolean          @default(false)
+  paymentMethod   String?          // credit_card, cash, transfer
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Conversation {
+  id        Int      @id @default(autoincrement())
+  salonId   Int
+  salon     Salon    @relation(fields: [salonId], references: [id])
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  
+  messages  Message[]
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  
+  @@unique([salonId, userId])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  
+  senderType     String       // "USER", "SALON"
+  content        String
+  isRead         Boolean      @default(false)
+  
+  createdAt      DateTime     @default(now())
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  salonId     Int
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  
+  category    String   // rent, supplies, marketing, salaries, utilities, tax, other
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  type      String   @default("info") // info, success, warning, error
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+}
