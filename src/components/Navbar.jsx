@@ -71,7 +71,7 @@ const Navbar = () => {
                                     ${isActive ? 'text-indigo-600 font-bold' : (item.isSpecial ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600')}
                                 `}
                             >
-                                {(item.isSpecial || isActive) && <Sparkles className="w-4 h-4 animate-pulse text-indigo-500" />}
+                                {item.isSpecial && <Sparkles className="w-4 h-4 animate-pulse text-indigo-500" />}
                                 {item.name}
                                 <span className={`absolute -bottom-1 left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                             </Link>
@@ -188,7 +188,7 @@ const Navbar = () => {
                                             }
                                         `}
                                     >
-                                        {(item.isSpecial || isActive) ? (
+                                        {item.isSpecial ? (
                                             <Sparkles className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
                                         ) : (
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-500 transition-colors" />
