@@ -61,19 +61,22 @@ const Navbar = () => {
 
                     {/* Desktop Menu */}
                     <div className="hidden lg:flex items-center gap-8">
-                        {navLinks.map((item) => (
+                        {navLinks.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
                             <Link
                                 key={item.name}
                                 to={item.path}
                                 className={`text-sm font-medium transition-all duration-300 relative group flex items-center gap-2
-                                    ${item.isSpecial ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600'}
+                                    ${isActive ? 'text-indigo-600 font-bold' : (item.isSpecial ? 'text-indigo-600 font-bold' : 'text-slate-600 hover:text-indigo-600')}
                                 `}
                             >
-                                {item.isSpecial && <Sparkles className="w-4 h-4 animate-pulse text-indigo-500" />}
+                                {(item.isSpecial || isActive) && <Sparkles className="w-4 h-4 animate-pulse text-indigo-500" />}
                                 {item.name}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all duration-300 group-hover:w-full"></span>
+                                <span className={`absolute -bottom-1 left-0 h-0.5 bg-indigo-600 transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                             </Link>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <div className="hidden lg:flex items-center gap-4">
@@ -171,26 +174,29 @@ const Navbar = () => {
 
                             {/* Drawer Links */}
                             <div className="flex-1 overflow-y-auto py-6 px-4 space-y-2">
-                                {navLinks.map((item) => (
+                                {navLinks.map((item) => {
+                                    const isActive = location.pathname === item.path;
+                                    return (
                                     <Link
                                         key={item.name}
                                         to={item.path}
                                         onClick={() => setIsMobileMenuOpen(false)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
-                                            ${item.isSpecial
+                                            ${isActive || item.isSpecial
                                                 ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-100'
                                                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
                                             }
                                         `}
                                     >
-                                        {item.isSpecial ? (
+                                        {(item.isSpecial || isActive) ? (
                                             <Sparkles className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
                                         ) : (
                                             <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-indigo-500 transition-colors" />
                                         )}
                                         {item.name}
                                     </Link>
-                                ))}
+                                    );
+                                })}
 
                                 <hr className="border-slate-100 my-4" />
 
