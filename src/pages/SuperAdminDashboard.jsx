@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import {
     LayoutDashboard,
     Users,
@@ -13,8 +14,7 @@ import {
     CheckCircle2,
     Server,
     MessageCircle,
-    Power,
-    Lock
+    Power
 } from 'lucide-react';
 
 const SuperAdminDashboard = () => {
@@ -30,27 +30,26 @@ const SuperAdminDashboard = () => {
     const [systemHealth, setSystemHealth] = useState(null);
     const [messages, setMessages] = useState([]);
 
-    // --- GOD MODE SECURITY ---
-    const [isGodAuthenticated, setIsGodAuthenticated] = useState(false);
-    const [godCredentials, setGodCredentials] = useState({ email: '', password: '' });
-    const [authError, setAuthError] = useState('');
-
-    const handleGodLogin = (e) => {
-        e.preventDefault();
-        // HARDCODED SECURITY CHECK (As requested by user)
-        // Only this specific email and a specific code allowed.
-        if (godCredentials.email.toLowerCase() === 'yipek8055@gmail.com' && godCredentials.password === 'ODAK_MASTER_2025') {
-            setIsGodAuthenticated(true);
-            setAuthError('');
-        } else {
-            setAuthError('ERİŞİM REDDEDİLDİ: Yetkisiz Giriş Denemesi Loglandı.');
-        }
-    };
+    // --- ADMIN AUTHENTICATION ---
+    // Check if user has SUPER_ADMIN role from token/context
+    const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'admin';
+    
+    if (!isSuperAdmin) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
+                <div className="text-center text-white">
+                    <h1 className="text-3xl font-bold mb-4">Erişim Reddedildi</h1>
+                    <p className="text-slate-400 mb-6">Bu panele sadece yöneticiler erişebilir.</p>
+                    <Link to="/" className="inline-block px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition">
+                        Ana Sayfaya Dön
+                    </Link>
+                </div>
+            </div>
+        );
+    }
     // -------------------------
 
     useEffect(() => {
-        if (!isGodAuthenticated) return; // Don't fetch if not authenticated
-
         const fetchAdminData = async () => {
             try {
                 // Fetch Stats
@@ -71,10 +70,10 @@ const SuperAdminDashboard = () => {
             }
         };
 
-        if (token) {
+        if (token && isSuperAdmin) {
             fetchAdminData();
         }
-    }, [token, isGodAuthenticated]);
+    }, [token, isSuperAdmin]);
 
     const handleImpersonate = async (userId) => {
         if (!confirm('Bu salon sahibinin hesabına girmek üzeresiniz. Onaylıyor musunuz?')) return;
@@ -107,7 +106,7 @@ const SuperAdminDashboard = () => {
     };
 
     const fetchMessages = async () => {
-        if (activeTab !== 'whatsapp' || !isGodAuthenticated) return;
+        if (activeTab !== 'whatsapp') return;
         try {
             const res = await axios.get('/api/admin/messages', {
                 headers: { Authorization: `Bearer ${token}` }
@@ -116,7 +115,7 @@ const SuperAdminDashboard = () => {
         } catch (e) { console.error(e); }
     };
 
-    useEffect(() => { fetchMessages(); }, [activeTab, isGodAuthenticated]);
+    useEffect(() => { fetchMessages(); }, [activeTab]);
 
     const statCards = [
         { title: 'Toplam Gelir', value: `${stats.totalRevenue} ₺`, change: 'Real-time', icon: DollarSign, color: 'bg-emerald-500' },
@@ -125,65 +124,7 @@ const SuperAdminDashboard = () => {
         { title: 'Sunucu Durumu', value: stats.systemStatus, change: process.env.NODE_ENV === 'production' ? 'Prod' : 'Dev', icon: Server, color: 'bg-amber-500' },
     ];
 
-    if (!isGodAuthenticated) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center font-mono">
-                <div className="w-full max-w-md p-8 border border-green-900 bg-gray-900/50 rounded-xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-green-500 animate-pulse"></div>
-
-                    <div className="text-center mb-10">
-                        <div className="inline-block p-4 rounded-full bg-green-900/20 mb-4 border border-green-500/30">
-                            <Lock className="w-12 h-12 text-green-500" />
-                        </div>
-                        <h1 className="text-2xl text-green-500 font-bold tracking-widest">GOD MODE ACCESS</h1>
-                        <p className="text-green-700 text-xs mt-2 uppercase tracking-widest">Authorized Personnel Only</p>
-                    </div>
-
-                    <form onSubmit={handleGodLogin} className="space-y-6">
-                        <div>
-                            <label className="text-green-700 text-xs uppercase tracking-wider mb-2 block">Admin Identity</label>
-                            <input
-                                type="email"
-                                value={godCredentials.email}
-                                onChange={e => setGodCredentials({ ...godCredentials, email: e.target.value })}
-                                className="w-full bg-black border border-green-800 p-3 text-green-500 focus:outline-none focus:border-green-500 transition-colors font-mono"
-                                placeholder="root@system"
-                                autoFocus
-                            />
-                        </div>
-                        <div>
-                            <label className="text-green-700 text-xs uppercase tracking-wider mb-2 block">Master Key</label>
-                            <input
-                                type="password"
-                                value={godCredentials.password}
-                                onChange={e => setGodCredentials({ ...godCredentials, password: e.target.value })}
-                                className="w-full bg-black border border-green-800 p-3 text-green-500 focus:outline-none focus:border-green-500 transition-colors font-mono"
-                                placeholder="••••••••"
-                            />
-                        </div>
-
-                        {authError && (
-                            <div className="p-3 bg-red-900/20 border border-red-900 text-red-500 text-xs font-bold animate-pulse">
-                                {authError}
-                            </div>
-                        )}
-
-                        <button type="submit" className="w-full bg-green-900/30 hover:bg-green-800/50 text-green-500 border border-green-900 py-3 font-bold tracking-widest transition-all hover:scale-[1.02] uppercase text-sm">
-                            Verify Credentials
-                        </button>
-                    </form>
-
-                    <div className="mt-8 pt-6 border-t border-green-900/50 text-center">
-                        <p className="text-green-900 text-[10px]">
-                            SYSTEM ID: {Math.random().toString(36).substr(2, 9).toUpperCase()} <br />
-                            SECURE CONNECTION ESTABLISHED
-                        </p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
+    
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans flex">
 

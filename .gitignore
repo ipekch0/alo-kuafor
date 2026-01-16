@@ -8,3 +8,5 @@ coverage
 *.log
 *.db
 dev.db
+
+.vercel
