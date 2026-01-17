@@ -168,9 +168,9 @@ const SuperAdminDashboard = () => {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 bg-slate-950 overflow-y-auto">
+            <div className="flex-1 bg-slate-950 flex flex-col">
                 {/* Header */}
-                <header className="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-50">
+                <header className="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900 flex-shrink-0">
                     <h2 className="text-xl font-bold">Tanrı Modu Aktif</h2>
                     <div className="flex items-center gap-4">
                         <div className="text-right hidden md:block">
@@ -181,7 +181,7 @@ const SuperAdminDashboard = () => {
                     </div>
                 </header>
 
-                <main className="p-8 space-y-8">
+                <main className="flex-1 overflow-y-auto p-8 space-y-8">
                     {/* Stats Grid */}
                     {activeTab === 'overview' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
