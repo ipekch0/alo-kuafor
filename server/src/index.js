@@ -112,10 +112,33 @@ app.get('/api/health', (req, res) => {
 });
 
 // DB Debug Endpoint (Re-added)
+app.get('/api/db-test', async (req, res) => {
+    try {
+        const dbStatus = prisma ? 'Initialized' : 'Undefined';
+        const envStatus = process.env.DATABASE_URL ? 'Set' : 'Missing';
 
+        let queryResult = 'Not attempted';
+        if (prisma) {
+            const count = await prisma.user.count();
+            queryResult = `Success! User count: ${count}`;
+        }
 
-
-
+        res.json({
+            status: 'ok',
+            prisma: dbStatus,
+            database_url: envStatus,
+            query: queryResult,
+            node_env: process.env.NODE_ENV,
+            vercel: !!process.env.VERCEL
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: error.message,
+            stack: error.stack
+        });
+    }
+});
 // Serve static files from the React app
 // Serve static files from the React app (ONLY if exists, otherwise API mode)
 const clientBuildPath = path.join(__dirname, '../../dist');
