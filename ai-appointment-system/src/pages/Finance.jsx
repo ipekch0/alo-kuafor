@@ -150,7 +150,22 @@ const Finance = () => {
         return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(amount);
     };
 
-    const pieData = Object.entries(stats.breakdown || {}).map(([name, value]) => ({ name, value }));
+    // Category translation mapping
+    const categoryLabels = {
+        'marketing': 'Reklam',
+        'supplies': 'Malzeme',
+        'tax': 'Vergi',
+        'utilities': 'İtiliteler',
+        'rent': 'Kira',
+        'staff': 'Personel',
+        'equipment': 'Ekipman',
+        'other': 'Diğer'
+    };
+
+    const pieData = Object.entries(stats.breakdown || {}).map(([name, value]) => ({ 
+        name: categoryLabels[name] || name, 
+        value 
+    }));
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
