@@ -55,7 +55,7 @@ const Login = () => {
                 }
 
                 if (isSalonOwner) {
-     
+
                     const salonDetails = {
                         salonName: formData.salonName,
                         taxNumber: formData.taxNumber,
@@ -82,7 +82,7 @@ const Login = () => {
                     } else {
                         setError(result.error || 'Kayıt başarısız');
                     }
-                } else {    
+                } else {
                     const result = await register(formData.name, formData.email, formData.password, formData.phone, 'customer');
                     if (result.success) {
                         if (result.requireVerification) {
@@ -123,7 +123,7 @@ const Login = () => {
                             </div>
                             <span className="text-3xl font-black text-slate-900 tracking-tighter font-sans uppercase">ODAKMANAGE</span>
                         </div>
-                        <p className="text-slate-500 text-lg font-light">Yönetici Paneli</p>
+                        <p className="text-slate-500 text-lg font-light">Yönetici Paneli <span className="text-[10px] opacity-30">v1.3.1-debug</span></p>
                     </motion.div>
                 </div>
 

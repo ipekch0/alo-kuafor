@@ -4,10 +4,12 @@ const validateEnv = require('./utils/validateEnv');
 
 // validateEnv(); // Use detailed validation
 try {
+    console.log('[DEBUG] Starting Environment Validation...');
     validateEnv();
+    console.log('[DEBUG] Environment Validation PASSED');
 } catch (error) {
-    console.error('Environment Validation Failed:', error.message);
-    // STRICTLY DO NOT EXIT. Let the app boot so we can see 500 errors formatted correctly.
+    console.error('[CRITICAL DEBUG] Environment Validation FAILED:', error.message);
+    // DO NOT EXIT - We want to see the error via /api/health or /api/db-test
 }
 
 const express = require('express');
