@@ -337,7 +337,7 @@ const SearchPage = () => {
                                             }
                                         }
                                     } catch (e) {
-                                        console.warn('Error parsing working hours', e);
+                                        console.warn('Çalışma saatleri ayrıştırılırken hata', e);
                                     }
 
                                     return (

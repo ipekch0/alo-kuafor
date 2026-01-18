@@ -41,7 +41,7 @@ const ChatWidget = ({ salonId, salonName, user, whatsappEnabled, salonPhone }) =
             });
             setMessages(msgRes.data);
         } catch (err) {
-            console.error('Chat Error:', err);
+            console.error('Sohbet Hatası:', err);
         } finally {
             setLoading(false);
         }
@@ -71,7 +71,7 @@ const ChatWidget = ({ salonId, salonName, user, whatsappEnabled, salonPhone }) =
 
             // Update with real message from server (optional)
         } catch (err) {
-            console.error('Send Error:', err);
+            console.error('Gönderme Hatası:', err);
         }
     };
 

@@ -26,7 +26,7 @@ const Inbox = () => {
                 setLoading(false);
             }
         } catch (error) {
-            console.error("Fetch inbox error", error);
+            console.error("İnbox yüklenirken hata", error);
         }
     };
 

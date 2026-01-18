@@ -41,11 +41,11 @@ const WhatsAppConnectionManager = () => {
         window.FB.login(function (response) {
             if (response.authResponse) {
                 const accessToken = response.authResponse.accessToken;
-                console.log('Facebook Login Token:', accessToken);
+                console.log('Facebook Giriş Token:', accessToken);
                 // Send token to backend
                 exchangeCode(accessToken);
             } else {
-                console.log('User cancelled login or did not fully authorize.', response);
+                console.log('Kullanıcı girişi iptal etti veya tam olarak yetki vermedi.', response);
                 setLoading(false);
                 toast.error('Giriş Başarısız. Durum: ' + response.status);
             }
@@ -173,7 +173,7 @@ const WhatsAppConnectionManager = () => {
                                             data = await res.json();
                                         } catch (e) {
                                             const text = await res.text();
-                                            console.error('API Error (Non-JSON):', text);
+                                            console.error('API Hatası (JSON Değil):', text);
                                             throw new Error(`Sunucu Hatası (${res.status}): Bağlantı kurulamadı.`);
                                         }
 

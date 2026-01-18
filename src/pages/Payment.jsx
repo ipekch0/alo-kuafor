@@ -45,7 +45,7 @@ const Payment = () => {
                 toast.error('Ödeme alınamadı.');
             }
         } catch (error) {
-            console.error('Payment error', error);
+            console.error('Ödeme hatası', error);
             toast.error('Bir hata oluştu. Lütfen tekrar deneyin.');
         } finally {
             setLoading(false);

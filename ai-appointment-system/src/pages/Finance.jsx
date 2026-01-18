@@ -54,7 +54,7 @@ const Finance = () => {
                 setExpenses(expensesData);
             }
         } catch (error) {
-            console.error('Error fetching finance data:', error);
+            console.error('Finans verileri yüklenirken hata:', error);
             toast.error('Veriler güncellenemedi');
         } finally {
             setLoading(false);

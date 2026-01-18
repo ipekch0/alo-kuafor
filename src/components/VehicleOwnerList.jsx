@@ -35,7 +35,7 @@ const VehicleOwnerList = () => {
             try {
                 await deleteOwner.mutateAsync(id);
             } catch (error) {
-                console.error('Error deleting owner:', error);
+                console.error('Mal sahibi silinirken hata:', error);
             }
         }
     };

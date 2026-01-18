@@ -95,7 +95,7 @@ const AIChatAssistant = () => {
             }
 
         } catch (error) {
-            console.error('AI Error:', error);
+            console.error('AI Hatası:', error);
 
             // Show error message
             const errorMessage = {
@@ -130,7 +130,7 @@ const AIChatAssistant = () => {
                 timestamp: new Date()
             }]);
         } catch (error) {
-            console.error('Clear error:', error);
+            console.error('Temizleme hatası:', error);
         }
     };
 

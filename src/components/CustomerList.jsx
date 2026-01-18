@@ -18,7 +18,7 @@ const CustomerList = () => {
                 await deleteCustomer.mutateAsync(id);
                 toast.success('Müşteri başarıyla silindi');
             } catch (error) {
-                console.error('Error deleting customer:', error);
+                console.error('Müşteri silinirken hata:', error);
                 toast.error('Silme işlemi başarısız');
             }
         }

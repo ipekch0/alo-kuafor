@@ -35,7 +35,7 @@ const SalonDetail = () => {
                 setReviews(data);
             }
         } catch (error) {
-            console.error('Error fetching reviews:', error);
+            console.error('Yorumlar yüklenirken hata:', error);
         }
     };
 

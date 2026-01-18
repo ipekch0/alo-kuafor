@@ -54,7 +54,7 @@ const CustomerCreateModal = () => {
             closeModal('customerCreate');
             setFormData(initialFormState);
         } catch (error) {
-            console.error('Error saving customer:', error);
+            console.error('Müşteri kaydedilirken hata:', error);
             toast.error('İşlem sırasında bir hata oluştu');
         }
     };

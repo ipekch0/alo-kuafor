@@ -29,7 +29,7 @@ const ChatWindow = ({ conversationId, salonId, salonName, onClose, isOwner = fal
                         setLoading(false);
                     }
                 } catch (error) {
-                    console.error("Init chat error", error);
+                    console.error("Sohbet başlatılırken hata", error);
                 }
             }
         };
@@ -83,7 +83,7 @@ const ChatWindow = ({ conversationId, salonId, salonName, onClose, isOwner = fal
                 convId = data.id;
                 setActiveConversationId(convId);
             } catch (err) {
-                console.error("Create conversation failed", err);
+                console.error("Konuşma oluşturulurken başarısız", err);
                 return;
             }
         }
@@ -101,7 +101,7 @@ const ChatWindow = ({ conversationId, salonId, salonName, onClose, isOwner = fal
                 scrollToBottom();
             }
         } catch (err) {
-            console.error("Send message failed", err);
+            console.error("Mesaj gönderme başarısız", err);
         }
     };
 

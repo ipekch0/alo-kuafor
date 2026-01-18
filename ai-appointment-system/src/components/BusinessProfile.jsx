@@ -97,7 +97,7 @@ const BusinessProfile = () => {
             await updateSalonMutation.mutateAsync(data);
             toast.success('İşletme profili ve logo başarıyla güncellendi.');
         } catch (error) {
-            console.error('Update error:', error);
+            console.error('Güncelleme hatası:', error);
             toast.error('Güncelleme başarısız: ' + (error.message || 'Bir hata oluştu'));
         }
     };
