@@ -64,7 +64,14 @@ class NLPEngine {
         this.manager.addNamedEntityText('service', 'fön', ['tr'], ['fön çekmek', 'fom']);
 
         await this.manager.train();
-        this.manager.save(this.modelPath);
+        try {
+            if (!process.env.VERCEL) {
+                this.manager.save(this.modelPath);
+                console.log('💾 Local NLP Model saved to disk.');
+            }
+        } catch (e) {
+            console.warn('⚠️ Could not save NLP model to disk (Read-only filesystem?):', e.message);
+        }
         this.isTrained = true;
         console.log('🚀 Local NLP Model training complete.');
     }
