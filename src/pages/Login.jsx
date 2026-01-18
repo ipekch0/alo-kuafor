@@ -123,7 +123,7 @@ const Login = () => {
                             </div>
                             <span className="text-3xl font-black text-slate-900 tracking-tighter font-sans uppercase">ODAKMANAGE</span>
                         </div>
-                        <p className="text-slate-500 text-lg font-light">Yönetici Paneli <span className="text-[10px] opacity-30">v1.3.1-debug</span></p>
+                        <p className="text-slate-500 text-lg font-light">Yönetici Paneli <span className="text-[10px] opacity-30">v1.3.5-stable</span></p>
                     </motion.div>
                 </div>
 

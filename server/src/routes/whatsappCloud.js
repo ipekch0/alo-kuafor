@@ -321,7 +321,7 @@ router.post('/webhook', verifyWebhookSignature, async (req, res) => {
                 const msgBody = message.text?.body || '';
                 const phoneNumberId = change.metadata.phone_number_id;
 
-                handleIncomingMessage(phoneNumberId, from, msgBody);
+                await handleIncomingMessage(phoneNumberId, from, msgBody);
             }
             res.sendStatus(200);
         } else {

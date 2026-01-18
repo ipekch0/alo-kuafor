@@ -6,17 +6,20 @@ let prisma;
 
 if (process.env.NODE_ENV === 'production') {
     try {
+        console.log('[PRISMA] Initializing Prisma Client in PRODUCTION mode...');
         prisma = new PrismaClient();
+        console.log('[PRISMA] Prisma Client initialized successfully.');
     } catch (e) {
-        console.error('CRITICAL: Prisma Client Failed to Initialize', e);
-        // Fallback or let it be undefined - usage will check
+        console.error('CRITICAL ERROR: Prisma Client Failed to Initialize in Production!', e.message);
+        console.error('Stack Trace:', e.stack);
     }
 } else {
     if (!global.prisma) {
         try {
+            console.log('[PRISMA] Initializing Global Prisma Client for Development...');
             global.prisma = new PrismaClient();
         } catch (e) {
-            console.error('CRITICAL: Global Prisma Client Failed', e);
+            console.error('CRITICAL ERROR: Global Prisma Client Failed in Development!', e.message);
         }
     }
     prisma = global.prisma;
