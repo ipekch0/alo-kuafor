@@ -1,4 +1,5 @@
 import React from 'react';
+// Deploy trigger: Salon verification and email system
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
