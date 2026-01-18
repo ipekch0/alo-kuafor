@@ -25,6 +25,41 @@ router.get('/test', (req, res) => {
     res.json({ message: 'Cloud API Router is working!' });
 });
 
+// Config Debug Route
+router.get('/config-check', async (req, res) => {
+    try {
+        const salons = await prisma.salon.findMany({
+            select: {
+                id: true,
+                name: true,
+                whatsappPhoneId: true,
+                whatsappAPIToken: { select: false }, // Don't leak token
+                _count: { select: { services: true } }
+            }
+        });
+
+        const configDetails = salons.map(s => ({
+            id: s.id,
+            name: s.name,
+            phoneIdSet: !!s.whatsappPhoneId,
+            phoneId: s.whatsappPhoneId,
+            tokenSet: !!s.whatsappAPIToken,
+            servicesCount: s._count.services
+        }));
+
+        res.json({
+            status: 'ok',
+            salons: configDetails,
+            env: {
+                has_app_secret: !!process.env.FACEBOOK_APP_SECRET,
+                verify_token_configured: true // Hardcoded in current version
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Note: authenticateToken is applied in index.js for this router -> MOVED to specific routes
 const authenticateToken = require('../middleware/auth');
 

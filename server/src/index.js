@@ -113,6 +113,15 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'AI Appointment API is running' });
 });
 
+// Health Check
+app.get('/', (req, res) => {
+    res.json({
+        status: 'active',
+        version: '1.3.5-stable',
+        time: new Date().toISOString()
+    });
+});
+
 // DB Debug Endpoint (Re-added)
 app.get('/api/db-test', async (req, res) => {
     try {
