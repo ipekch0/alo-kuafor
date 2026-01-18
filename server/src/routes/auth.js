@@ -13,17 +13,6 @@ const prisma = require('../lib/prisma');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_key_for_debugging_only';
 const JWT_EXPIRES_IN = '7d';
 
-// Nodemailer Transporter
-const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
 const { sendSMS } = require('../services/smsService');
 const validateRequest = require('../middleware/validation');
 const { registerSchema, loginSchema } = require('../utils/schemas');
@@ -74,31 +63,27 @@ router.post('/register', validateRequest(registerSchema), async (req, res) => {
 
         // Send Email
         try {
-            await transporter.sendMail({
-                from: `"OdakManage Güvenlik" <${process.env.EMAIL_USER}>`,
-                to: email,
-                subject: 'OdakManage Doğrulama Kodunuz',
-                text: `Merhaba ${name}, OdakManage'e hoşgeldiniz! Doğrulama kodunuz: ${verificationCode}`,
-                html: `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                        <h2 style="color: #4F46E5;">OdakManage'e Hoşgeldiniz!</h2>
-                        <p>Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
-                        
-                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
-                            <tr>
-                                <td align="center" style="background-color: #F3F4F6; padding: 15px 25px; border-radius: 8px;">
-                                    <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; font-family: monospace;">
-                                        ${verificationCode}
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
+            const subject = 'OdakManage Doğrulama Kodunuz';
+            const html = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #4F46E5;">OdakManage'e Hoşgeldiniz!</h2>
+                    <p>Hesabınızı doğrulamak için lütfen aşağıdaki kodu kullanın:</p>
+                    
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 20px 0;">
+                        <tr>
+                            <td align="center" style="background-color: #F3F4F6; padding: 15px 25px; border-radius: 8px;">
+                                <span style="font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #111827; font-family: monospace;">
+                                    ${verificationCode}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
 
-                        <p style="font-size: 14px; color: #666;">Bu kodu siz talep etmediyseniz, lütfen dikkate almayınız.</p>
-                        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-                    </div>
-                `
-            });
+                    <p style="font-size: 14px; color: #666;">Bu kodu siz talep etmediyseniz, lütfen dikkate almayınız.</p>
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                </div>
+            `;
+            await sendEmail(email, subject, html);
             console.log(`✅ Verification email sent to ${email}`);
         } catch (emailError) {
             console.error('Email send error:', emailError.message);
@@ -193,9 +178,42 @@ router.post('/verify-otp', async (req, res) => {
             data: {
                 isVerified: true,
                 verificationCode: null,
-                // phoneVerified: true // safely omit if DB not migrated
             }
         });
+
+        // Send Welcome Email
+        try {
+            const isSalon = updatedUser.role === 'salon_owner';
+            const welcomeSubject = isSalon
+                ? 'OdakManage Ailesine Hoşgeldiniz! ✂️'
+                : 'OdakManage\'e Hoşgeldiniz! ✨';
+
+            const welcomeHtml = isSalon ? `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #4F46E5;">Tebrikler ${updatedUser.name}!</h2>
+                    <p>Salonunuz için OdakManage dünyasına ilk adımı attınız. İşletmenizi büyütmek ve randevularınızı yapay zeka ile yönetmek için sabırsızlanıyoruz.</p>
+                    <p><b>Sıradaki Adımlar:</b></p>
+                    <ul>
+                        <li>İşletme profilinizi tamamlayın.</li>
+                        <li>Hizmetlerinizi ve personelinizi ekleyin.</li>
+                        <li>Yapay zeka asistanınızı yapılandırın.</li>
+                    </ul>
+                    <a href="${req.headers.origin}/panel" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px;">Paneli Görüntüle</a>
+                </div>
+            ` : `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #4F46E5;">Hoşgeldiniz ${updatedUser.name}!</h2>
+                    <p>OdakManage ile en iyi kuaförlerden kolayca randevu alabilir ve stilinizi yönetebilirsiniz.</p>
+                    <p>Hemen keşfetmeye başlayın!</p>
+                    <a href="${req.headers.origin}/search" style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px;">Salon Ara</a>
+                </div>
+            `;
+
+            await sendEmail(updatedUser.email, welcomeSubject, welcomeHtml);
+            console.log(`📧 Welcome email sent to ${updatedUser.email}`);
+        } catch (emailError) {
+            console.error('Welcome Email Error:', emailError.message);
+        }
 
         // Generate Token
         const token = jwt.sign(

@@ -66,7 +66,11 @@ router.get('/stats', authenticateToken, requireSuperAdmin, async (req, res) => {
                 id: salon.id,
                 name: salon.name,
                 owner: salon.owner.name,
+                ownerEmail: salon.owner.email,
                 status: salon.isVerified ? 'active' : 'pending',
+                isVerified: salon.isVerified,
+                taxNumber: salon.taxNumber,
+                taxOffice: salon.taxOffice,
                 monthlyRevenue: monthlyRevenue,
                 city: salon.city
             };
@@ -88,11 +92,33 @@ router.get('/stats', authenticateToken, requireSuperAdmin, async (req, res) => {
     }
 });
 
+// POST /api/admin/verify-salon - GOD MODE: Verify a salon
+router.post('/verify-salon', authenticateToken, requireSuperAdmin, async (req, res) => {
+    try {
+        const { salonId } = req.body;
+
+        await prisma.salon.update({
+            where: { id: salonId },
+            data: { isVerified: true }
+        });
+
+        res.json({ success: true, message: 'Salon verified successfully.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Verification failed' });
+    }
+});
+
 // POST /api/admin/impersonate - GOD MODE: Login as any user
 router.post('/impersonate', authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
         const { userId } = req.body;
-        const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+        // userId here is actually salonId from the frontend call, let's fix that or handle both
+        // If it's a salonId, we need the ownerId
+        const salon = await prisma.salon.findUnique({ where: { id: userId } });
+        const targetUserId = salon ? salon.ownerId : userId;
+
+        const targetUser = await prisma.user.findUnique({ where: { id: targetUserId } });
 
         if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
@@ -123,9 +149,13 @@ router.post('/ban-user', authenticateToken, requireSuperAdmin, async (req, res) 
         const { userId, action } = req.body; // action: 'ban' or 'unban'
         const isActive = action === 'unban';
 
+        // Check if userId is salonId
+        const salon = await prisma.salon.findUnique({ where: { id: userId } });
+        const targetUserId = salon ? salon.ownerId : userId;
+
         await prisma.user.update({
-            where: { id: userId },
-            data: { isActive: isActive } // Requires schema update for isActive
+            where: { id: targetUserId },
+            data: { isActive: isActive }
         });
 
         res.json({ success: true, message: `User ${action}ed successfully via God Mode.` });

@@ -33,7 +33,7 @@ const SuperAdminDashboard = () => {
     // --- ADMIN AUTHENTICATION ---
     // Check if user has SUPER_ADMIN role from token/context
     const isSuperAdmin = user?.role === 'SUPER_ADMIN' || user?.role === 'admin';
-    
+
     if (!isSuperAdmin) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 to-slate-800">
@@ -124,7 +124,7 @@ const SuperAdminDashboard = () => {
         { title: 'Sunucu Durumu', value: stats.systemStatus, change: process.env.NODE_ENV === 'production' ? 'Prod' : 'Dev', icon: Server, color: 'bg-amber-500' },
     ];
 
-    
+
     return (
         <div className="min-h-screen bg-slate-900 text-white font-sans flex">
 
@@ -215,8 +215,8 @@ const SuperAdminDashboard = () => {
                                 <table className="w-full text-left">
                                     <thead className="bg-slate-950 text-slate-400 text-xs uppercase font-bold">
                                         <tr>
-                                            <th className="px-6 py-4">Salon Adı</th>
-                                            <th className="px-6 py-4">Sahibi</th>
+                                            <th className="px-6 py-4">Salon / Lokasyon</th>
+                                            <th className="px-6 py-4">Sahibi / Vergi</th>
                                             <th className="px-6 py-4">Durum</th>
                                             <th className="px-6 py-4">Ciro</th>
                                             <th className="px-6 py-4 text-right">GOD ACTIONS</th>
@@ -225,22 +225,46 @@ const SuperAdminDashboard = () => {
                                     <tbody className="divide-y divide-slate-800">
                                         {salons.map(salon => (
                                             <tr key={salon.id} className="hover:bg-slate-800/50 transition-colors group">
-                                                <td className="px-6 py-4 font-medium">{salon.name}</td>
-                                                <td className="px-6 py-4">{salon.owner}</td>
+                                                <td className="px-6 py-4 font-medium">
+                                                    <div>{salon.name}</div>
+                                                    <div className="text-xs text-slate-500">{salon.city}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm">{salon.owner}</div>
+                                                    <div className="text-[10px] text-slate-500 font-mono">
+                                                        {salon.taxOffice} / {salon.taxNumber}
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize
-                                                    ${salon.status === 'active' ? 'bg-emerald-500/10 text-emerald-400' :
-                                                            salon.status === 'pending' ? 'bg-amber-500/10 text-amber-400' : 'bg-red-500/10 text-red-400'}`}>
-                                                        {salon.status}
+                                                    ${salon.isVerified ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                                                        {salon.isVerified ? 'Aktif' : 'Onay Bekliyor'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-slate-300">{salon.monthlyRevenue} ₺</td>
                                                 <td className="px-6 py-4 text-right space-x-2">
+                                                    {!salon.isVerified && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm('Bu salonu doğrula?')) return;
+                                                                try {
+                                                                    await axios.post('/api/admin/verify-salon', { salonId: salon.id }, {
+                                                                        headers: { Authorization: `Bearer ${token}` }
+                                                                    });
+                                                                    alert('Salon doğrulandı!');
+                                                                    window.location.reload();
+                                                                } catch (e) { alert('Hata: ' + e.message); }
+                                                            }}
+                                                            className="text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition-colors border border-emerald-500 shadow-lg shadow-emerald-500/20"
+                                                        >
+                                                            Doğrula
+                                                        </button>
+                                                    )}
                                                     <button
-                                                        onClick={() => handleImpersonate(salon.id)} // Assuming salon.id matches owner logic (need to fix in backend stats if ownerID not returned)
+                                                        onClick={() => handleImpersonate(salon.id)}
                                                         className="text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg transition-colors border border-indigo-500 shadow-lg shadow-indigo-500/20"
                                                     >
-                                                        Hesaba Gir
+                                                        Giriş Yap
                                                     </button>
                                                     <button
                                                         onClick={() => handleBan(salon.id)}

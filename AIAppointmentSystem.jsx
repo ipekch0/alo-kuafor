@@ -67,9 +67,30 @@ const AIAppointmentSystem = () => {
   };
 
   const { user, logout } = useAuth();
+  const [salon, setSalon] = useState(null);
 
   // Normalize role to Uppercase to handle 'salon_owner' vs 'SALON_OWNER' mismatch
   const currentRole = (user?.role || '').toUpperCase();
+
+  // Fetch Salon status if Salon Owner
+  React.useEffect(() => {
+    if (currentRole === 'SALON_OWNER') {
+      const fetchSalon = async () => {
+        try {
+          const response = await fetch(`${API_URL}/salons/mine`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setSalon(data);
+          }
+        } catch (error) {
+          console.error('Fetch Salon Error:', error);
+        }
+      };
+      fetchSalon();
+    }
+  }, [currentRole]);
 
   const {
     selectedView,
@@ -232,6 +253,15 @@ const AIAppointmentSystem = () => {
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 sticky top-16 lg:top-0 z-30 px-4 sm:px-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h2 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{currentTitle}</h2>
+            {currentRole === 'SALON_OWNER' && salon && (
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${salon.isVerified
+                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                : 'bg-amber-50 text-amber-600 border-amber-200'
+                }`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${salon.isVerified ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></div>
+                {salon.isVerified ? 'Onaylı İşletme' : 'Onay Bekliyor'}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
