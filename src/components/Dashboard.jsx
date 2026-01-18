@@ -107,34 +107,34 @@ const Dashboard = () => {
             className="space-y-8 pb-10"
         >
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
                         Merhaba, <span className="text-gradient">{user?.name || 'Yönetici'}</span> 👋
                     </h1>
-                    <p className="text-slate-500 mt-2 flex items-center gap-2">
+                    <p className="text-slate-500 mt-2 flex items-center gap-2 text-sm sm:text-base">
                         <Calendar className="w-4 h-4" />
                         {new Date().toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex items-center gap-3">
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => openModal('appointmentCreate')}
-                        className="btn-premium flex items-center gap-2 shadow-indigo-500/20"
+                        className="btn-premium flex-1 sm:flex-none flex items-center justify-center gap-2 shadow-indigo-500/20 px-4 sm:px-8"
                     >
                         <Plus className="w-5 h-5" />
-                        <span>Yeni Randevu</span>
+                        <span className="text-sm sm:text-base">Randevu</span>
                     </motion.button>
                     <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => openModal('customerCreate')}
-                        className="btn-ghost-premium flex items-center gap-2"
+                        className="btn-ghost-premium flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-8"
                     >
                         <UserPlus className="w-5 h-5" />
-                        <span>Müşteri Ekle</span>
+                        <span className="text-sm sm:text-base">Müşteri</span>
                     </motion.button>
                 </div>
             </div>
@@ -207,33 +207,33 @@ const Dashboard = () => {
                                     <motion.div
                                         key={appointment.id}
                                         whileHover={{ scale: 1.01 }}
-                                        className="flex items-center gap-4 p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group"
+                                        className="flex items-start sm:items-center gap-4 p-4 bg-white rounded-xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group"
                                     >
-                                        <div className="p-3 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors">
+                                        <div className="p-3 bg-indigo-50 rounded-lg group-hover:bg-indigo-100 transition-colors hidden sm:block">
                                             <Clock className="w-5 h-5 text-indigo-600" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center justify-between mb-1">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-1 gap-2">
                                                 <h4 className="text-slate-900 font-semibold truncate">
                                                     {appointment.customer?.name || 'İsimsiz Müşteri'}
                                                 </h4>
-                                                <span className="text-sm font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                                                <span className="text-xs sm:text-sm font-medium text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 w-fit">
                                                     {new Date(appointment.dateTime).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-sm text-slate-500">
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-slate-500">
                                                 <span className="flex items-center gap-1">
                                                     <Scissors className="w-3 h-3 text-pink-500" />
                                                     {appointment.service?.name}
                                                 </span>
-                                                <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                                                <span className="hidden sm:block w-1 h-1 bg-slate-300 rounded-full" />
                                                 <span className="flex items-center gap-1">
                                                     <Users className="w-3 h-3 text-blue-500" />
                                                     {appointment.professional?.name}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="ml-4 flex items-center gap-2">
+                                        <div className="ml-2 sm:ml-4 flex flex-col sm:flex-row items-end sm:items-center gap-2">
                                             {appointment.status !== 'completed' && (
                                                 <button
                                                     onClick={() => handleCompleteAppointment(appointment.id)}
@@ -244,7 +244,7 @@ const Dashboard = () => {
                                                 </button>
                                             )}
                                             <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${appointment.status === 'completed'
+                                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium whitespace-nowrap ${appointment.status === 'completed'
                                                     ? 'bg-emerald-100 text-emerald-800'
                                                     : 'bg-amber-100 text-amber-800'
                                                     }`}

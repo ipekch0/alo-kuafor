@@ -59,12 +59,12 @@ const AppointmentDetail = () => {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-200 pb-1">
+            <div className="flex gap-1 sm:gap-2 border-b border-slate-200 pb-1 overflow-x-auto no-scrollbar">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-3 rounded-t-lg transition-colors relative ${activeTab === tab.id ? 'text-brand-dark bg-brand-light/10' : 'text-slate-400 hover:text-slate-600'
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-3 rounded-t-lg transition-colors relative whitespace-nowrap text-sm sm:text-base ${activeTab === tab.id ? 'text-brand-dark bg-brand-light/10' : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         <tab.icon className="w-4 h-4" />

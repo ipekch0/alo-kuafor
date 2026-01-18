@@ -162,9 +162,9 @@ const Finance = () => {
         'other': 'Diğer'
     };
 
-    const pieData = Object.entries(stats.breakdown || {}).map(([name, value]) => ({ 
-        name: categoryLabels[name] || name, 
-        value 
+    const pieData = Object.entries(stats.breakdown || {}).map(([name, value]) => ({
+        name: categoryLabels[name] || name,
+        value
     }));
 
     if (loading) return (
@@ -194,10 +194,10 @@ const Finance = () => {
                     </div>
 
 
-                    <div className="flex items-center gap-2 no-print">
+                    <div className="flex flex-wrap items-center gap-2 no-print">
                         <button
                             onClick={handleExportExcel}
-                            className="flex items-center gap-2 px-10 py-2.5 bg-emerald-50 text-emerald-600 font-medium rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200"
+                            className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-4 sm:px-10 py-2.5 bg-emerald-50 text-emerald-600 font-medium rounded-xl hover:bg-emerald-100 transition-colors border border-emerald-200"
                             title="Excel Olarak İndir"
                         >
                             <FileSpreadsheet size={18} />
@@ -205,7 +205,7 @@ const Finance = () => {
                         </button>
                         <button
                             onClick={handleExportPDF}
-                            className="flex items-center gap-2 px-10 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-xl hover:bg-rose-100 transition-colors border border-rose-200"
+                            className="flex items-center justify-center gap-2 flex-1 sm:flex-none px-4 sm:px-10 py-2.5 bg-rose-50 text-rose-600 font-medium rounded-xl hover:bg-rose-100 transition-colors border border-rose-200"
                             title="PDF Olarak Yazdır"
                         >
                             <FileText size={18} />
@@ -213,13 +213,11 @@ const Finance = () => {
                         </button>
                         <button
                             onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-2 px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl shadow-lg shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-[0.98] ml-2"
+                            className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-xl shadow-lg shadow-slate-900/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
                         >
                             <Plus size={20} />
-                            Gider Ekle
+                            <span>Gider Ekle</span>
                         </button>
-
-
                     </div>
                 </div>
 
