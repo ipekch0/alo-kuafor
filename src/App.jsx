@@ -1,5 +1,5 @@
 import React from 'react';
-// Deploy trigger: Salon verification and email system
+// Deploy trigger: Local NLP and Settings Update - 01:41
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import LandingPage from './pages/LandingPage';
