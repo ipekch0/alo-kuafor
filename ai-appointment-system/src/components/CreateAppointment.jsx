@@ -61,7 +61,7 @@ const CreateAppointment = () => {
                 setSelectedView('appointments');
             }
         } catch (error) {
-            console.error('Error creating appointment:', error);
+            console.error('Randevu oluştururken hata:', error);
             alert('Randevu oluşturulurken hata oluştu.');
         }
     };

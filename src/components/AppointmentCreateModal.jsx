@@ -128,7 +128,7 @@ const AppointmentCreateModal = () => {
                 handleClose();
             }
         } catch (error) {
-            console.error('Error creating appointment:', error);
+            console.error('Randevu oluştururken hata:', error);
             toast.error('Randevu oluşturulurken hata oluştu.');
         }
     };

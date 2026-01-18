@@ -66,7 +66,7 @@ const SuperAdminDashboard = () => {
                 setSystemHealth(healthRes.data);
 
             } catch (error) {
-                console.error('Admin API Error:', error);
+                console.error('Yönetici API Hatası:', error);
             }
         };
 
@@ -118,9 +118,9 @@ const SuperAdminDashboard = () => {
     useEffect(() => { fetchMessages(); }, [activeTab]);
 
     const statCards = [
-        { title: 'Toplam Gelir', value: `${stats.totalRevenue} ₺`, change: 'Real-time', icon: DollarSign, color: 'bg-emerald-500' },
-        { title: 'Aktif Salonlar', value: stats.activeSalons, change: 'Verified', icon: Store, color: 'bg-indigo-500' },
-        { title: 'Toplam Randevu', value: stats.totalAppointments, change: 'All Time', icon: Calendar, color: 'bg-blue-500' },
+        { title: 'Toplam Gelir', value: `${stats.totalRevenue} ₺`, change: 'Canlı', icon: DollarSign, color: 'bg-emerald-500' },
+        { title: 'Aktif Salonlar', value: stats.activeSalons, change: 'Doğrulanmış', icon: Store, color: 'bg-indigo-500' },
+        { title: 'Toplam Randevu', value: stats.totalAppointments, change: 'Her Zaman', icon: Calendar, color: 'bg-blue-500' },
         { title: 'Sunucu Durumu', value: stats.systemStatus, change: process.env.NODE_ENV === 'production' ? 'Prod' : 'Dev', icon: Server, color: 'bg-amber-500' },
     ];
 
@@ -162,7 +162,7 @@ const SuperAdminDashboard = () => {
                 <div className="p-4 border-t border-slate-800">
                     <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50">
                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-xs font-medium text-slate-400">BOSS Server: Online</span>
+                        <span className="text-xs font-medium text-slate-400">BOSS Sunucusu: Çevrimiçi</span>
                     </div>
                 </div>
             </div>

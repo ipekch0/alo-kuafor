@@ -67,7 +67,7 @@ const SuperAdminDashboard = () => {
                 setSystemHealth(healthRes.data);
 
             } catch (error) {
-                console.error('Admin API Error:', error);
+                console.error('Yönetici API Hatası:', error);
             }
         };
 
@@ -119,9 +119,9 @@ const SuperAdminDashboard = () => {
     useEffect(() => { fetchMessages(); }, [activeTab, isGodAuthenticated]);
 
     const statCards = [
-        { title: 'Toplam Gelir', value: `${stats.totalRevenue} ₺`, change: 'Real-time', icon: DollarSign, color: 'bg-emerald-500' },
-        { title: 'Aktif Salonlar', value: stats.activeSalons, change: 'Verified', icon: Store, color: 'bg-indigo-500' },
-        { title: 'Toplam Randevu', value: stats.totalAppointments, change: 'All Time', icon: Calendar, color: 'bg-blue-500' },
+        { title: 'Toplam Gelir', value: `${stats.totalRevenue} ₺`, change: 'Canlı', icon: DollarSign, color: 'bg-emerald-500' },
+        { title: 'Aktif Salonlar', value: stats.activeSalons, change: 'Doğrulanmış', icon: Store, color: 'bg-indigo-500' },
+        { title: 'Toplam Randevu', value: stats.totalAppointments, change: 'Her Zaman', icon: Calendar, color: 'bg-blue-500' },
         { title: 'Sunucu Durumu', value: stats.systemStatus, change: process.env.NODE_ENV === 'production' ? 'Prod' : 'Dev', icon: Server, color: 'bg-amber-500' },
     ];
 

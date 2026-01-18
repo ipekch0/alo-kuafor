@@ -26,7 +26,7 @@ const VehicleOwnerList = () => {
             setShowModal(false);
             setFormData({ name: '', email: '', phone: '', idNumber: '', address: '', city: '' });
         } catch (error) {
-            console.error('Error creating owner:', error);
+            console.error('Mal sahibi oluştururken hata:', error);
         }
     };
 

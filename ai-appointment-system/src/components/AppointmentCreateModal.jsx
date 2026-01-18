@@ -46,7 +46,7 @@ const AppointmentCreateModal = () => {
                 toast.success('Randevu başarıyla oluşturuldu');
             }
         } catch (error) {
-            console.error('Error creating appointment:', error);
+            console.error('Randevu oluştururken hata:', error);
             toast.error('Randevu oluşturulurken hata oluştu.');
         }
     };

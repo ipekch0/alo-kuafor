@@ -54,11 +54,11 @@ const SearchPage = () => {
                 if (!value) params.delete(key);
             }
             const response = await fetch(`/api/salons/search?${params.toString()}`);
-            if (!response.ok) throw new Error('Network response was not ok');
+            if (!response.ok) throw new Error('Ağ isteği başarısız oldu');
             const data = await response.json();
             setSalons(Array.isArray(data) ? data : []);
         } catch (error) {
-            console.error('Error fetching salons:', error);
+            console.error('Salonlar yüklenirken hata:', error);
             setSalons([]);
         } finally {
             setLoading(false);

@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
                         setToken(null);
                     }
                 } catch (error) {
-                    console.error('Auth check failed:', error);
+                    console.error('Kimlik doğrulama kontrolü başarısız:', error);
                     localStorage.removeItem('token');
                     setToken(null);
                 }
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
                         error: data.error
                     };
                 }
-                throw new Error(data.error || 'Login failed');
+                throw new Error(data.error || 'Giriş başarısız');
             }
 
             localStorage.setItem('token', data.token);
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Registration failed');
+                throw new Error(data.error || 'Kayıt başarısız');
             }
 
             if (data.requireVerification) {
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Profile update failed');
+                throw new Error(data.error || 'Profil güncelleme başarısız');
             }
 
             setUser(data.user);
