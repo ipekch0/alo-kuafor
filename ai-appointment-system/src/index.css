@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Outfit', sans-serif;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 100% 0%, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+
+  /* Premium Glass Effect - Light Mode */
+  .glass-premium {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-xl shadow-slate-200/50;
+  }
+
+  .glass-card {
+    @apply bg-white/60 backdrop-blur-md border border-white/50 rounded-2xl hover:bg-white/80 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300;
+  }
+
+  /* Neon Gradients (Adapted for Light) */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-yellow-600 to-amber-700;
+  }
+
+  /* Premium Buttons */
+  .btn-premium {
+    @apply relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium px-6 py-2.5 rounded-xl hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
+  }
+
+  .btn-ghost-premium {
+    @apply bg-white hover:bg-slate-50 text-slate-700 font-medium px-6 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-200 hover:text-indigo-600 transition-all duration-300;
+  }
+
+  /* Inputs - Light */
+  .input-premium {
+    @apply w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all duration-200;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-200;
+  }
+
+  /* Animations for Cards */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  /* Missing Dashboard Classes */
+  .card-premium {
+    @apply bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300;
+  }
+
+  .card-gradient-1 {
+    @apply bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30;
+  }
+
+  .card-gradient-2 {
+    @apply bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30;
+  }
+
+  .card-gradient-3 {
+    @apply bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30;
+  }
+
+  .card-gradient-4 {
+    @apply bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/30;
+  }
+}
+
+/* Custom Scrollbar - Light */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+}
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .no-print,
+  aside,
+  button,
+  .btn-premium,
+  .btn-ghost-premium {
+    display: none !important;
+  }
+
+  /* Specific fixes for layout during print */
+  main,
+  .lg\:col-span-9,
+  .lg\:p-10 {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  /* Ensure tables print well */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd !important;
+  }
+
+  /* Show a print header */
+  .print-header {
+    display: block !important;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+}
+
+.print-header {
+  display: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animation-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}

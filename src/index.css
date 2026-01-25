@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Outfit:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Outfit', sans-serif;
+    background-color: #f8fafc;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0.05) 0px, transparent 50%);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+
+  /* Modern Glass Effect */
+  .glass-premium {
+    @apply bg-white/80 backdrop-blur-xl border border-white/60 shadow-xl shadow-slate-200/50;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-lg border border-white/50 rounded-2xl hover:bg-white/90 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all duration-300 ease-out;
+  }
+
+  /* Sophisticated Gradients */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700;
+  }
+
+  /* Premium Buttons */
+  .btn-premium {
+    @apply relative overflow-hidden bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-medium px-8 py-3 rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300;
+  }
+
+  /* Premium Gradients for Cards */
+  .card-gradient-1 {
+    @apply bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30;
+  }
+
+  .card-gradient-2 {
+    @apply bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30;
+  }
+
+  .card-gradient-3 {
+    @apply bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30;
+  }
+
+  .card-gradient-4 {
+    @apply bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/30;
+  }
+
+  .btn-ghost-premium {
+    @apply bg-white/80 backdrop-blur-sm hover:bg-white text-slate-700 font-medium px-8 py-3 rounded-xl border border-slate-200 hover:border-indigo-200 hover:text-indigo-600 shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  /* Inputs */
+  .input-premium {
+    @apply w-full px-4 py-3 bg-white/50 backdrop-blur-sm border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all duration-200;
+  }
+
+  /* Animations */
+  .hover-lift {
+    @apply transition-transform duration-300 hover:-translate-y-1;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  /* Custom Scrollbar and Utilities */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full border-4 border-slate-50 hover:bg-slate-400 transition-colors;
+}
