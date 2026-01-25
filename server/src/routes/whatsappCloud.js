@@ -378,4 +378,34 @@ router.post('/webhook', async (req, res) => {
     }
 });
 
+// --- DIAGNOSTIC ENDPOINT ---
+router.get('/test-bot', async (req, res) => {
+    const { phoneId, from } = req.query;
+    if (!phoneId) return res.status(400).send('Hata: phoneId parametresi eksik. Örnek: .../test-bot?phoneId=123456&from=905xxxx');
+
+    try {
+        const salon = await prisma.salon.findFirst({
+            where: { whatsappPhoneId: phoneId }
+        });
+
+        if (!salon) return res.send(`❌ HATA: Bu Phone ID (${phoneId}) ile eşleşen salon bulunamadı. Ayarlar sayfasından ID'yi doğru kaydettiğinize emin olun.`);
+        if (!salon.whatsappAPIToken) return res.send(`❌ HATA: Salon bulundu (${salon.name}) ancak Token kayıtlı değil.`);
+
+        res.write(`✅ Salon Bulundu: ${salon.name}\n`);
+        res.write(`✅ Token: Mevcut\n`);
+        res.write(`🔄 "Merhaba" mesajı simüle ediliyor...\n`);
+
+        // Simulate Incoming Message
+        await handleIncomingMessage(phoneId, from || '905555555555', {
+            type: 'text',
+            text: { body: 'merhaba' }
+        });
+
+        res.write(`✅ İşlem tamamlandı. Eğer telefonunuza mesaj gelmediyse, Token geçersiz olabilir veya WhatsApp Cloud API kotanız dolmuş olabilir.`);
+        res.end();
+    } catch (e) {
+        res.status(500).send('Sunucu Hatası: ' + e.message);
+    }
+});
+
 module.exports = router;
