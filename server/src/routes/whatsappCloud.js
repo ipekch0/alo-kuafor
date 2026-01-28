@@ -368,14 +368,19 @@ router.post('/manual-connect', authenticateToken, async (req, res) => {
 
 // Webhook Verification
 router.get('/webhook', (req, res) => {
-    const VERIFY_TOKEN = 'my_secure_verify_token_123';
+    const VERIFY_TOKEN = 'alo123'; // Simplified token
+
     const mode = req.query['hub.mode'];
     const token = req.query['hub.verify_token'];
     const challenge = req.query['hub.challenge'];
 
-    if (mode && token === VERIFY_TOKEN) {
+    console.log('[Webhook Verification]', { mode, token, challenge });
+
+    if (mode && token && token.trim() === VERIFY_TOKEN) {
+        // Respond with ONLY the challenge value
         res.status(200).send(challenge);
     } else {
+        console.error('[Webhook Verification] Failed. Token mismatch.');
         res.sendStatus(403);
     }
 });
