@@ -378,7 +378,8 @@ router.get('/webhook', (req, res) => {
 
     if (mode && token && token.trim() === VERIFY_TOKEN) {
         // Respond with ONLY the challenge value
-        res.status(200).send(challenge);
+        // CRITICAL: Facebook requires text/plain, Express might default to text/html
+        res.type('text/plain').send(challenge.toString());
     } else {
         console.error('[Webhook Verification] Failed. Token mismatch.');
         res.sendStatus(403);
