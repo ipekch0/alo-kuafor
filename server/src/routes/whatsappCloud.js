@@ -4,6 +4,7 @@ const axios = require('axios');
 const path = require('path');
 const prisma = require('../lib/prisma');
 const crypto = require('crypto');
+const nlpEngine = require('../services/nlpEngine'); // Local NLP (node-nlp)
 
 // --- HELPER FUNCTIONS ---
 
@@ -281,9 +282,35 @@ const handleIncomingMessage = async (phoneId, from, message) => {
             return;
         }
 
-        // Fallback catch-all
+        // Fallback catch-all (LOCAL NLP HANDLER)
         if (!payload && session.step !== 'welcome') {
-            await sendText(token, phoneId, from, 'Anlaşılmadı. İşlemi iptal etmek için "iptal" yazabilirsiniz.');
+            console.log('🧠 Yerel NLP Devreye Giriyor...');
+
+            // Context for NLP
+            const context = {
+                services: salon.services,
+                address: salon.address
+            };
+
+            const nlpResult = await nlpEngine.process(textBody, context);
+
+            if (nlpResult.intent && nlpResult.intent !== 'None' && !nlpResult.fallback) {
+                // If NLP found an intent returns text
+                if (nlpResult.text) {
+                    await sendText(token, phoneId, from, nlpResult.text);
+                } else {
+                    // If it recognized intent but needs logic (e.g. appointment)
+                    // Redirect to menu logic
+                    if (nlpResult.intent === 'appointment.create' || nlpResult.intent === 'appointment.check') {
+                        await sendButtons(token, phoneId, from, 'Randevu işlemleri için aşağıdaki menüyü kullanabilirsiniz:', [
+                            { id: 'BTN_APPOINTMENT', title: '📅 Randevu Al' },
+                            { id: 'BTN_SERVICES', title: '✂️ Hizmetler' }
+                        ]);
+                    }
+                }
+            } else {
+                await sendText(token, phoneId, from, 'Anlaşılmadı. İşlemi iptal etmek için "iptal" yazabilirsiniz veya menüden seçim yapın.');
+            }
         }
 
     } catch (e) {
